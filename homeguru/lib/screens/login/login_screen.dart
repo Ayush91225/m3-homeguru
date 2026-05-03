@@ -317,7 +317,7 @@ class _Header extends StatelessWidget {
             ],
           ),
         ),
-        if (role != null) ...[
+        ...?role != null ? [
           const SizedBox(width: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -329,7 +329,7 @@ class _Header extends StatelessWidget {
                 style: tt.labelMedium?.copyWith(
                     color: cs.onSecondaryContainer, fontWeight: FontWeight.w700)),
           ),
-        ],
+        ] : null,
       ],
     );
   }

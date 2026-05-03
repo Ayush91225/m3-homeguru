@@ -189,7 +189,6 @@ class _TutorStep2BodyState extends State<TutorStep2Body> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final w = MediaQuery.sizeOf(context).width;
     final hPad = w >= 600 ? w * 0.2 : 20.0;
@@ -205,17 +204,17 @@ class _TutorStep2BodyState extends State<TutorStep2Body> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _nameCard(cs, tt),
+                  _nameCard(tt),
                   const SizedBox(height: 16),
-                  _personalCard(cs, tt),
+                  _personalCard(tt),
                   const SizedBox(height: 16),
-                  _locationCard(cs, tt),
+                  _locationCard(tt),
                   const SizedBox(height: 16),
-                  _languagesCard(cs, tt),
+                  _languagesCard(tt),
                   const SizedBox(height: 16),
-                  _bioCard(cs, tt),
+                  _bioCard(tt),
                   const SizedBox(height: 16),
-                  _certificatesCard(cs, tt),
+                  _certificatesCard(tt),
                 ],
               ),
             ),
@@ -225,7 +224,7 @@ class _TutorStep2BodyState extends State<TutorStep2Body> {
           padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 16),
           child: FilledButton(
             onPressed: _submit,
-            style: FilledButton.styleFrom(backgroundColor: cs.tertiary, foregroundColor: cs.onTertiary),
+            style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.tertiary, foregroundColor: Theme.of(context).colorScheme.onTertiary),
             child: const Text('Continue'),
           ),
         ),
@@ -234,7 +233,9 @@ class _TutorStep2BodyState extends State<TutorStep2Body> {
   }
 
   // ── Name ──────────────────────────────────────────────────────────────────
-  Widget _nameCard(ColorScheme cs, TextTheme tt) => _Card(cs: cs, child: Column(
+  Widget _nameCard(TextTheme tt) {
+    final cs = Theme.of(context).colorScheme;
+    return _Card(cs: cs, child: Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       _CardTitle('Name', cs, tt),
@@ -266,9 +267,12 @@ class _TutorStep2BodyState extends State<TutorStep2Body> {
       ]),
     ],
   ));
+  }
 
   // ── Personal (DOB + Gender) ────────────────────────────────────────────────
-  Widget _personalCard(ColorScheme cs, TextTheme tt) => _Card(cs: cs, child: Column(
+  Widget _personalCard(TextTheme tt) {
+    final cs = Theme.of(context).colorScheme;
+    return _Card(cs: cs, child: Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       _CardTitle('Personal', cs, tt),
@@ -335,9 +339,12 @@ class _TutorStep2BodyState extends State<TutorStep2Body> {
       }).toList()),
     ],
   ));
+  }
 
   // ── Location ──────────────────────────────────────────────────────────────
-  Widget _locationCard(ColorScheme cs, TextTheme tt) => _Card(cs: cs, child: Column(
+  Widget _locationCard(TextTheme tt) {
+    final cs = Theme.of(context).colorScheme;
+    return _Card(cs: cs, child: Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       _CardTitle('Location', cs, tt),
@@ -401,9 +408,12 @@ class _TutorStep2BodyState extends State<TutorStep2Body> {
       ],
     ],
   ));
+  }
 
   // ── Languages ─────────────────────────────────────────────────────────────
-  Widget _languagesCard(ColorScheme cs, TextTheme tt) => _Card(cs: cs, child: Column(
+  Widget _languagesCard(TextTheme tt) {
+    final cs = Theme.of(context).colorScheme;
+    return _Card(cs: cs, child: Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
                     GestureDetector(
@@ -473,6 +483,7 @@ class _TutorStep2BodyState extends State<TutorStep2Body> {
                     ),
     ],
   ));
+  }
 
   void _pickLanguages() async {
     if (_loadingLanguages) return;
@@ -510,7 +521,6 @@ class _TutorStep2BodyState extends State<TutorStep2Body> {
   }
 
   Future<String?> _pickProficiencyFor(String langName) async {
-    final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
     return await showModalBottomSheet<String>(
@@ -546,7 +556,9 @@ class _TutorStep2BodyState extends State<TutorStep2Body> {
   }
 
   // ── Bio ───────────────────────────────────────────────────────────────────
-  Widget _bioCard(ColorScheme cs, TextTheme tt) => _Card(cs: cs, child: Column(
+  Widget _bioCard(TextTheme tt) {
+    final cs = Theme.of(context).colorScheme;
+    return _Card(cs: cs, child: Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       _CardTitle('About / Bio', cs, tt),
@@ -575,9 +587,12 @@ class _TutorStep2BodyState extends State<TutorStep2Body> {
       ),
     ],
   ));
+  }
 
   // ── Certificates ──────────────────────────────────────────────────────────
-  Widget _certificatesCard(ColorScheme cs, TextTheme tt) => _Card(cs: cs, child: Column(
+  Widget _certificatesCard(TextTheme tt) {
+    final cs = Theme.of(context).colorScheme;
+    return _Card(cs: cs, child: Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Row(children: [
@@ -644,6 +659,7 @@ class _TutorStep2BodyState extends State<TutorStep2Body> {
       ],
     ],
   ));
+  }
 
   void _pickFiles() async {
     final result = await FilePicker.pickFiles(
