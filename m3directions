@@ -1,0 +1,229 @@
+use colors be warm and blue accents of colour availale in m3 kit colors
+
+strictly dont use emojis
+use icons and google fonts|
+
+App name 
+HomeGuru
+
+pakacge name:
+com.navchetna.homeguru
+
+FLUTTER APP
+
+we need to make the app totally in google's material m3 ui
+components, designs, fonts, colours, animations, design flow, ux, ui, progress indicators
+dynamic_color: ^1.8.1
+https://m3.material.io/styles/color/roles
+https://m3.material.io/styles/color/system/overview
+https://m3.material.io/styles/color/choosing-a-scheme
+https://m3.material.io/styles/color/static/baseline
+https://m3.material.io/styles/color/static/custom-brand
+https://m3.material.io/styles/color/dynamic/choosing-a-source
+https://m3.material.io/styles/color/dynamic/user-generated-source
+https://m3.material.io/styles/color/dynamic/content-based-source
+
+
+https://api.flutter.dev/flutter/material/ElevationOverlay-class.html
+https://m3.material.io/styles/elevation/overview
+
+https://m3.material.io/components
+https://m3.material.io/components/loading-indicator/overview
+https://m3.material.io/components/progress-indicators/overview
+
+more...
+
+
+
+
+
+
+1. Color: The Dynamic Engine
+The core of Pixel UI is Dynamic Color (Monet). Instead of fixed hex codes, your app should derive its palette from the user’s wallpaper.
+
+Implementation: Use the dynamic_color package to extract a ColorScheme.
+
+The Roles:
+
+Primary/On-Primary: Used for key components like FABs and active states.
+
+Surface & Surface Variant: Use these for the background and cards. M3 has moved away from pure white backgrounds; use a slight tint of the primary color for surfaces to create a cohesive "organic" look.
+
+Tonal Palettes: Ensure you use all 13 tonal colors. For example, use Surface Container (a new M3 role) for background depth rather than just shadows.
+
+2. Typography: The "Google Sans" Feel
+Google uses Google Sans (or its open-source sibling, Product Sans) for its brand identity. For Flutter apps targeting the Pixel look:
+
+Font: Use Google Sans for headings and Roboto or Inter for long-form body text to improve readability.
+
+Scale: Follow the M3 type scale strictly (Display, Headline, Title, Body, Label).
+
+Alignment: Pixel UI often uses left-aligned headlines with generous top padding to create a sense of "airiness."
+
+3. Elevation & Surfaces (No More Shadows)
+Material 3 replaces drop shadows with Color Mappings and Surface Tinting.
+
+Elevation Overlay: Higher elevation now means a more prominent "Surface Tint." A card at elevation 3 will look more "saturated" with the primary color than a card at elevation 1.
+
+Shapes: Use high-radius corners. M3 components (Cards, Dialogs, Buttons) typically use a 28dp corner radius for large components and fully rounded (stadium) shapes for buttons and chips.
+
+4. Components & Layout
+To match the Pixel experience, prioritize these specific M3 components:
+
+Navigation Bar: Use the M3 NavigationBar (not BottomNavigationBar). It uses a pill-shaped "Active Indicator" behind the icon.
+
+Top App Bar: Use the Center-aligned or Medium/Large Top App Bar. The "Large" version shrinks into a standard bar as the user scrolls, a signature Pixel interaction.
+
+FAB: Use the Large FAB or Extended FAB with rounded-square corners (not circles).
+
+Segmented Buttons: Use these for switching views instead of old-style tabs where possible.
+
+5. Motion & Transitions (The "Alive" UI)
+Pixel UI feels "springy" and responsive.
+
+Predictive Back: Ensure your design flow supports the back-gesture preview.
+
+Shared Axis Transition: Use the animations package for page transitions. Moving from a list to a detail view should use a "Container Transform" where the card grows to fill the screen.
+
+Easing: Use StandardEasing or EmphasizedEasing. The motion should be slow to start, fast in the middle, and very gentle at the end.
+
+6. Progress & State Indicators
+Linear/Circular Progress: Use the M3 versions which feature rounded caps (rather than flat ends).
+
+Indeterminate Motion: The animation should be a "cycle" that feels fluid, matching the system loading indicators on a Pixel device.
+
+Empty States: Use monochromatic, tonal illustrations that match the Outline or Secondary color roles.
+
+7. Design Flow / UX Strategy
+One-Handed Use: Move interactive elements (buttons, search bars) toward the bottom two-thirds of the screen, leaving the top for large, expressive headings.
+
+Haptics: Integrate light haptic feedback on button presses and "heavy" haptics on long presses or successful actions.
+
+Edge-to-Edge: Ensure your UI draws behind the navigation bar and status bar for a truly immersive look.
+
+Recommended Tooling
+Material Theme Builder: Use the Web Tool to export a theme.dart file. It will generate the light and dark schemes (including high-contrast versions) automatically.
+
+Component Reference: Always check the M3 Component Gallery for exact padding and margin specs (e.g., standard 16dp or 24dp side margins).
+
+Next Step: I recommend setting up the MaterialApp with useMaterial3: true and the dynamic_color plugin to immediately see how your branding adapts to the system wallpaper.
+
+
+
+Below is a practical **Material 3 / Google Pixel** design direction you can use as the system for your app. It centers on calm surfaces, strong hierarchy, dynamic color, rounded geometry, and motion that feels native to Google’s own products. [developer.android](https://developer.android.com/develop/ui/compose/designsystems/material3)
+
+## Overall direction
+
+Design the app like a Pixel app first: simple layouts, lots of breathing room, soft elevation, clear typography, and very restrained branding. Use Material 3 as the full visual language, not just a component library, so colors, spacing, motion, loading states, and navigation all follow the same rules. [docs.flutter](https://docs.flutter.dev/release/breaking-changes/updated-material-3-progress-indicators)
+
+## Color system
+
+Build the theme around M3 color roles, not around a single brand color. The core roles are primary, secondary, and tertiary for emphasis, plus neutral and neutral-variant families for surfaces, outlines, and low-emphasis UI. [anvil](https://anvil.works/docs/how-to/creating-material-3-colour-scheme)
+
+Use these rules:
+- Primary, for the main CTA, selected states, active controls, and key highlights. [developer.android](https://developer.android.com/develop/ui/compose/designsystems/material3)
+- Secondary, for less prominent accent actions and supporting UI. [developer.android](https://developer.android.com/develop/ui/compose/designsystems/material3)
+- Tertiary, for contrast accents and special attention states. [developer.android](https://developer.android.com/develop/ui/compose/designsystems/material3)
+- Neutral and neutral-variant, for background, cards, dividers, borders, and text hierarchy. [anvil](https://anvil.works/docs/how-to/creating-material-3-colour-scheme)
+- Prefer tone-based surfaces in light and dark mode, rather than old-school shadow-heavy depth. [x](http://x.com/materialdesign/status/1639255952586326017)
+
+For a true “Google” feel, let dynamic color drive the experience when available, and fall back to a brand seed or baseline palette when it is not. [zenn](https://zenn.dev/chmod644/articles/4b0ce6be91344b)
+
+## Typography and tone
+
+Use the Material 3 type scale with Roboto as the default typeface, which is the documented M3 default on Android. Keep the typography quiet and functional: large, confident titles; readable body text; minimal use of decorative styles; and consistent spacing between text groups. [m1.material](https://m1.material.io/style/typography.html)
+
+A Pixel-like hierarchy usually means:
+- Large, friendly page titles.
+- Medium-weight section headers.
+- Compact labels and helper text.
+- No more than 3 text styles visible on one screen unless the content truly needs it.
+
+## Shapes and surfaces
+
+Material 3 components rely on a corner radius scale, so use rounded rectangles everywhere: cards, dialogs, sheets, chips, buttons, and input fields. Keep corners consistent across the app so the UI feels system-level, not patched together. [m3.material](https://m3.material.io/styles/shape/corner-radius-scale)
+
+For depth, prefer tonal surfaces over dramatic shadows. Use elevation as a subtle separation cue, and keep overlays/tinting aligned with Material 3 tonal surface behavior rather than heavy shadow stacks. [composables](https://composables.com/jetpack-compose/androidx.compose.material3/material3/functions/surfaceColorAtElevation)
+
+## Navigation flow
+
+Use one clear primary navigation pattern and keep it consistent by device size. Bottom navigation is good for 3–5 top-level destinations, navigation rail is better on tablets and wider layouts, and drawers should not be the default unless the app is content-dense. [9to5google](https://9to5google.com/2025/05/14/material-3-expressive-navigation/)
+
+Recommended structure:
+- Mobile: bottom navigation for top-level destinations.
+- Tablet / foldables: navigation rail plus contextual panes.
+- Desktop/web wide layouts: rail or side navigation with persistent content regions.
+- Keep destination names short and obvious.
+
+## Components to standardize
+
+Use Material 3 components as the default vocabulary across the app, including app bars, cards, chips, dialogs, bottom sheets, snackbars, tabs, menus, text fields, and lists. The app should feel like it belongs to the same family as Google Photos, Drive, Keep, and Pixel system surfaces: clean, purposeful, and not over-styled. [m3.material](https://m3.material.io/styles/color/roles)
+
+Priority usage:
+- Filled buttons for primary actions.
+- Tonal buttons for secondary actions.
+- Outlined buttons for low-emphasis actions.
+- Cards and list items for content grouping.
+- Sheets and dialogs for interruptions only.
+
+## Loading and progress
+
+Use the right progress pattern for the wait time. Flutter’s Material 3 progress indicators have been updated to match M3 specs, including refined tracks and rounded details. [docs.flutter](https://docs.flutter.dev/release/breaking-changes/updated-material-3-progress-indicators)
+
+A good rule:
+- 200 ms to 5 s: use a loading indicator style that feels immediate and lightweight. [9to5google](https://9to5google.com/2025/05/16/material-3-expressive-loading-indicator/)
+- Longer uncertain waits: use linear progress or skeleton-like structure where possible.
+- Only show indeterminate indicators when you cannot estimate progress.
+- Avoid overusing spinners; prefer actual content loading states.
+
+For micro-waits and refresh actions, keep animation subtle and informative rather than flashy. [9to5google](https://9to5google.com/2025/05/16/material-3-expressive-loading-indicator/)
+
+## Motion and animation
+
+Motion should feel fast, gentle, and useful. Material motion guidance emphasizes durations and easing that match the distance and importance of movement, instead of using one fixed animation style everywhere. [m1.material](https://m1.material.io/motion/duration-easing.html)
+
+Use motion like this:
+- Short, crisp transitions for small UI changes.
+- Slightly longer motion for navigation and screen-to-screen shifts.
+- Clear easing differences for entering versus leaving elements.
+- Never animate just to decorate; every motion should explain state change, hierarchy, or continuity. [m1.material](https://m1.material.io/motion/duration-easing.html)
+
+## UI behavior rules
+
+Make the interface feel “Google” by favoring clarity over density. Keep primary actions obvious, secondary actions de-emphasized, and destructive actions visually separated and harder to trigger accidentally. [m3.material](https://m3.material.io/styles/shape)
+
+A strong Material 3 app usually follows these principles:
+- One dominant action per screen.
+- Information grouped into cards or sections with consistent spacing.
+- Clear empty states, loading states, error states, and success states.
+- Soft, non-intrusive feedback through snackbars or inline messages.
+- Persistent state indicators for selection, progress, and filters.
+
+## Flutter implementation direction
+
+Since you mentioned `dynamic_color: ^1.8.1`, the app should be built around `ThemeData(useMaterial3: true)` with dynamic color on supported devices and a clean fallback theme when dynamic color is unavailable. Use Material 3 progress widgets, tonal surfaces, and the updated navigation patterns so the app stays aligned with current Flutter Material behavior. [vibe-studio](https://vibe-studio.ai/insights/implementing-dynamic-theming-with-material-3-color-schemes-in-flutter)
+
+## What to avoid
+
+Avoid designs that feel “custom Android skin” rather than Google. That means:
+- Avoid harsh shadows and heavy gradients.
+- Avoid too many colors on one screen.
+- Avoid sharp corners mixed with rounded ones.
+- Avoid dense toolbars and cluttered action rows.
+- Avoid animation that looks playful instead of purposeful.
+
+## Practical design rule
+
+If you want one simple north star: every screen should feel like it could ship inside a Google app today. That means dynamic but restrained color, rounded M3 surfaces, Roboto typography, system-like motion, and simple navigation that adapts across phone and tablet. [m3.material](https://m3.material.io/styles/typography/fonts)
+
+If helpful, I can turn this into a **full Flutter Material 3 design system spec** with:
+1. exact color roles,
+2. typography scale,
+3. button/card/input styles,
+4. navigation rules,
+5. loading/progress patterns,
+6. animation timings,
+7. dark mode and dynamic color setup.
+
+
+
