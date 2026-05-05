@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'referrals_sheet.dart';
+import 'rewards_sheet.dart';
+import 'certifications_sheet.dart';
 
 class RewardsAchievements extends StatelessWidget {
   const RewardsAchievements({super.key});
@@ -7,24 +10,45 @@ class RewardsAchievements extends StatelessWidget {
     {
       'icon': Icons.emoji_events_rounded,
       'label': 'Rewards',
-      'gradientColors': [Color(0xFFFFEB3B), Color(0xFFFF6F00)], // Golden gradient (bright yellow to deep orange)
+      'gradientColors': [Color(0xFFFFEB3B), Color(0xFFFF6F00)],
+      'action': 'rewards',
     },
     {
       'icon': Icons.card_giftcard_rounded,
       'label': 'Referrals',
-      'gradientColors': [Color(0xFFFF5252), Color(0xFFB71C1C)], // Red gradient (bright red to dark red)
+      'gradientColors': [Color(0xFFFF5252), Color(0xFFB71C1C)],
+      'action': 'referrals',
     },
     {
       'icon': Icons.workspace_premium_rounded,
       'label': 'Certifications',
-      'gradientColors': [Color(0xFF2196F3), Color(0xFF0D47A1)], // Blue gradient (bright blue to deep blue)
+      'gradientColors': [Color(0xFF2196F3), Color(0xFF0D47A1)],
+      'action': 'certifications',
     },
     {
       'icon': Icons.storefront_rounded,
       'label': 'Store',
-      'gradientColors': [Color(0xFFBA68C8), Color(0xFF6A1B9A)], // Violet gradient (light violet to deep violet)
+      'gradientColors': [Color(0xFFBA68C8), Color(0xFF6A1B9A)],
+      'action': 'store',
     },
   ];
+
+  void _handleTap(BuildContext context, String action) {
+    switch (action) {
+      case 'referrals':
+        ReferralsSheet.show(context);
+        break;
+      case 'rewards':
+        RewardsSheet.show(context);
+        break;
+      case 'certifications':
+        CertificationsSheet.show(context);
+        break;
+      case 'store':
+        // TODO: navigate to store page
+        break;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +85,7 @@ class RewardsAchievements extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: _items.map((item) {
                 return GestureDetector(
-                  onTap: () {},
+                  onTap: () => _handleTap(context, item['action'] as String),
                   child: SizedBox(
                     width: itemWidth,
                     child: Column(

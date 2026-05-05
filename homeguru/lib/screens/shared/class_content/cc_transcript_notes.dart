@@ -26,6 +26,7 @@ class TranscriptSection extends StatelessWidget {
     final tt = Theme.of(context).textTheme;
 
     final content = Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: _mockTranscript.map((entry) {
         final (time, speaker, text) = entry;
@@ -107,6 +108,7 @@ class AiNotesSection extends StatelessWidget {
     final tt = Theme.of(context).textTheme;
 
     final content = Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(

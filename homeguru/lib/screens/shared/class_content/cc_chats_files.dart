@@ -23,6 +23,7 @@ class ChatsSection extends StatelessWidget {
     final tt = Theme.of(context).textTheme;
 
     final content = Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: _mockChats.map((msg) {
         final (sender, text, time, isTutor) = msg;
@@ -93,6 +94,7 @@ class FilesSection extends StatelessWidget {
     final files = _fileData.take(count).toList();
 
     final content = Column(
+      mainAxisSize: MainAxisSize.min,
       children: files.map((f) {
         final (name, ext, size) = f;
         return Padding(

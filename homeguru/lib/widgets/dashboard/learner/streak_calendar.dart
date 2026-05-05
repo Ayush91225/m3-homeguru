@@ -16,6 +16,13 @@ class _StreakCalendarState extends State<StreakCalendar> {
   final ScreenshotController _screenshotController = ScreenshotController();
 
   late final List<List<int>> _yearData = _generateYearData();
+  final _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   List<List<int>> _generateYearData() {
     final random = math.Random(42);
@@ -79,6 +86,20 @@ class _StreakCalendarState extends State<StreakCalendar> {
     final yearData = _yearData;
     final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+    // Each cell is 11px wide + 3px gap = 14px per week column.
+    // Day-label column is 22px + 6px gap = 28px offset before weeks start.
+    const cellStep = 14.0;
+    const dayColOffset = 28.0;
+
+    // Find the week index where each month first appears.
+    // _yearData has 53 weeks starting from the current week ~1 year ago.
+    // We approximate: month i starts at week floor(i * 365/12 / 7).
+    List<double> monthOffsets = List.generate(12, (i) {
+      final dayOfYear = (i * 365.0 / 12).round();
+      final week = (dayOfYear / 7).floor().clamp(0, 52);
+      return dayColOffset + week * cellStep;
+    });
+
     return Column(
       children: [
         Screenshot(
@@ -118,71 +139,83 @@ class _StreakCalendarState extends State<StreakCalendar> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(left: 28, bottom: 6),
-                        child: Row(
-                          children: List.generate(12, (i) {
-                            return Container(
-                              width: 44,
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                months[i],
-                                style: tt.labelSmall?.copyWith(
-                                  color: cs.onSurfaceVariant,
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            );
-                          }),
-                        ),
-                      ),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              SizedBox(height: 11),
-                              _DayLabel('Tue', tt, cs),
-                              SizedBox(height: 11),
-                              _DayLabel('Thu', tt, cs),
-                              SizedBox(height: 11),
-                              _DayLabel('Sat', tt, cs),
-                              SizedBox(height: 11),
-                            ],
-                          ),
-                          const SizedBox(width: 6),
-                          Row(
-                            children: yearData.map((week) {
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 3),
-                                child: Column(
-                                  children: week.map((level) {
-                                    return Padding(
-                                      padding: const EdgeInsets.only(bottom: 3),
-                                      child: Container(
-                                        width: 11,
-                                        height: 11,
-                                        decoration: BoxDecoration(
-                                          color: _getColorForLevel(level, cs),
-                                          borderRadius: BorderRadius.circular(2),
-                                        ),
-                                      ),
-                                    );
-                                  }).toList(),
+                ShaderMask(
+                  shaderCallback: (rect) => LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [Colors.white, Colors.white, Colors.transparent],
+                    stops: const [0.0, 0.82, 1.0],
+                  ).createShader(rect),
+                  blendMode: BlendMode.dstIn,
+                  child: SingleChildScrollView(
+                    controller: _scrollController,
+                    scrollDirection: Axis.horizontal,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Month labels pinned to exact week columns
+                        SizedBox(
+                          width: dayColOffset + 53 * cellStep,
+                          height: 16,
+                          child: Stack(
+                            children: List.generate(12, (i) {
+                              return Positioned(
+                                left: monthOffsets[i],
+                                top: 0,
+                                child: Text(
+                                  months[i],
+                                  style: tt.labelSmall?.copyWith(
+                                    color: cs.onSurfaceVariant,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
                               );
-                            }).toList(),
+                            }),
                           ),
-                        ],
-                      ),
-                    ],
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Column(
+                              children: [
+                                const SizedBox(height: 11),
+                                _DayLabel('Tue', tt, cs),
+                                const SizedBox(height: 11),
+                                _DayLabel('Thu', tt, cs),
+                                const SizedBox(height: 11),
+                                _DayLabel('Sat', tt, cs),
+                                const SizedBox(height: 3),
+                              ],
+                            ),
+                            const SizedBox(width: 6),
+                            Row(
+                              children: yearData.map((week) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 3),
+                                  child: Column(
+                                    children: week.map((level) {
+                                      return Padding(
+                                        padding: const EdgeInsets.only(bottom: 3),
+                                        child: Container(
+                                          width: 11,
+                                          height: 11,
+                                          decoration: BoxDecoration(
+                                            color: _getColorForLevel(level, cs),
+                                            borderRadius: BorderRadius.circular(2),
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),

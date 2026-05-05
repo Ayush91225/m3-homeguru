@@ -43,6 +43,7 @@ class _QuizSectionState extends State<QuizSection> {
     final tt = Theme.of(context).textTheme;
 
     final content = Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: _mockQuizSets.asMap().entries.map((quizEntry) {
         final qi = quizEntry.key;
@@ -174,6 +175,7 @@ class PollsSection extends StatelessWidget {
     final tt = Theme.of(context).textTheme;
 
     final content = Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: _mockPolls.asMap().entries.map((e) {
         final (question, options, votes) = e.value;

@@ -83,6 +83,7 @@ flutter:
     - assets/open.png
     - assets/teacher.png
     - assets/mock_tutors.json
+    - assets/refer.png
 
 flutter_launcher_icons:
   android: true

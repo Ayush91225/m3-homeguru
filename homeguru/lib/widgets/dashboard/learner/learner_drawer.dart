@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../main.dart';
 import '../../../screens/welcome/welcome_screen.dart';
+import '../../../screens/shared/notifications_screen.dart';
+import '../../../screens/shared/wallet/wallet_screen.dart';
 
 class LearnerDrawer extends StatelessWidget {
   const LearnerDrawer({
@@ -107,6 +109,26 @@ class LearnerDrawer extends StatelessWidget {
                   },
                 ),
                 const Divider(height: 16),
+                _DrawerItem(
+                  icon: Icons.account_balance_wallet_outlined,
+                  selectedIcon: Icons.account_balance_wallet_rounded,
+                  label: 'Wallet',
+                  selected: false,
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const WalletScreen()));
+                  },
+                ),
+                _DrawerItem(
+                  icon: Icons.notifications_none_rounded,
+                  selectedIcon: Icons.notifications_rounded,
+                  label: 'Notifications',
+                  selected: false,
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+                  },
+                ),
                 _DrawerItem(
                   icon: Icons.settings_outlined,
                   selectedIcon: Icons.settings_rounded,

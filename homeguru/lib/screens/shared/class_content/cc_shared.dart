@@ -98,10 +98,17 @@ class _CollapsibleSectionState extends State<CollapsibleSection> {
                   alignment: Alignment.topCenter,
                   child: _expanded
                       ? widget.child
-                      : ClipRect(
-                          child: SizedBox(
-                            height: widget.previewHeight,
-                            child: widget.child,
+                      : SizedBox(
+                          height: widget.previewHeight,
+                          child: ClipRect(
+                            child: OverflowBox(
+                              alignment: Alignment.topCenter,
+                              maxHeight: double.infinity,
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: widget.child,
+                              ),
+                            ),
                           ),
                         ),
                 ),
