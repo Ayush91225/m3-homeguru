@@ -38,6 +38,17 @@ dependencies:
   country_state_city: ^0.1.6
   http: ^1.6.0
   file_picker: ^11.0.2
+  image_picker: ^1.1.2
+  audioplayers: ^6.1.0
+  flutter_tts: ^4.2.0
+  fl_chart: ^0.69.0
+  share_plus: ^10.1.2
+  screenshot: ^3.0.0
+  path_provider: ^2.1.5
+  timezone: ^0.9.4
+  cached_network_image: ^3.4.1
+  webview_flutter: ^4.10.0
+  video_player: ^2.9.2
 
 dev_dependencies:
   flutter_test:
@@ -71,6 +82,7 @@ flutter:
     - assets/chill.png
     - assets/open.png
     - assets/teacher.png
+    - assets/mock_tutors.json
 
 flutter_launcher_icons:
   android: true

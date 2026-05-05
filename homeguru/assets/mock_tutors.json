@@ -1,0 +1,242 @@
+[
+  {
+    "id": "1",
+    "name": "Priya Sharma",
+    "subjects": [
+      {"name": "Mathematics", "specialization": "JEE Advanced", "hourlyRate": 800},
+      {"name": "Physics", "specialization": "JEE Mains", "hourlyRate": 750}
+    ],
+    "rating": 4.9,
+    "reviews": 127,
+    "experience": 8,
+    "location": "Delhi",
+    "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop",
+    "verified": true,
+    "responseTime": "2 hours",
+    "students": 45
+  },
+  {
+    "id": "2",
+    "name": "Rajesh Kumar",
+    "subjects": [
+      {"name": "Physics", "specialization": "NEET", "hourlyRate": 750},
+      {"name": "Chemistry", "specialization": "NEET", "hourlyRate": 700}
+    ],
+    "rating": 4.8,
+    "reviews": 98,
+    "experience": 6,
+    "location": "Mumbai",
+    "image": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop",
+    "verified": true,
+    "responseTime": "1 hour",
+    "students": 38
+  },
+  {
+    "id": "3",
+    "name": "Ananya Reddy",
+    "subjects": [
+      {"name": "Chemistry", "specialization": "CBSE Grade 11-12", "hourlyRate": 650},
+      {"name": "Biology", "specialization": "CBSE Grade 11-12", "hourlyRate": 600}
+    ],
+    "rating": 4.9,
+    "reviews": 156,
+    "experience": 10,
+    "location": "Bangalore",
+    "image": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop",
+    "verified": true,
+    "responseTime": "30 mins",
+    "students": 62
+  },
+  {
+    "id": "4",
+    "name": "Vikram Singh",
+    "subjects": [
+      {"name": "English", "specialization": "IELTS", "hourlyRate": 900},
+      {"name": "English", "specialization": "TOEFL", "hourlyRate": 850}
+    ],
+    "rating": 4.7,
+    "reviews": 89,
+    "experience": 12,
+    "location": "Pune",
+    "image": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop",
+    "verified": true,
+    "responseTime": "3 hours",
+    "students": 51
+  },
+  {
+    "id": "5",
+    "name": "Meera Patel",
+    "subjects": [
+      {"name": "Biology", "specialization": "NEET", "hourlyRate": 850},
+      {"name": "Chemistry", "specialization": "NEET", "hourlyRate": 800}
+    ],
+    "rating": 5.0,
+    "reviews": 203,
+    "experience": 15,
+    "location": "Ahmedabad",
+    "image": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop",
+    "verified": true,
+    "responseTime": "1 hour",
+    "students": 78
+  },
+  {
+    "id": "6",
+    "name": "Arjun Mehta",
+    "subjects": [
+      {"name": "Python", "specialization": "Data Science", "hourlyRate": 1000},
+      {"name": "Machine Learning", "specialization": "AI/ML", "hourlyRate": 1200}
+    ],
+    "rating": 4.8,
+    "reviews": 142,
+    "experience": 7,
+    "location": "Hyderabad",
+    "image": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=400&fit=crop",
+    "verified": true,
+    "responseTime": "2 hours",
+    "students": 55
+  },
+  {
+    "id": "7",
+    "name": "Sneha Iyer",
+    "subjects": [
+      {"name": "Mathematics", "specialization": "ICSE Grade 9-10", "hourlyRate": 550},
+      {"name": "Science", "specialization": "ICSE Grade 9-10", "hourlyRate": 500}
+    ],
+    "rating": 4.9,
+    "reviews": 118,
+    "experience": 5,
+    "location": "Chennai",
+    "image": "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=400&h=400&fit=crop",
+    "verified": true,
+    "responseTime": "1 hour",
+    "students": 42
+  },
+  {
+    "id": "8",
+    "name": "Karan Malhotra",
+    "subjects": [
+      {"name": "Economics", "specialization": "UPSC", "hourlyRate": 950},
+      {"name": "History", "specialization": "UPSC", "hourlyRate": 900}
+    ],
+    "rating": 4.7,
+    "reviews": 76,
+    "experience": 9,
+    "location": "Delhi",
+    "image": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&h=400&fit=crop",
+    "verified": false,
+    "responseTime": "4 hours",
+    "students": 34
+  },
+  {
+    "id": "9",
+    "name": "Divya Nair",
+    "subjects": [
+      {"name": "French", "specialization": "A1-B2 Levels", "hourlyRate": 700},
+      {"name": "Spanish", "specialization": "A1-A2 Levels", "hourlyRate": 650}
+    ],
+    "rating": 4.9,
+    "reviews": 91,
+    "experience": 6,
+    "location": "Kochi",
+    "image": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=400&fit=crop",
+    "verified": true,
+    "responseTime": "2 hours",
+    "students": 29
+  },
+  {
+    "id": "10",
+    "name": "Aditya Gupta",
+    "subjects": [
+      {"name": "Accountancy", "specialization": "CA Foundation", "hourlyRate": 800},
+      {"name": "Business Studies", "specialization": "CBSE Grade 11-12", "hourlyRate": 600}
+    ],
+    "rating": 4.8,
+    "reviews": 134,
+    "experience": 11,
+    "location": "Kolkata",
+    "image": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop",
+    "verified": true,
+    "responseTime": "1 hour",
+    "students": 48
+  },
+  {
+    "id": "11",
+    "name": "Riya Kapoor",
+    "subjects": [
+      {"name": "History", "specialization": "CBSE Grade 11-12", "hourlyRate": 500},
+      {"name": "Political Science", "specialization": "CBSE Grade 11-12", "hourlyRate": 500}
+    ],
+    "rating": 4.6,
+    "reviews": 67,
+    "experience": 4,
+    "location": "Jaipur",
+    "image": "https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=400&h=400&fit=crop",
+    "verified": true,
+    "responseTime": "3 hours",
+    "students": 31
+  },
+  {
+    "id": "12",
+    "name": "Siddharth Rao",
+    "subjects": [
+      {"name": "Guitar", "specialization": "Acoustic", "hourlyRate": 600},
+      {"name": "Guitar", "specialization": "Electric", "hourlyRate": 700}
+    ],
+    "rating": 4.9,
+    "reviews": 112,
+    "experience": 8,
+    "location": "Bangalore",
+    "image": "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=400&h=400&fit=crop",
+    "verified": true,
+    "responseTime": "2 hours",
+    "students": 37
+  },
+  {
+    "id": "13",
+    "name": "Pooja Desai",
+    "subjects": [
+      {"name": "Yoga", "specialization": "Hatha", "hourlyRate": 450},
+      {"name": "Yoga", "specialization": "Vinyasa", "hourlyRate": 500}
+    ],
+    "rating": 5.0,
+    "reviews": 189,
+    "experience": 13,
+    "location": "Pune",
+    "image": "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400&h=400&fit=crop",
+    "verified": true,
+    "responseTime": "1 hour",
+    "students": 71
+  },
+  {
+    "id": "14",
+    "name": "Rohan Joshi",
+    "subjects": [
+      {"name": "Web Development", "specialization": "React", "hourlyRate": 1100},
+      {"name": "Web Development", "specialization": "Node.js", "hourlyRate": 1000}
+    ],
+    "rating": 4.8,
+    "reviews": 145,
+    "experience": 6,
+    "location": "Mumbai",
+    "image": "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&h=400&fit=crop",
+    "verified": true,
+    "responseTime": "2 hours",
+    "students": 44
+  },
+  {
+    "id": "15",
+    "name": "Kavya Menon",
+    "subjects": [
+      {"name": "Dance", "specialization": "Bharatanatyam", "hourlyRate": 550},
+      {"name": "Dance", "specialization": "Kuchipudi", "hourlyRate": 600}
+    ],
+    "rating": 4.9,
+    "reviews": 102,
+    "experience": 10,
+    "location": "Chennai",
+    "image": "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&h=400&fit=crop",
+    "verified": true,
+    "responseTime": "3 hours",
+    "students": 39
+  }
+]
