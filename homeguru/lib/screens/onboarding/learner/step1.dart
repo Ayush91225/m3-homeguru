@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../../widgets/onboarding/phone_field.dart';
+import '../../../widgets/onboarding/phone_field.dart';
 
 class LearnerStep1Body extends StatefulWidget {
   const LearnerStep1Body({super.key, required this.onNext, this.useTertiary = false});

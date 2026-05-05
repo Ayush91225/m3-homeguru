@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../widgets/welcome/role_sheet.dart';
 import '../../widgets/login/forgot_password_view.dart';
 class LoginSheet {
@@ -117,7 +118,7 @@ class _LoginSheetContentState extends State<_LoginSheetContent> {
                     alignment: Alignment.topCenter,
                     children: <Widget>[
                       ...previousChildren,
-                      if (currentChild != null) currentChild,
+                      if (currentChild case final c?) c,
                     ],
                   );
                 },
@@ -192,10 +193,49 @@ class _LoginViewState extends State<_LoginView> {
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
-    HapticFeedback.mediumImpact();
-    setState(() => _loading = true);
-    await Future.delayed(const Duration(seconds: 2));
-    if (mounted) setState(() => _loading = false);
+    
+    final email = _emailCtrl.text.trim();
+    final pass = _passCtrl.text;
+    
+    // Static credentials check
+    if (email == 'learner@hg.com' && pass == '12345678') {
+      HapticFeedback.mediumImpact();
+      setState(() => _loading = true);
+      await Future.delayed(const Duration(milliseconds: 800));
+      
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('logged_in_user', 'learner');
+      
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/learner-dashboard');
+      }
+      return;
+    }
+    
+    if (email == 'tutor@hg.com' && pass == '12345678') {
+      HapticFeedback.mediumImpact();
+      setState(() => _loading = true);
+      await Future.delayed(const Duration(milliseconds: 800));
+      
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('logged_in_user', 'tutor');
+      
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/tutor-dashboard');
+      }
+      return;
+    }
+    
+    // Invalid credentials
+    HapticFeedback.heavyImpact();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Invalid email or password'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   @override
@@ -317,7 +357,7 @@ class _Header extends StatelessWidget {
             ],
           ),
         ),
-        ...?role != null ? [
+        if (role != null) ...[
           const SizedBox(width: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -329,7 +369,7 @@ class _Header extends StatelessWidget {
                 style: tt.labelMedium?.copyWith(
                     color: cs.onSecondaryContainer, fontWeight: FontWeight.w700)),
           ),
-        ] : null,
+        ],
       ],
     );
   }

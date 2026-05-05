@@ -223,8 +223,10 @@ class _LearnerOnboardingScreenState extends State<LearnerOnboardingScreen> {
           child: _CongratsOverlay(
             firstName: _firstName,
             onStart: () {
-              Navigator.of(context).pop();
-              // TODO: navigate to home
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                '/learner-dashboard',
+                (route) => false,
+              );
             },
           ),
         ),
