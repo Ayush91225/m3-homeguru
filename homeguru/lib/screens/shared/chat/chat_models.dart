@@ -26,6 +26,10 @@ class ChatTutor {
     this.isOnline = false,
     this.isVerified = false,
     this.isPast = false,
+    this.rating = 0.0,
+    this.students = 0,
+    this.location = '',
+    this.pricing = const {},
   });
 
   final String id;
@@ -38,6 +42,10 @@ class ChatTutor {
   final bool isOnline;
   final bool isVerified;
   final bool isPast;
+  final double rating;
+  final int students;
+  final String location;
+  final Map<String, int> pricing;
 }
 
 final seedInbox = [
@@ -51,6 +59,10 @@ final seedInbox = [
     unread: 2,
     isOnline: true,
     isVerified: true,
+    rating: 4.9,
+    students: 45,
+    location: 'Delhi',
+    pricing: {'Mathematics': 800, 'Physics': 750},
   ),
   ChatTutor(
     id: '2',
@@ -61,6 +73,10 @@ final seedInbox = [
     time: '9:15 AM',
     isOnline: true,
     isVerified: true,
+    rating: 4.8,
+    students: 38,
+    location: 'Mumbai',
+    pricing: {'Physics': 750, 'Chemistry': 700},
   ),
   ChatTutor(
     id: '3',
@@ -71,6 +87,10 @@ final seedInbox = [
     time: 'Yesterday',
     unread: 1,
     isVerified: true,
+    rating: 4.9,
+    students: 62,
+    location: 'Bangalore',
+    pricing: {'English': 650},
   ),
   ChatTutor(
     id: '4',
@@ -79,6 +99,10 @@ final seedInbox = [
     avatarUrl: 'https://i.pravatar.cc/150?img=68',
     lastMessage: 'Great work on the last assignment! 🎉',
     time: 'Yesterday',
+    rating: 4.7,
+    students: 51,
+    location: 'Pune',
+    pricing: {'Chemistry': 700, 'Biology': 650},
   ),
   ChatTutor(
     id: '5',
@@ -88,6 +112,10 @@ final seedInbox = [
     lastMessage: 'I have shared the notes in the chat.',
     time: 'Mon',
     isOnline: true,
+    rating: 4.8,
+    students: 55,
+    location: 'Chennai',
+    pricing: {'Biology': 850, 'Chemistry': 800},
   ),
   ChatTutor(
     id: '6',
@@ -96,6 +124,10 @@ final seedInbox = [
     avatarUrl: 'https://i.pravatar.cc/150?img=53',
     lastMessage: 'Let me know if you have any doubts.',
     time: 'Sun',
+    rating: 4.6,
+    students: 31,
+    location: 'Jaipur',
+    pricing: {'History': 500, 'Political Science': 500},
   ),
 ];
 
@@ -109,6 +141,10 @@ final seedPast = [
     time: '2h ago',
     isVerified: true,
     isPast: true,
+    rating: 4.9,
+    students: 44,
+    location: 'Hyderabad',
+    pricing: {'Python': 1000, 'Machine Learning': 1200},
   ),
   ChatTutor(
     id: '8',
@@ -118,6 +154,10 @@ final seedPast = [
     lastMessage: 'I specialise in JEE Economics. Interested?',
     time: '5h ago',
     isPast: true,
+    rating: 4.7,
+    students: 34,
+    location: 'Delhi',
+    pricing: {'Economics': 950, 'History': 900},
   ),
 ];
 
@@ -130,5 +170,9 @@ final seedArchived = [
     lastMessage: 'It was a pleasure teaching you!',
     time: '3 weeks ago',
     isVerified: true,
+    rating: 4.8,
+    students: 29,
+    location: 'Kochi',
+    pricing: {'Sanskrit': 600},
   ),
 ];

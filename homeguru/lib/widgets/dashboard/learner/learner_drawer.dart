@@ -5,6 +5,9 @@ import '../../../screens/welcome/welcome_screen.dart';
 import '../../../screens/shared/notifications_screen.dart';
 import '../../../screens/shared/wallet/wallet_screen.dart';
 import '../../../screens/dashboard/learner/store_screen.dart';
+import '../../../screens/dashboard/learner/my_requests_screen.dart';
+import '../../../screens/shared/meet/prejoin_screen.dart';
+import '../../../services/user_profile_store.dart';
 import '../../schedule/reschedule_request_sheet.dart';
 import '../../schedule/payment_pending_sheet.dart';
 import '../../schedule/calendar_types.dart';
@@ -80,6 +83,16 @@ class LearnerDrawer extends StatelessWidget {
                   onTap: () {
                     onDestinationSelected(2);
                     Navigator.pop(context);
+                  },
+                ),
+                _DrawerItem(
+                  icon: Icons.send_outlined,
+                  selectedIcon: Icons.send_rounded,
+                  label: 'My Requests',
+                  selected: false,
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const MyRequestsScreen()));
                   },
                 ),
                 _DrawerItem(
@@ -387,6 +400,45 @@ class _TestCard extends StatelessWidget {
             ),
             child: Text(
               'Payment Pending Sheet',
+              style: TextStyle(fontSize: 11, color: cs.error),
+            ),
+          ),
+          const SizedBox(height: 6),
+          TextButton(
+            onPressed: () {
+              final profile = ProfileStore.of(context);
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PrejoinScreen(
+                    meetingCode: 'HG-1234',
+                    userName: profile.name,
+                    userRole: 'Learner',
+                    event: CalendarEvent(
+                      id: 'temp',
+                      title: 'Mathematics Class',
+                      date: DateTime.now(),
+                      startMinutes: 540,
+                      endMinutes: 600,
+                      allDay: false,
+                      calendarId: 'temp',
+                      tone: EventTone.blue,
+                      type: 'class',
+                      teacher: 'Priya Sharma',
+                      teacherImage: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop',
+                    ),
+                  ),
+                ),
+              );
+            },
+            style: TextButton.styleFrom(
+              minimumSize: const Size.fromHeight(32),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              backgroundColor: cs.surface,
+            ),
+            child: Text(
+              'Prejoin Screen',
               style: TextStyle(fontSize: 11, color: cs.error),
             ),
           ),

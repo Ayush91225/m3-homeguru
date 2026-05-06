@@ -85,7 +85,6 @@ class ReferralsSheet extends StatelessWidget {
               separatorBuilder: (_, __) => const SizedBox(width: 10),
               itemBuilder: (_, i) {
                 final f = _friends[i];
-                final isDark = Theme.of(context).brightness == Brightness.dark;
                 final isJoined = f.status == 'joined';
                 
                 return Container(

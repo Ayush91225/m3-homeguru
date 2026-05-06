@@ -132,7 +132,7 @@ class _PaymentBarsState extends State<PaymentBars> {
         decoration: BoxDecoration(
           color: cs.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: cs.outlineVariant.withOpacity(0.5), width: 0.5),
+          border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.5), width: 0.5),
         ),
         padding: const EdgeInsets.all(14),
         child: Row(
@@ -208,7 +208,7 @@ class _PaymentBarsState extends State<PaymentBars> {
                 decoration: BoxDecoration(
                   color: cs.surface,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: cs.outlineVariant.withOpacity(0.3), width: 0.5),
+                  border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3), width: 0.5),
                 ),
               ),
             ),
@@ -222,7 +222,7 @@ class _PaymentBarsState extends State<PaymentBars> {
                 decoration: BoxDecoration(
                   color: cs.surface,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: cs.outlineVariant.withOpacity(0.4), width: 0.5),
+                  border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.4), width: 0.5),
                 ),
               ),
             ),
@@ -236,7 +236,7 @@ class _PaymentBarsState extends State<PaymentBars> {
               decoration: BoxDecoration(
                 color: cs.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: cs.outline.withOpacity(0.5), width: 0.5),
+                border: Border.all(color: cs.outline.withValues(alpha: 0.5), width: 0.5),
               ),
               padding: const EdgeInsets.all(14),
               child: Row(
@@ -412,7 +412,7 @@ class _AllPaymentsSheetState extends State<_AllPaymentsSheet> {
               width: 32,
               height: 4,
               decoration: BoxDecoration(
-                color: cs.onSurfaceVariant.withOpacity(0.4),
+                color: cs.onSurfaceVariant.withValues(alpha: 0.4),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -457,7 +457,7 @@ class _AllPaymentsSheetState extends State<_AllPaymentsSheet> {
                       color: cs.surfaceContainerLow,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: isUrgent ? cs.error.withOpacity(0.3) : cs.outlineVariant.withOpacity(0.5),
+                        color: isUrgent ? cs.error.withValues(alpha: 0.3) : cs.outlineVariant.withValues(alpha: 0.5),
                         width: 0.5,
                       ),
                     ),

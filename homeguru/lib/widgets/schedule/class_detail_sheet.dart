@@ -4,6 +4,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'calendar_types.dart';
 import '../../screens/shared/chat/chat_models.dart';
 import '../../screens/shared/chat/conversation_screen.dart';
+import '../../screens/shared/meet/prejoin_screen.dart';
+import '../../services/user_profile_store.dart';
 import 'reschedule_sheet.dart';
 import 'cancel_sheet.dart';
 
@@ -163,7 +165,21 @@ class ClassDetailSheet extends StatelessWidget {
             ),
           const SizedBox(height: 20),
           FilledButton(
-            onPressed: canJoin ? () {} : null,
+            onPressed: canJoin ? () {
+              final profile = ProfileStore.of(context);
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PrejoinScreen(
+                    meetingCode: event.meetingId ?? 'HG-${event.id.hashCode % 10000}',
+                    userName: profile.name,
+                    userRole: 'Learner',
+                    event: event,
+                  ),
+                ),
+              );
+            } : null,
             style: FilledButton.styleFrom(
               backgroundColor: color,
               minimumSize: const Size.fromHeight(48),

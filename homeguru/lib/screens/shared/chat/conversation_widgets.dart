@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'chat_models.dart';
 import 'chat_widgets.dart';
 import '../sessions_listing_screen.dart';
+import '../../../widgets/shared/tutor_action_sheet.dart';
 
 // ─── Full-screen image viewer ─────────────────────────────────────────────────
 
@@ -195,7 +196,9 @@ class DateDivider extends StatelessWidget {
 // ─── Blocked bar (past tutors) ────────────────────────────────────────────────
 
 class BlockedBar extends StatelessWidget {
-  const BlockedBar({super.key});
+  final ChatTutor? tutor;
+
+  const BlockedBar({super.key, this.tutor});
 
   @override
   Widget build(BuildContext context) {
@@ -223,7 +226,22 @@ class BlockedBar extends StatelessWidget {
             FilledButton.icon(
               icon: const Icon(Icons.refresh_rounded, size: 16),
               label: const Text('Book Again'),
-              onPressed: () {},
+              onPressed: tutor != null
+                  ? () {
+                      TutorActionSheet.show(
+                        context,
+                        tutorId: tutor!.id,
+                        tutorName: tutor!.name,
+                        tutorImage: tutor!.avatarUrl,
+                        isVerified: tutor!.isVerified,
+                        primarySubject: tutor!.subject,
+                        tutorRating: tutor!.rating,
+                        tutorStudents: tutor!.students,
+                        tutorLocation: tutor!.location,
+                        tutorPricing: tutor!.pricing,
+                      );
+                    }
+                  : null,
               style: FilledButton.styleFrom(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -407,12 +425,27 @@ class TutorInfoSheet extends StatelessWidget {
                   label: Text(isPast ? 'Book Again' : 'Sessions'),
                   onPressed: () {
                     Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => SessionsListingScreen(initialTutor: tutor.name),
-                      ),
-                    );
+                    if (isPast) {
+                      TutorActionSheet.show(
+                        context,
+                        tutorId: tutor.id,
+                        tutorName: tutor.name,
+                        tutorImage: tutor.avatarUrl,
+                        isVerified: tutor.isVerified,
+                        primarySubject: tutor.subject,
+                        tutorRating: tutor.rating,
+                        tutorStudents: tutor.students,
+                        tutorLocation: tutor.location,
+                        tutorPricing: tutor.pricing,
+                      );
+                    } else {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => SessionsListingScreen(initialTutor: tutor.name),
+                        ),
+                      );
+                    }
                   },
                 ),
               ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart';
 import '../../../screens/dashboard/learner/learner_dashboard.dart';
+import '../../shared/tutor_action_sheet.dart';
 
 class SuggestedTutors extends StatefulWidget {
   const SuggestedTutors({super.key});
@@ -33,7 +34,14 @@ class _SuggestedTutorsState extends State<SuggestedTutors> {
     }
   }
 
-
+  String _getSubjects(Map<String, dynamic> tutor) {
+    final subjects = tutor['subjects'] as List<dynamic>?;
+    if (subjects == null || subjects.isEmpty) return '';
+    if (subjects.length == 1) {
+      return (subjects[0] as Map<String, dynamic>)['name'] ?? '';
+    }
+    return '${subjects.length} subjects';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,6 +83,25 @@ class _SuggestedTutorsState extends State<SuggestedTutors> {
                 if (dashboardState != null) {
                   dashboardState.onItemTapped(1);
                 }
+              } else {
+                final tutor = _tutors[index];
+                HapticFeedback.lightImpact();
+                TutorActionSheet.show(
+                  context,
+                  tutorId: tutor['id'] ?? '',
+                  tutorName: tutor['name'] ?? '',
+                  tutorImage: tutor['image'] ?? '',
+                  isVerified: tutor['verified'] == true,
+                  primarySubject: _getSubjects(tutor),
+                  tutorRating: (tutor['rating'] as num?)?.toDouble() ?? 0,
+                  tutorStudents: tutor['students'] as int? ?? 0,
+                  tutorLocation: tutor['location'] ?? '',
+                  tutorPricing: {
+                    for (var subject in (tutor['subjects'] as List<dynamic>? ?? []))
+                      (subject as Map<String, dynamic>)['name'] as String:
+                          subject['hourlyRate'] as int
+                  },
+                );
               }
             },
             shape: const RoundedRectangleBorder(

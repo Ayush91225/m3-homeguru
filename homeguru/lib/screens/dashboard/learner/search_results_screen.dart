@@ -265,9 +265,6 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                             isTopRight: isTop && !isLeft,
                             isBottomLeft: isBottom && isLeft,
                             isBottomRight: isBottom && !isLeft,
-                            onTap: () {
-                              // TODO: Navigate to tutor profile
-                            },
                           ),
                         );
                       },

@@ -135,7 +135,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
         children: [
           Expanded(child: _buildMessageList()),
           if (widget.isPast)
-            const BlockedBar()
+            BlockedBar(tutor: widget.tutor)
           else
             ConversationInputBar(
               tutorFirstName: widget.tutor.name.split(' ').first,

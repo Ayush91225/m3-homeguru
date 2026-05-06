@@ -69,7 +69,24 @@
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>We need access to your photo library to let you share images with Guru AI</string>
 	<key>NSCameraUsageDescription</key>
-	<string>We need access to your camera to let you take photos for Guru AI</string>
+	<string>We need access to your camera for video calls and taking photos</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>We need access to your microphone for video calls and voice messages</string>
+	<key>NSContactsUsageDescription</key>
+	<string>We need access to your contacts to help you find tutors</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>We need your location to find nearby tutors</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>We need permission to save photos to your library</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>We need Bluetooth access for audio routing during calls</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>We need local network access for video calls</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+		<string>voip</string>
+	</array>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>

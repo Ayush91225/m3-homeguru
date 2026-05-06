@@ -132,7 +132,8 @@ class _ChatScreenState extends State<ChatScreen> {
       id: tutor.id, name: tutor.name, subject: tutor.subject,
       avatarUrl: tutor.avatarUrl, lastMessage: text, time: timeStr,
       unread: tutor.unread, isOnline: tutor.isOnline, isVerified: tutor.isVerified,
-      isPast: tutor.isPast,
+      isPast: tutor.isPast, rating: tutor.rating, students: tutor.students,
+      location: tutor.location, pricing: tutor.pricing,
     );
     setState(() {
       for (final list in [_inbox, _past, _archived]) {

@@ -31,17 +31,6 @@ const _storeItems = [
   (icon: Icons.star_border_purple500_rounded, title: 'Booster Pack', desc: 'XP multiplier for 7 days', xp: 1200, category: 'special', colorIndex: 7, rarity: 'epic'),
 ];
 
-const _itemColors = [
-  (light: Color(0xFF81C784), dark: Color(0xFF81C784)), // Green
-  (light: Color(0xFF64B5F6), dark: Color(0xFF64B5F6)), // Blue
-  (light: Color(0xFF9575CD), dark: Color(0xFF9575CD)), // Purple
-  (light: Color(0xFFFFB74D), dark: Color(0xFFFFB74D)), // Orange
-  (light: Color(0xFFF06292), dark: Color(0xFFF06292)), // Pink
-  (light: Color(0xFF4DB6AC), dark: Color(0xFF4DB6AC)), // Teal
-  (light: Color(0xFFE57373), dark: Color(0xFFEF5350)), // Red
-  (light: Color(0xFFFFD54F), dark: Color(0xFFFFD54F)), // Amber
-  (light: Color(0xFF90CAF9), dark: Color(0xFF90CAF9)), // Light Blue
-];
 
 class StoreScreen extends StatefulWidget {
   const StoreScreen({super.key});
@@ -410,8 +399,6 @@ class _StoreItemCard extends StatelessWidget {
   }
 
   void _showPurchaseDialog(BuildContext context, item) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
 
     showDialog(
       context: context,

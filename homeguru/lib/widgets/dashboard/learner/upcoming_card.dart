@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../schedule/reschedule_sheet.dart';
 import '../../schedule/cancel_sheet.dart';
 import '../../schedule/calendar_types.dart';
+import '../../../screens/shared/meet/prejoin_screen.dart';
+import '../../../services/user_profile_store.dart';
 
 class UpcomingCard extends StatefulWidget {
   const UpcomingCard({super.key, this.onScheduleTap});
@@ -282,6 +284,7 @@ class _UpcomingCardState extends State<UpcomingCard> {
                     _SplitButton(
                       isActive: session['isActive'],
                       cs: cs,
+                      session: session,
                       onReschedule: _showRescheduleSheet,
                       onCancel: _showCancelSheet,
                     ),
@@ -433,12 +436,14 @@ class _UpcomingCardState extends State<UpcomingCard> {
 class _SplitButton extends StatefulWidget {
   final bool isActive;
   final ColorScheme cs;
+  final Map<String, dynamic> session;
   final VoidCallback onReschedule;
   final VoidCallback onCancel;
 
   const _SplitButton({
     required this.isActive,
     required this.cs,
+    required this.session,
     required this.onReschedule,
     required this.onCancel,
   });
@@ -486,7 +491,35 @@ class _SplitButtonState extends State<_SplitButton> {
             mainAxisSize: MainAxisSize.min,
             children: [
               FilledButton(
-                onPressed: widget.isActive ? () {} : null,
+                onPressed: widget.isActive ? () {
+                  final profile = ProfileStore.of(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => PrejoinScreen(
+                        meetingCode: 'HG-${DateTime.now().millisecondsSinceEpoch % 10000}',
+                        userName: profile.name,
+                        userRole: 'Learner',
+                        event: CalendarEvent(
+                          id: 'temp',
+                          title: '${widget.session['subject']} – ${widget.session['specialization']}',
+                          date: widget.session['dateTime'],
+                          startMinutes: (widget.session['dateTime'] as DateTime).hour * 60 + (widget.session['dateTime'] as DateTime).minute,
+                          endMinutes: (widget.session['dateTime'] as DateTime).hour * 60 + (widget.session['dateTime'] as DateTime).minute + 60,
+                          allDay: false,
+                          calendarId: 'temp',
+                          tone: EventTone.blue,
+                          type: 'class',
+                          teacher: widget.session['tutor'],
+                          teacherImage: widget.session['image'],
+                          subject: widget.session['subject'],
+                          sessionNumber: 1,
+                          totalSessions: 10,
+                        ),
+                      ),
+                    ),
+                  );
+                } : null,
                 style: FilledButton.styleFrom(
                   backgroundColor: widget.cs.primaryContainer,
                   foregroundColor: widget.cs.onPrimaryContainer,
