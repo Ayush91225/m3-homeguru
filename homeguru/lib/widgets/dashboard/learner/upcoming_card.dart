@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../schedule/reschedule_sheet.dart';
+import '../../schedule/cancel_sheet.dart';
+import '../../schedule/calendar_types.dart';
 
 class UpcomingCard extends StatefulWidget {
   const UpcomingCard({super.key, this.onScheduleTap});
@@ -81,6 +84,50 @@ class _UpcomingCardState extends State<UpcomingCard> {
     if (diff.inMinutes < 60) return '${diff.inMinutes}min';
     if (diff.inHours < 24) return '${diff.inHours}h ${diff.inMinutes % 60}min';
     return '${diff.inDays}d ${diff.inHours % 24}h';
+  }
+
+  void _showRescheduleSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      useRootNavigator: true,
+      builder: (context) => RescheduleSheet(
+        event: CalendarEvent(
+          id: 'temp',
+          title: 'Class',
+          date: DateTime.now(),
+          startMinutes: 540,
+          endMinutes: 600,
+          allDay: false,
+          calendarId: 'temp',
+          tone: EventTone.blue,
+          type: 'class',
+        ),
+      ),
+    );
+  }
+
+  void _showCancelSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      useRootNavigator: true,
+      builder: (context) => CancelSheet(
+        event: CalendarEvent(
+          id: 'temp',
+          title: 'Class',
+          date: DateTime.now(),
+          startMinutes: 540,
+          endMinutes: 600,
+          allDay: false,
+          calendarId: 'temp',
+          tone: EventTone.blue,
+          type: 'class',
+        ),
+      ),
+    );
   }
 
   @override
@@ -235,6 +282,8 @@ class _UpcomingCardState extends State<UpcomingCard> {
                     _SplitButton(
                       isActive: session['isActive'],
                       cs: cs,
+                      onReschedule: _showRescheduleSheet,
+                      onCancel: _showCancelSheet,
                     ),
                   ],
                 ),
@@ -381,17 +430,32 @@ class _UpcomingCardState extends State<UpcomingCard> {
   }
 }
 
-class _SplitButton extends StatelessWidget {
+class _SplitButton extends StatefulWidget {
   final bool isActive;
   final ColorScheme cs;
+  final VoidCallback onReschedule;
+  final VoidCallback onCancel;
 
-  const _SplitButton({required this.isActive, required this.cs});
+  const _SplitButton({
+    required this.isActive,
+    required this.cs,
+    required this.onReschedule,
+    required this.onCancel,
+  });
+
+  @override
+  State<_SplitButton> createState() => _SplitButtonState();
+}
+
+class _SplitButtonState extends State<_SplitButton> {
+  final MenuController _menuController = MenuController();
 
   @override
   Widget build(BuildContext context) {
     return MenuAnchor(
+      controller: _menuController,
       style: MenuStyle(
-        backgroundColor: WidgetStatePropertyAll(cs.surfaceContainer),
+        backgroundColor: WidgetStatePropertyAll(widget.cs.surfaceContainer),
         elevation: const WidgetStatePropertyAll(3),
         shape: WidgetStatePropertyAll(
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -399,14 +463,20 @@ class _SplitButton extends StatelessWidget {
       ),
       menuChildren: [
         MenuItemButton(
-          leadingIcon: Icon(Icons.schedule_rounded, size: 20, color: cs.onSurface),
-          child: Text('Reschedule', style: TextStyle(color: cs.onSurface)),
-          onPressed: () {},
+          leadingIcon: Icon(Icons.schedule_rounded, size: 20, color: widget.cs.onSurface),
+          child: Text('Reschedule', style: TextStyle(color: widget.cs.onSurface)),
+          onPressed: () {
+            _menuController.close();
+            widget.onReschedule();
+          },
         ),
         MenuItemButton(
-          leadingIcon: Icon(Icons.cancel_rounded, size: 20, color: cs.error),
-          child: Text('Cancel', style: TextStyle(color: cs.error)),
-          onPressed: () {},
+          leadingIcon: Icon(Icons.cancel_rounded, size: 20, color: widget.cs.error),
+          child: Text('Cancel', style: TextStyle(color: widget.cs.error)),
+          onPressed: () {
+            _menuController.close();
+            widget.onCancel();
+          },
         ),
       ],
       builder: (context, controller, child) {
@@ -416,12 +486,12 @@ class _SplitButton extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               FilledButton(
-                onPressed: isActive ? () {} : null,
+                onPressed: widget.isActive ? () {} : null,
                 style: FilledButton.styleFrom(
-                  backgroundColor: cs.primaryContainer,
-                  foregroundColor: cs.onPrimaryContainer,
-                  disabledBackgroundColor: cs.surfaceContainerHighest,
-                  disabledForegroundColor: cs.onSurfaceVariant,
+                  backgroundColor: widget.cs.primaryContainer,
+                  foregroundColor: widget.cs.onPrimaryContainer,
+                  disabledBackgroundColor: widget.cs.surfaceContainerHighest,
+                  disabledForegroundColor: widget.cs.onSurfaceVariant,
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
                   shape: const RoundedRectangleBorder(
                     borderRadius: BorderRadius.only(
@@ -437,14 +507,14 @@ class _SplitButton extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: isActive ? cs.onPrimaryContainer : cs.onSurfaceVariant,
+                    color: widget.isActive ? widget.cs.onPrimaryContainer : widget.cs.onSurfaceVariant,
                   ),
                 ),
               ),
               Container(
                 width: 1,
                 height: 36,
-                color: cs.onPrimaryContainer.withValues(alpha: 0.2),
+                color: widget.cs.onPrimaryContainer.withValues(alpha: 0.2),
               ),
               InkWell(
                 onTap: () {
@@ -462,7 +532,7 @@ class _SplitButton extends StatelessWidget {
                   height: 36,
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   decoration: BoxDecoration(
-                    color: cs.primaryContainer,
+                    color: widget.cs.primaryContainer,
                     borderRadius: const BorderRadius.only(
                       topRight: Radius.circular(999),
                       bottomRight: Radius.circular(999),
@@ -472,7 +542,7 @@ class _SplitButton extends StatelessWidget {
                     child: Icon(
                       Icons.arrow_drop_down_rounded,
                       size: 18,
-                      color: cs.onPrimaryContainer,
+                      color: widget.cs.onPrimaryContainer,
                     ),
                   ),
                 ),

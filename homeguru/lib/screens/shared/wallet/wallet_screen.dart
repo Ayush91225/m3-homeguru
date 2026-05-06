@@ -4,6 +4,7 @@ import 'wallet_balance_card.dart';
 import 'wallet_filter_bar.dart';
 import 'wallet_tx_tile.dart';
 import 'refer_earn_sheet.dart';
+import '../../../widgets/dashboard/learner/payment_bars.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
@@ -105,6 +106,13 @@ class _WalletScreenState extends State<WalletScreen> {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
               child: EscrowBalanceCard(txs: kMockTxs),
+            ),
+          ),
+
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+              child: const PaymentBars(),
             ),
           ),
 

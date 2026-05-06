@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'referrals_sheet.dart';
 import 'rewards_sheet.dart';
 import 'certifications_sheet.dart';
+import '../../../screens/dashboard/learner/store_screen.dart';
 
 class RewardsAchievements extends StatelessWidget {
   const RewardsAchievements({super.key});
@@ -45,7 +46,7 @@ class RewardsAchievements extends StatelessWidget {
         CertificationsSheet.show(context);
         break;
       case 'store':
-        // TODO: navigate to store page
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const StoreScreen()));
         break;
     }
   }

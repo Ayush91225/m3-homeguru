@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../../../widgets/mascot/hoot_sprite.dart';
 import '../../../widgets/dashboard/common_app_bar.dart';
 import '../../../widgets/dashboard/learner/learner_drawer.dart';
+import '../../../widgets/dashboard/learner/payment_bars.dart';
 import 'home_tab.dart';
 import 'search_tab.dart';
 import 'schedule_tab.dart';
@@ -59,12 +60,22 @@ class LearnerDashboardState extends State<LearnerDashboard> {
         selectedIndex: _selectedIndex,
         onDestinationSelected: onItemTapped,
       ),
-      body: _tabs[_selectedIndex],
+      body: Stack(
+        children: [
+          _tabs[_selectedIndex],
+          Positioned(
+            left: 20,
+            right: (_fabExtended ? 140 : 56) + 20,
+            bottom: 16,
+            child: const PaymentBars(),
+          ),
+        ],
+      ),
       floatingActionButton: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOutCubic,
         width: _fabExtended ? 140 : 56,
-        height: 56,
+        height: 68,
         child: Material(
           color: cs.primaryContainer,
           borderRadius: const BorderRadius.only(

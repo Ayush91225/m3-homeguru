@@ -4,6 +4,10 @@ import '../../../main.dart';
 import '../../../screens/welcome/welcome_screen.dart';
 import '../../../screens/shared/notifications_screen.dart';
 import '../../../screens/shared/wallet/wallet_screen.dart';
+import '../../../screens/dashboard/learner/store_screen.dart';
+import '../../schedule/reschedule_request_sheet.dart';
+import '../../schedule/payment_pending_sheet.dart';
+import '../../schedule/calendar_types.dart';
 
 class LearnerDrawer extends StatelessWidget {
   const LearnerDrawer({
@@ -110,6 +114,16 @@ class LearnerDrawer extends StatelessWidget {
                 ),
                 const Divider(height: 16),
                 _DrawerItem(
+                  icon: Icons.storefront_outlined,
+                  selectedIcon: Icons.storefront_rounded,
+                  label: 'HG Store',
+                  selected: false,
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const StoreScreen()));
+                  },
+                ),
+                _DrawerItem(
                   icon: Icons.account_balance_wallet_outlined,
                   selectedIcon: Icons.account_balance_wallet_rounded,
                   label: 'Wallet',
@@ -143,6 +157,8 @@ class LearnerDrawer extends StatelessWidget {
                   selected: false,
                   onTap: () => Navigator.pop(context),
                 ),
+                const Divider(height: 16),
+                const _TestCard(),
               ],
             ),
           ),
@@ -267,6 +283,114 @@ class _DrawerItem extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+
+class _TestCard extends StatelessWidget {
+  const _TestCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: cs.errorContainer.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cs.error.withValues(alpha: 0.5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.bug_report_rounded, size: 16, color: cs.error),
+              const SizedBox(width: 8),
+              Text(
+                'TEST BUTTONS',
+                style: tt.labelMedium?.copyWith(
+                  color: cs.error,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) => RescheduleRequestSheet(
+                  event: CalendarEvent(
+                    id: 'temp',
+                    title: 'Mathematics Class',
+                    date: DateTime.now(),
+                    startMinutes: 540,
+                    endMinutes: 600,
+                    allDay: false,
+                    calendarId: 'temp',
+                    tone: EventTone.blue,
+                    type: 'class',
+                    teacher: 'Priya Sharma',
+                    teacherImage: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop',
+                  ),
+                  newDate: DateTime.now().add(const Duration(days: 2)),
+                  newTimeSlot: '3:00 PM',
+                ),
+              );
+            },
+            style: TextButton.styleFrom(
+              minimumSize: const Size.fromHeight(32),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              backgroundColor: cs.surface,
+            ),
+            child: Text(
+              'Reschedule Request Sheet',
+              style: TextStyle(fontSize: 11, color: cs.error),
+            ),
+          ),
+          const SizedBox(height: 6),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) => PaymentPendingSheet(
+                  tutorName: 'Priya Sharma',
+                  tutorImage: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop',
+                  subject: 'Mathematics',
+                  level: 'JEE Advanced',
+                  sessionsBooked: 100,
+                  preferredSlot: 'Mon, Wed, Fri - 5:00 PM',
+                  perHourPrice: 499,
+                  classesPerWeek: 3,
+                  durationMonths: 8,
+                  bookingAcceptedAt: DateTime.now().subtract(const Duration(hours: 2)),
+                ),
+              );
+            },
+            style: TextButton.styleFrom(
+              minimumSize: const Size.fromHeight(32),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              backgroundColor: cs.surface,
+            ),
+            child: Text(
+              'Payment Pending Sheet',
+              style: TextStyle(fontSize: 11, color: cs.error),
+            ),
+          ),
+        ],
       ),
     );
   }

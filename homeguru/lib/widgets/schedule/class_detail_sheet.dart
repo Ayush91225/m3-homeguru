@@ -4,6 +4,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'calendar_types.dart';
 import '../../screens/shared/chat/chat_models.dart';
 import '../../screens/shared/chat/conversation_screen.dart';
+import 'reschedule_sheet.dart';
+import 'cancel_sheet.dart';
 
 class ClassDetailSheet extends StatelessWidget {
   final CalendarEvent event;
@@ -206,7 +208,15 @@ class ClassDetailSheet extends StatelessWidget {
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.pop(context);
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (context) => RescheduleSheet(event: event),
+                    );
+                  },
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size.fromHeight(48),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -217,7 +227,15 @@ class ClassDetailSheet extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.pop(context);
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (context) => CancelSheet(event: event),
+                    );
+                  },
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size.fromHeight(48),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),

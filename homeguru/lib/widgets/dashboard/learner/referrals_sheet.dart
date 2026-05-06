@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../screens/dashboard/learner/referrals_screen.dart';
 
 class ReferralsSheet extends StatelessWidget {
   const ReferralsSheet({super.key});
@@ -10,23 +11,24 @@ class ReferralsSheet extends StatelessWidget {
       );
 
   static const _friends = [
-    (name: 'Aryan Mehta', xp: '200 XP'),
-    (name: 'Priya Sharma', xp: '200 XP'),
-    (name: 'Rohan Gupta', xp: 'Pending'),
+    (name: 'Aryan Mehta', xp: '200 XP', status: 'joined'),
+    (name: 'Priya Sharma', xp: '200 XP', status: 'joined'),
+    (name: 'Rohan Gupta', xp: 'Pending', status: 'pending'),
+    (name: 'Sneha Patel', xp: '200 XP', status: 'joined'),
+    (name: 'Vikram Singh', xp: 'Pending', status: 'pending'),
   ];
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+
+    final earnedXP = _friends.where((f) => f.status == 'joined').length * 200;
 
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFFEF5350), Color(0xFFC62828)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        color: cs.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
       child: Column(
@@ -40,64 +42,89 @@ class ReferralsSheet extends StatelessWidget {
                 width: 36,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.4),
+                  color: cs.outlineVariant,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
               const Spacer(),
               IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.open_in_new_rounded, color: Colors.white, size: 20),
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const ReferralsScreen()));
+                },
+                icon: Icon(Icons.open_in_new_rounded, color: cs.primary, size: 20),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          // title
+          // title + earned XP
           Row(
             children: [
-              const Icon(Icons.card_giftcard_rounded, color: Colors.white, size: 22),
-              const SizedBox(width: 10),
               Text('Referrals',
-                  style: tt.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.w800)),
+                  style: tt.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: cs.primaryContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text('$earnedXP XP earned',
+                    style: tt.labelMedium?.copyWith(
+                        color: cs.onPrimaryContainer, fontWeight: FontWeight.w700)),
+              ),
             ],
           ),
           const SizedBox(height: 16),
-          // friends
-          ..._friends.map((f) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 16,
-                      backgroundColor: Colors.white.withValues(alpha: 0.2),
-                      child: Text(f.name[0],
-                          style: tt.labelMedium?.copyWith(
-                              color: Colors.white, fontWeight: FontWeight.w700)),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(f.name,
-                          style: tt.bodyMedium?.copyWith(
-                              color: Colors.white, fontWeight: FontWeight.w600)),
-                    ),
-                    Text(f.xp,
-                        style: tt.bodySmall?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.8),
-                            fontWeight: FontWeight.w600)),
-                  ],
-                ),
-              )),
-          const SizedBox(height: 12),
-          // view all button
-          OutlinedButton(
-            onPressed: () => Navigator.pop(context),
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size.fromHeight(40),
-              side: const BorderSide(color: Colors.white, width: 1.5),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          // friends list
+          SizedBox(
+            height: 90,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: _friends.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              itemBuilder: (_, i) {
+                final f = _friends[i];
+                final isDark = Theme.of(context).brightness == Brightness.dark;
+                final isJoined = f.status == 'joined';
+                
+                return Container(
+                  width: 70,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: cs.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                        color: cs.outlineVariant.withValues(alpha: 0.5)),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircleAvatar(
+                        radius: 16,
+                        backgroundColor: cs.primaryContainer,
+                        child: Text(f.name[0],
+                            style: tt.labelLarge?.copyWith(
+                                color: cs.onPrimaryContainer, fontWeight: FontWeight.w700)),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(f.name.split(' ')[0],
+                          style: tt.labelSmall?.copyWith(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w700,
+                              color: cs.onSurface),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis),
+                      if (!isJoined) ...[
+                        const SizedBox(height: 2),
+                        Icon(Icons.schedule_rounded, size: 10, color: cs.onSurfaceVariant.withValues(alpha: 0.5)),
+                      ],
+                    ],
+                  ),
+                );
+              },
             ),
-            child: const Text('View All'),
           ),
         ],
       ),

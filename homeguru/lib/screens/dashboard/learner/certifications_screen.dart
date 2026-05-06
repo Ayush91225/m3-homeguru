@@ -1,30 +1,22 @@
 import 'package:flutter/material.dart';
-import '../../../widgets/dashboard/learner/rewards_hero_card.dart';
+import '../../../widgets/dashboard/learner/certifications_hero_card.dart';
 
-const _allBadges = [
-  (icon: Icons.local_fire_department_rounded, title: '7-Day Streak', desc: 'Studied 7 days in a row', unlocked: true, colorIndex: 0),
-  (icon: Icons.star_rounded, title: 'First Session', desc: 'Completed your first session', unlocked: true, colorIndex: 1),
-  (icon: Icons.military_tech_rounded, title: 'Top Learner', desc: 'Ranked in top 10% this month', unlocked: true, colorIndex: 2),
-  (icon: Icons.bolt_rounded, title: 'Quick Starter', desc: 'Booked within 24h of joining', unlocked: true, colorIndex: 3),
-  (icon: Icons.workspace_premium_rounded, title: 'Verified Learner', desc: 'Profile fully verified', unlocked: true, colorIndex: 4),
-  (icon: Icons.favorite_rounded, title: "Tutor's Pick", desc: 'Recommended by a tutor', unlocked: true, colorIndex: 5),
-  (icon: Icons.emoji_events_rounded, title: 'XP Champion', desc: 'Earned 1000+ XP', unlocked: true, colorIndex: 6),
-  (icon: Icons.school_rounded, title: '10 Sessions', desc: 'Completed 10 sessions', unlocked: true, colorIndex: 7),
-  (icon: Icons.auto_awesome_rounded, title: 'AI Master', desc: 'Used Guru AI 50 times', unlocked: true, colorIndex: 8),
-  (icon: Icons.calendar_month_rounded, title: 'Monthly Streak', desc: 'Studied 30 days in a row', unlocked: false, colorIndex: 0),
-  (icon: Icons.groups_rounded, title: 'Social Learner', desc: 'Referred 5 friends', unlocked: false, colorIndex: 1),
-  (icon: Icons.trending_up_rounded, title: 'Progress Pro', desc: 'Improved grade by 2 levels', unlocked: false, colorIndex: 2),
-  (icon: Icons.timer_rounded, title: 'Speed Demon', desc: 'Completed 10 sessions in a week', unlocked: false, colorIndex: 3),
-  (icon: Icons.library_books_rounded, title: 'Bookworm', desc: 'Studied 5 different subjects', unlocked: false, colorIndex: 4),
-  (icon: Icons.psychology_rounded, title: 'Deep Thinker', desc: 'Asked 100 questions', unlocked: false, colorIndex: 5),
-  (icon: Icons.celebration_rounded, title: 'Century Club', desc: 'Completed 100 sessions', unlocked: false, colorIndex: 6),
-  (icon: Icons.diamond_rounded, title: 'Diamond Learner', desc: 'Earned 10,000 XP', unlocked: false, colorIndex: 7),
-  (icon: Icons.workspace_premium_rounded, title: 'Premium Member', desc: 'Active for 1 year', unlocked: false, colorIndex: 8),
-  (icon: Icons.stars_rounded, title: 'All Star', desc: 'Unlocked all badges', unlocked: false, colorIndex: 6),
+const _allCertifications = [
+  (icon: Icons.workspace_premium_rounded, title: 'Math Mastery', desc: 'Completed Advanced Math', earned: true, colorIndex: 0),
+  (icon: Icons.science_rounded, title: 'Science Pro', desc: 'Completed Science Course', earned: true, colorIndex: 1),
+  (icon: Icons.language_rounded, title: 'English Expert', desc: 'Completed English Course', earned: true, colorIndex: 2),
+  (icon: Icons.calculate_rounded, title: 'Algebra Champion', desc: 'Mastered Algebra', earned: true, colorIndex: 3),
+  (icon: Icons.biotech_rounded, title: 'Biology Star', desc: 'Completed Biology', earned: true, colorIndex: 4),
+  (icon: Icons.public_rounded, title: 'Geography Guru', desc: 'Completed Geography', earned: true, colorIndex: 5),
+  (icon: Icons.history_edu_rounded, title: 'History Scholar', desc: 'Completed History', earned: false, colorIndex: 6),
+  (icon: Icons.palette_rounded, title: 'Art Enthusiast', desc: 'Completed Art Course', earned: false, colorIndex: 7),
+  (icon: Icons.music_note_rounded, title: 'Music Maestro', desc: 'Completed Music Theory', earned: false, colorIndex: 8),
+  (icon: Icons.sports_soccer_rounded, title: 'Sports Champion', desc: 'Completed PE Course', earned: false, colorIndex: 0),
+  (icon: Icons.computer_rounded, title: 'Tech Wizard', desc: 'Completed Computer Science', earned: false, colorIndex: 1),
+  (icon: Icons.psychology_rounded, title: 'Psychology Pro', desc: 'Completed Psychology', earned: false, colorIndex: 2),
 ];
 
-// Referrals-style colors
-const _badgeColors = [
+const _certColors = [
   (light: Color(0xFF81C784), dark: Color(0xFF81C784)), // Green
   (light: Color(0xFF64B5F6), dark: Color(0xFF64B5F6)), // Blue
   (light: Color(0xFF9575CD), dark: Color(0xFF9575CD)), // Purple
@@ -36,27 +28,27 @@ const _badgeColors = [
   (light: Color(0xFF90CAF9), dark: Color(0xFF90CAF9)), // Light Blue
 ];
 
-class RewardsScreen extends StatefulWidget {
-  const RewardsScreen({super.key});
+class CertificationsScreen extends StatefulWidget {
+  const CertificationsScreen({super.key});
 
   @override
-  State<RewardsScreen> createState() => _RewardsScreenState();
+  State<CertificationsScreen> createState() => _CertificationsScreenState();
 }
 
-class _RewardsScreenState extends State<RewardsScreen> {
+class _CertificationsScreenState extends State<CertificationsScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
-    final unlocked = _allBadges.where((b) => b.unlocked).toList();
+    final earned = _allCertifications.where((c) => c.earned).toList();
 
     return Scaffold(
       backgroundColor: cs.surface,
       extendBodyBehindAppBar: true,
       body: CustomScrollView(
         slivers: [
-          const SliverToBoxAdapter(child: RewardsHeroCard()),
+          const SliverToBoxAdapter(child: CertificationsHeroCard()),
 
           // ── stats cards ──
           SliverToBoxAdapter(
@@ -66,17 +58,17 @@ class _RewardsScreenState extends State<RewardsScreen> {
                 children: [
                   Expanded(
                     child: _StatCard(
-                      icon: Icons.emoji_events_rounded,
-                      label: 'Badges Unlocked',
-                      value: '${unlocked.length}',
+                      icon: Icons.workspace_premium_rounded,
+                      label: 'Certificates Earned',
+                      value: '${earned.length}',
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: _StatCard(
-                      icon: Icons.stars_rounded,
-                      label: 'Total XP',
-                      value: '${unlocked.length * 100}',
+                      icon: Icons.emoji_events_rounded,
+                      label: 'Total Courses',
+                      value: '${_allCertifications.length}',
                     ),
                   ),
                 ],
@@ -84,15 +76,15 @@ class _RewardsScreenState extends State<RewardsScreen> {
             ),
           ),
 
-          // ── "All badges" title ──
+          // ── "All Certifications" title ──
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
-              child: Text('All Badges', style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+              child: Text('All Certifications', style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
             ),
           ),
 
-          // ── badges carousel ──
+          // ── certifications carousel ──
           SliverToBoxAdapter(
             child: SizedBox(
               height: 140,
@@ -103,7 +95,7 @@ class _RewardsScreenState extends State<RewardsScreen> {
                 shape: const RoundedRectangleBorder(
                   borderRadius: BorderRadius.all(Radius.circular(20)),
                 ),
-                children: _allBadges.map((badge) {
+                children: _allCertifications.map((cert) {
                   return LayoutBuilder(
                     builder: (context, constraints) {
                       final w = constraints.maxWidth;
@@ -112,8 +104,8 @@ class _RewardsScreenState extends State<RewardsScreen> {
 
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 6),
-                        child: _BadgeCarouselCard(
-                          badge: badge,
+                        child: _CertCarouselCard(
+                          cert: cert,
                           isSmall: isSmall,
                           isMedium: isMedium,
                         ),
@@ -125,15 +117,15 @@ class _RewardsScreenState extends State<RewardsScreen> {
             ),
           ),
 
-          // ── "Unlocked" title ──
+          // ── "Earned Certificates" title ──
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
-              child: Text('Unlocked Badges (${unlocked.length})', style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+              child: Text('Earned Certificates (${earned.length})', style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
             ),
           ),
 
-          // ── unlocked badges grid ──
+          // ── earned certificates grid ──
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
             sliver: SliverGrid.builder(
@@ -143,10 +135,10 @@ class _RewardsScreenState extends State<RewardsScreen> {
                 crossAxisSpacing: 12,
                 childAspectRatio: 0.85,
               ),
-              itemCount: unlocked.length,
+              itemCount: earned.length,
               itemBuilder: (_, i) {
-                final badge = unlocked[i];
-                return _UnlockedBadgeCard(badge: badge);
+                final cert = earned[i];
+                return _EarnedCertCard(cert: cert);
               },
             ),
           ),
@@ -199,13 +191,13 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-class _BadgeCarouselCard extends StatelessWidget {
-  final ({IconData icon, String title, String desc, bool unlocked, int colorIndex}) badge;
+class _CertCarouselCard extends StatelessWidget {
+  final ({IconData icon, String title, String desc, bool earned, int colorIndex}) cert;
   final bool isSmall;
   final bool isMedium;
 
-  const _BadgeCarouselCard({
-    required this.badge,
+  const _CertCarouselCard({
+    required this.cert,
     required this.isSmall,
     required this.isMedium,
   });
@@ -216,9 +208,9 @@ class _BadgeCarouselCard extends StatelessWidget {
     final tt = Theme.of(context).textTheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final badgeColor = isDark
-        ? _badgeColors[badge.colorIndex % _badgeColors.length].dark
-        : _badgeColors[badge.colorIndex % _badgeColors.length].light;
+    final certColor = isDark
+        ? _certColors[cert.colorIndex % _certColors.length].dark
+        : _certColors[cert.colorIndex % _certColors.length].light;
 
     if (isSmall) {
       return Container(
@@ -231,10 +223,10 @@ class _BadgeCarouselCard extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: badgeColor.withValues(alpha: isDark ? 0.25 : 0.18),
+              color: certColor.withValues(alpha: isDark ? 0.25 : 0.18),
               shape: BoxShape.circle,
             ),
-            child: Icon(badge.icon, size: 16, color: badgeColor),
+            child: Icon(cert.icon, size: 16, color: certColor),
           ),
         ),
       );
@@ -254,20 +246,20 @@ class _BadgeCarouselCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: badgeColor.withValues(alpha: isDark ? 0.25 : 0.18),
+                color: certColor.withValues(alpha: isDark ? 0.25 : 0.18),
                 shape: BoxShape.circle,
               ),
-              child: Icon(badge.icon, size: 20, color: badgeColor),
+              child: Icon(cert.icon, size: 20, color: certColor),
             ),
             const SizedBox(height: 8),
             Text(
-              badge.title,
+              cert.title,
               style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
             const Spacer(),
-            if (!badge.unlocked)
+            if (!cert.earned)
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
@@ -310,10 +302,10 @@ class _BadgeCarouselCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: badgeColor.withValues(alpha: isDark ? 0.25 : 0.18),
+                  color: certColor.withValues(alpha: isDark ? 0.25 : 0.18),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(badge.icon, size: 24, color: badgeColor),
+                child: Icon(cert.icon, size: 24, color: certColor),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -321,14 +313,14 @@ class _BadgeCarouselCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      badge.title,
+                      cert.title,
                       style: tt.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      badge.desc,
+                      cert.desc,
                       style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -342,34 +334,21 @@ class _BadgeCarouselCard extends StatelessWidget {
           Row(
             children: [
               Icon(
-                badge.unlocked ? Icons.check_circle_rounded : Icons.lock_rounded,
+                cert.earned ? Icons.check_circle_rounded : Icons.lock_rounded,
                 size: 14,
-                color: badge.unlocked ? badgeColor : cs.onSurfaceVariant,
+                color: cert.earned ? certColor : cs.onSurfaceVariant,
               ),
               const SizedBox(width: 6),
               Text(
-                badge.unlocked ? 'Unlocked' : 'Locked',
+                cert.earned ? 'Earned' : 'Locked',
                 style: tt.labelSmall?.copyWith(
-                  color: badge.unlocked ? badgeColor : cs.onSurfaceVariant,
+                  color: cert.earned ? certColor : cs.onSurfaceVariant,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               const Spacer(),
-              if (badge.unlocked)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: badgeColor.withValues(alpha: isDark ? 0.2 : 0.12),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '+100 XP',
-                    style: tt.labelMedium?.copyWith(
-                      color: badgeColor,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
+              if (cert.earned)
+                Icon(Icons.download_rounded, size: 18, color: certColor),
             ],
           ),
         ],
@@ -378,10 +357,10 @@ class _BadgeCarouselCard extends StatelessWidget {
   }
 }
 
-class _UnlockedBadgeCard extends StatelessWidget {
-  final ({IconData icon, String title, String desc, bool unlocked, int colorIndex}) badge;
+class _EarnedCertCard extends StatelessWidget {
+  final ({IconData icon, String title, String desc, bool earned, int colorIndex}) cert;
 
-  const _UnlockedBadgeCard({required this.badge});
+  const _EarnedCertCard({required this.cert});
 
   @override
   Widget build(BuildContext context) {
@@ -389,9 +368,9 @@ class _UnlockedBadgeCard extends StatelessWidget {
     final tt = Theme.of(context).textTheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final badgeColor = isDark
-        ? _badgeColors[badge.colorIndex % _badgeColors.length].dark
-        : _badgeColors[badge.colorIndex % _badgeColors.length].light;
+    final certColor = isDark
+        ? _certColors[cert.colorIndex % _certColors.length].dark
+        : _certColors[cert.colorIndex % _certColors.length].light;
 
     return Container(
       decoration: BoxDecoration(
@@ -406,8 +385,8 @@ class _UnlockedBadgeCard extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  badgeColor.withValues(alpha: isDark ? 0.3 : 0.2),
-                  badgeColor.withValues(alpha: isDark ? 0.18 : 0.1),
+                  certColor.withValues(alpha: isDark ? 0.3 : 0.2),
+                  certColor.withValues(alpha: isDark ? 0.18 : 0.1),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -418,10 +397,10 @@ class _UnlockedBadgeCard extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: badgeColor.withValues(alpha: isDark ? 0.25 : 0.2),
+                  color: certColor.withValues(alpha: isDark ? 0.25 : 0.2),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(badge.icon, size: 32, color: badgeColor),
+                child: Icon(cert.icon, size: 32, color: certColor),
               ),
             ),
           ),
@@ -433,14 +412,14 @@ class _UnlockedBadgeCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    badge.title,
+                    cert.title,
                     style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    badge.desc,
+                    cert.desc,
                     style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
