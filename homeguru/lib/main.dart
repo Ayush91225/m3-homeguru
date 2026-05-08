@@ -8,8 +8,10 @@ import 'theme/app_theme.dart';
 import 'screens/welcome/welcome_screen.dart';
 import 'screens/dashboard/learner/learner_dashboard.dart';
 import 'screens/dashboard/learner/search_results_screen.dart';
+import 'screens/dashboard/tutor/tutor_dashboard.dart';
 import 'screens/shared/guruai/guruai_screen.dart';
 import 'services/user_profile_store.dart';
+import 'services/call_notification_service.dart';
 
 const _kThemeKey = 'theme_mode';
 
@@ -36,8 +38,11 @@ void main() async {
   // Initialize timezone database
   tz.initializeTimeZones();
 
-  // Disable google_fonts runtime fetching for better performance
-  GoogleFonts.config.allowRuntimeFetching = false;
+  // Initialize call notification service
+  await CallNotificationService.initialize();
+
+  // Enable google_fonts runtime fetching
+  GoogleFonts.config.allowRuntimeFetching = true;
 
   await _loadTheme();
   profileStore = await UserProfileStore.load();
@@ -80,6 +85,8 @@ class _HomeGuruAppState extends State<HomeGuruApp> {
       setState(() {
         if (loggedInUser == 'learner') {
           _initialRoute = const LearnerDashboard();
+        } else if (loggedInUser == 'tutor') {
+          _initialRoute = const TutorDashboard();
         } else {
           _initialRoute = const WelcomeScreen();
         }
@@ -114,6 +121,7 @@ class _HomeGuruAppState extends State<HomeGuruApp> {
             home: _initialRoute,
             routes: {
               '/learner-dashboard': (context) => const LearnerDashboard(),
+              '/tutor-dashboard': (context) => const TutorDashboard(),
               '/guru-ai': (context) => const GuruAIScreen(),
             },
             onGenerateRoute: (settings) {

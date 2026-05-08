@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Whiteboard</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@excalidraw/excalidraw@0.17.6/dist/excalidraw.production.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        #root {
+            width: 100%;
+            height: 100%;
+        }
+        .excalidraw {
+            --color-primary: #1E3162 !important;
+            --color-primary-darker: #152347 !important;
+            --color-primary-darkest: #0f1a36 !important;
+            --color-primary-light: #DCE8F5 !important;
+        }
+        .excalidraw .App-menu_top .ToolIcon_type_radio:checked + .ToolIcon__icon {
+            background-color: #1E3162 !important;
+            border-radius: 12px !important;
+        }
+        .excalidraw .ToolIcon_type_radio:checked + .ToolIcon__icon svg,
+        .excalidraw .ToolIcon_type_checkbox:checked + .ToolIcon__icon svg {
+            color: white !important;
+        }
+        .excalidraw .App-toolbar-container {
+            border-radius: 20px !important;
+            border: 1px solid #EBEBEB !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.04) !important;
+        }
+        .excalidraw .ToolIcon__icon {
+            border-radius: 10px !important;
+        }
+        .excalidraw .dropdown-menu-container {
+            border-radius: 16px !important;
+            border: 1px solid #EBEBEB !important;
+        }
+        /* Hide library button */
+        .excalidraw .sidebar-trigger,
+        .excalidraw label[title="Library"],
+        .excalidraw .default-sidebar-trigger {
+            display: none !important;
+            visibility: hidden !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script>
+        let excalidrawAPI = null;
+        let isRemoteUpdate = false;
+
+        const App = () => {
+            return React.createElement(ExcalidrawLib.Excalidraw, {
+                excalidrawAPI: (api) => {
+                    excalidrawAPI = api;
+                    window.excalidrawAPI = api;
+                },
+                onChange: (elements, appState, files) => {
+                    if (isRemoteUpdate) return;
+                    
+                    const data = {
+                        action: 'whiteboard-update',
+                        elements: elements.filter(e => !e.isDeleted),
+                        appState: {
+                            viewBackgroundColor: appState.viewBackgroundColor,
+                            currentItemStrokeColor: appState.currentItemStrokeColor,
+                            currentItemBackgroundColor: appState.currentItemBackgroundColor,
+                        }
+                    };
+                    
+                    if (window.FlutterBridge) {
+                        window.FlutterBridge.postMessage(JSON.stringify(data));
+                    }
+                },
+                initialData: {
+                    appState: {
+                        viewBackgroundColor: '#ffffff',
+                        currentItemStrokeColor: '#1E3162',
+                    }
+                },
+                UIOptions: {
+                    canvasActions: {
+                        toggleTheme: false,
+                        loadScene: false,
+                    }
+                }
+            });
+        };
+
+        window.insertImage = (dataUrl) => {
+            if (!excalidrawAPI) return;
+            try {
+                const img = new Image();
+                img.onload = () => {
+                    const element = {
+                        type: 'image',
+                        x: 100,
+                        y: 100,
+                        width: img.width,
+                        height: img.height,
+                        fileId: 'img_' + Date.now(),
+                        status: 'saved',
+                    };
+                    excalidrawAPI.updateScene({
+                        elements: [...excalidrawAPI.getSceneElements(), element]
+                    });
+                    excalidrawAPI.addFiles([{
+                        id: element.fileId,
+                        dataURL: dataUrl,
+                        mimeType: 'image/png',
+                        created: Date.now()
+                    }]);
+                };
+                img.src = dataUrl;
+            } catch (e) {
+                console.error('Insert image error:', e);
+            }
+        };
+
+        window.updateWhiteboard = (data) => {
+            if (!excalidrawAPI) return;
+            isRemoteUpdate = true;
+            try {
+                const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+                if (parsed.elements) {
+                    excalidrawAPI.updateScene({
+                        elements: parsed.elements,
+                        appState: parsed.appState || {}
+                    });
+                }
+            } catch (e) {
+                console.error('Update error:', e);
+            }
+            setTimeout(() => { isRemoteUpdate = false; }, 100);
+        };
+
+        window.clearWhiteboard = () => {
+            if (!excalidrawAPI) return;
+            excalidrawAPI.updateScene({ elements: [] });
+        };
+
+        window.getWhiteboardData = () => {
+            if (!excalidrawAPI) return null;
+            const elements = excalidrawAPI.getSceneElements();
+            return JSON.stringify({ elements });
+        };
+
+        window.exportImage = async () => {
+            if (!excalidrawAPI) return;
+            try {
+                const canvas = await excalidrawAPI.exportToCanvas({
+                    elements: excalidrawAPI.getSceneElements(),
+                    appState: excalidrawAPI.getAppState(),
+                });
+                const dataUrl = canvas.toDataURL('image/png');
+                if (window.FlutterBridge) {
+                    window.FlutterBridge.postMessage(JSON.stringify({ action: 'save-image', dataUrl }));
+                }
+            } catch (e) {
+                console.error('Export error:', e);
+            }
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(React.createElement(App));
+    </script>
+</body>
+</html>

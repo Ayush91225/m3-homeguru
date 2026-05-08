@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #000; overflow: hidden; }
+    iframe { width: 100vw; height: 100vh; border: none; }
+  </style>
+</head>
+<body>
+  <iframe id="ytplayer" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+  
+  <script>
+    let iframe = document.getElementById('ytplayer');
+    let currentVideoId = null;
+    let isHost = false;
+
+    window.addEventListener('message', function(event) {
+      const data = event.data;
+      
+      if (data.action === 'init') {
+        currentVideoId = data.videoId;
+        isHost = data.isHost || false;
+        loadVideo();
+      } else if (data.action === 'changeVideo') {
+        currentVideoId = data.videoId;
+        isHost = data.isHost || false;
+        loadVideo();
+      }
+    });
+
+    function loadVideo() {
+      if (!currentVideoId) return;
+      
+      const controls = isHost ? 1 : 0;
+      const url = `https://www.youtube.com/embed/${currentVideoId}?autoplay=1&rel=0&modestbranding=1&controls=${controls}&playsinline=1&disablekb=${1-controls}&fs=1&iv_load_policy=3`;
+      iframe.src = url;
+      
+      sendToFlutter({ type: 'ready' });
+    }
+
+    function sendToFlutter(data) {
+      if (window.Flutter) {
+        window.Flutter.postMessage(JSON.stringify(data));
+      }
+    }
+  </script>
+</body>
+</html>

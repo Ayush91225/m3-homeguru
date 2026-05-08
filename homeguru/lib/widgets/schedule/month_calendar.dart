@@ -7,6 +7,7 @@ class MonthCalendar extends StatelessWidget {
   final DateTime today;
   final List<CalendarEvent> events;
   final Function(DateTime) onSelectDate;
+  final bool isTutor;
 
   const MonthCalendar({
     super.key,
@@ -14,6 +15,7 @@ class MonthCalendar extends StatelessWidget {
     required this.today,
     required this.events,
     required this.onSelectDate,
+    this.isTutor = false,
   });
 
   Color _getToneColor(EventTone tone) {
@@ -114,9 +116,13 @@ class MonthCalendar extends StatelessWidget {
                 onTap: () => onSelectDate(date),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isSelected ? cs.primaryContainer : (isToday ? cs.surfaceContainerHighest : Colors.transparent),
+                    color: isSelected
+                        ? (isTutor ? cs.tertiaryContainer : cs.primaryContainer)
+                        : (isToday ? cs.surfaceContainerHighest : Colors.transparent),
                     borderRadius: BorderRadius.circular(12),
-                    border: isToday && !isSelected ? Border.all(color: cs.primary, width: 1.5) : null,
+                    border: isToday && !isSelected
+                        ? Border.all(color: isTutor ? cs.tertiary : cs.primary, width: 1.5)
+                        : null,
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -124,7 +130,9 @@ class MonthCalendar extends StatelessWidget {
                       Text(
                         '${date.day}',
                         style: tt.bodyMedium?.copyWith(
-                          color: isSelected ? cs.onPrimaryContainer : cs.onSurface,
+                          color: isSelected
+                              ? (isTutor ? cs.onTertiaryContainer : cs.onPrimaryContainer)
+                              : cs.onSurface,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -139,7 +147,7 @@ class MonthCalendar extends StatelessWidget {
                               width: 2,
                               height: 2,
                               decoration: BoxDecoration(
-                                color: _getToneColor(event.tone),
+                                color: isTutor ? cs.tertiary : _getToneColor(event.tone),
                                 shape: BoxShape.circle,
                               ),
                             );
@@ -180,14 +188,14 @@ class MonthCalendar extends StatelessWidget {
             )
           else
             ...selectedDayEvents.map((event) {
-              final color = _getToneColor(event.tone);
+              final color = isTutor ? cs.tertiary : _getToneColor(event.tone);
               return GestureDetector(
                 onTap: () {
                   showModalBottomSheet(
                     context: context,
                     isScrollControlled: true,
                     backgroundColor: Colors.transparent,
-                    builder: (context) => ClassDetailSheet(event: event),
+                    builder: (context) => ClassDetailSheet(event: event, isTutor: isTutor),
                   );
                 },
                 child: Container(

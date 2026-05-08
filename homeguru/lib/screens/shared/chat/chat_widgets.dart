@@ -49,25 +49,30 @@ class ConversationTile extends StatelessWidget {
     required this.onTap,
     required this.onLongPress,
     this.isPast = false,
+    this.isTutor = false,
   });
 
   final ChatTutor tutor;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
   final bool isPast;
+  final bool isTutor;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final hasUnread = tutor.unread > 0;
+    final accentColor = isTutor ? cs.tertiary : cs.primary;
+    final accentContainer = isTutor ? cs.tertiaryContainer : cs.primaryContainer;
+    final onAccent = isTutor ? cs.onTertiary : cs.onPrimary;
 
     return InkWell(
       onTap: onTap,
       onLongPress: onLongPress,
       child: Container(
         color: hasUnread
-            ? cs.primaryContainer.withValues(alpha: 0.18)
+            ? accentContainer.withValues(alpha: 0.18)
             : Colors.transparent,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
@@ -99,7 +104,7 @@ class ConversationTile extends StatelessWidget {
                             if (tutor.isVerified) ...[
                               const SizedBox(width: 4),
                               Icon(Icons.verified_rounded,
-                                  size: 14, color: cs.primary),
+                                  size: 14, color: accentColor),
                             ],
                           ],
                         ),
@@ -108,7 +113,7 @@ class ConversationTile extends StatelessWidget {
                       Text(
                         tutor.time,
                         style: tt.labelSmall?.copyWith(
-                          color: hasUnread ? cs.primary : cs.onSurfaceVariant,
+                          color: hasUnread ? accentColor : cs.onSurfaceVariant,
                           fontWeight:
                               hasUnread ? FontWeight.w700 : FontWeight.w400,
                         ),
@@ -119,7 +124,7 @@ class ConversationTile extends StatelessWidget {
                   Text(
                     tutor.subject,
                     style: tt.labelSmall?.copyWith(
-                      color: cs.primary,
+                      color: accentColor,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -147,13 +152,13 @@ class ConversationTile extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: cs.primary,
+                            color: accentColor,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
                             '${tutor.unread}',
                             style: tt.labelSmall?.copyWith(
-                              color: cs.onPrimary,
+                              color: onAccent,
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
                             ),
@@ -170,7 +175,7 @@ class ConversationTile extends StatelessWidget {
                             size: 14, color: cs.onSurfaceVariant),
                         const SizedBox(width: 6),
                         Text(
-                          'Past tutor',
+                          isTutor ? 'Past learner' : 'Past tutor',
                           style: tt.labelSmall?.copyWith(
                             color: cs.onSurfaceVariant,
                             fontWeight: FontWeight.w500,
@@ -200,14 +205,16 @@ class QuickSheet extends StatefulWidget {
     required this.onArchive,
     required this.onSend,
     required this.onOpen,
+    this.isTutor = false,
   });
 
   final ChatTutor tutor;
   final bool isPast;
   final bool isArchived;
-  final VoidCallback onArchive;  // archive OR unarchive depending on isArchived
+  final VoidCallback onArchive;
   final ValueChanged<String> onSend;
   final VoidCallback onOpen;
+  final bool isTutor;
 
   @override
   State<QuickSheet> createState() => _QuickSheetState();
@@ -237,6 +244,8 @@ class _QuickSheetState extends State<QuickSheet> {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final t = widget.tutor;
+    final accentColor = widget.isTutor ? cs.tertiary : cs.primary;
+    final onAccent = widget.isTutor ? cs.onTertiary : cs.onPrimary;
 
     return Padding(
       padding:
@@ -271,12 +280,12 @@ class _QuickSheetState extends State<QuickSheet> {
                           if (t.isVerified) ...[
                             const SizedBox(width: 4),
                             Icon(Icons.verified_rounded,
-                                size: 15, color: cs.primary),
+                                size: 15, color: accentColor),
                           ],
                         ],
                       ),
                       Text(t.subject,
-                          style: tt.labelSmall?.copyWith(color: cs.primary)),
+                          style: tt.labelSmall?.copyWith(color: accentColor)),
                     ],
                   ),
                 ),
@@ -285,7 +294,7 @@ class _QuickSheetState extends State<QuickSheet> {
                   icon: const Icon(Icons.open_in_new_rounded, size: 16),
                   label: const Text('Open'),
                   style: TextButton.styleFrom(
-                      foregroundColor: cs.primary,
+                      foregroundColor: accentColor,
                       visualDensity: VisualDensity.compact),
                 ),
               ],
@@ -300,7 +309,10 @@ class _QuickSheetState extends State<QuickSheet> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => SessionsListingScreen(initialTutor: t.name),
+                  builder: (_) => SessionsListingScreen(
+                    initialTutor: t.name,
+                    isTutor: widget.isTutor,
+                  ),
                 ),
               );
             },
@@ -335,7 +347,9 @@ class _QuickSheetState extends State<QuickSheet> {
                     onSubmitted: (_) => _send(),
                     decoration: InputDecoration(
                       hintText: widget.isPast
-                          ? 'Messaging disabled for past tutors'
+                          ? (widget.isTutor
+                              ? 'Messaging disabled for past learners'
+                              : 'Messaging disabled for past tutors')
                           : 'Quick message…',
                       hintStyle: tt.bodyMedium
                           ?.copyWith(color: cs.onSurfaceVariant),
@@ -360,8 +374,8 @@ class _QuickSheetState extends State<QuickSheet> {
                             : null,
                     icon: const Icon(Icons.send_rounded, size: 20),
                     style: IconButton.styleFrom(
-                      backgroundColor: cs.primary,
-                      foregroundColor: cs.onPrimary,
+                      backgroundColor: accentColor,
+                      foregroundColor: onAccent,
                       disabledBackgroundColor:
                           cs.onSurface.withValues(alpha: 0.12),
                     ),

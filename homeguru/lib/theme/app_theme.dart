@@ -16,9 +16,9 @@ ColorScheme _pin(ColorScheme base) => base.copyWith(
       onTertiary: Colors.white,
       tertiaryContainer: const Color(0xFFFFDCC2),
       onTertiaryContainer: const Color(0xFF3A1500),
-      surface: const Color(0xFFF8F9FF),
-      surfaceContainerLow: const Color(0xFFF1F4F9),
-      surfaceContainerHighest: const Color(0xFFE1E3E8),
+      surface: const Color(0xFFFFFBF7),
+      surfaceContainerLow: const Color(0xFFFFF8F2),
+      surfaceContainerHighest: const Color(0xFFF5EFE8),
     );
 
 ColorScheme _pinDark(ColorScheme base) => base.copyWith(
@@ -48,57 +48,62 @@ ColorScheme harmonise(ColorScheme? dynamic, Brightness brightness) {
   return brightness == Brightness.light ? _pin(base) : _pinDark(base);
 }
 
-// Memoized text themes
-TextTheme? _cachedTextTheme;
-TextTheme _textTheme() {
-  // Using Outfit for headings (Premium/Google Sans alternative)
-  // and Inter for body text (Modern/Readable)
-  return _cachedTextTheme ??= GoogleFonts.interTextTheme().copyWith(
-    displayLarge: GoogleFonts.outfit(
-        fontSize: 57, fontWeight: FontWeight.w400, letterSpacing: -0.25),
-    displayMedium:
-        GoogleFonts.outfit(fontSize: 45, fontWeight: FontWeight.w400),
-    displaySmall:
-        GoogleFonts.outfit(fontSize: 36, fontWeight: FontWeight.w400),
-    headlineLarge:
-        GoogleFonts.outfit(fontSize: 32, fontWeight: FontWeight.w700),
-    headlineMedium:
-        GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.w700),
-    headlineSmall:
-        GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.w700),
-    titleLarge: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.w600),
-    titleMedium: GoogleFonts.outfit(
-        fontSize: 16, fontWeight: FontWeight.w600, letterSpacing: 0.15),
-    titleSmall: GoogleFonts.outfit(
-        fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 0.1),
-    bodyLarge: GoogleFonts.inter(
-        fontSize: 16, fontWeight: FontWeight.w400, letterSpacing: 0.5),
-    bodyMedium: GoogleFonts.inter(
-        fontSize: 14, fontWeight: FontWeight.w400, letterSpacing: 0.25),
-    bodySmall: GoogleFonts.inter(
-        fontSize: 12, fontWeight: FontWeight.w400, letterSpacing: 0.4),
-    labelLarge: GoogleFonts.inter(
-        fontSize: 14, fontWeight: FontWeight.w500, letterSpacing: 0.1),
-    labelMedium: GoogleFonts.inter(
-        fontSize: 12, fontWeight: FontWeight.w500, letterSpacing: 0.5),
-    labelSmall: GoogleFonts.inter(
-        fontSize: 11, fontWeight: FontWeight.w500, letterSpacing: 0.5),
-  );
+// Cached text theme for performance
+final _cachedTextTheme = _buildTextTheme();
+
+TextTheme _buildTextTheme() {
+  try {
+    // Using Outfit for headings (Premium/Google Sans alternative)
+    // and Inter for body text (Modern/Readable)
+    return GoogleFonts.interTextTheme().copyWith(
+      displayLarge: GoogleFonts.outfit(
+          fontSize: 57, fontWeight: FontWeight.w400, letterSpacing: -0.25),
+      displayMedium:
+          GoogleFonts.outfit(fontSize: 45, fontWeight: FontWeight.w400),
+      displaySmall:
+          GoogleFonts.outfit(fontSize: 36, fontWeight: FontWeight.w400),
+      headlineLarge:
+          GoogleFonts.outfit(fontSize: 32, fontWeight: FontWeight.w700),
+      headlineMedium:
+          GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.w700),
+      headlineSmall:
+          GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.w700),
+      titleLarge: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.w600),
+      titleMedium: GoogleFonts.outfit(
+          fontSize: 16, fontWeight: FontWeight.w600, letterSpacing: 0.15),
+      titleSmall: GoogleFonts.outfit(
+          fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 0.1),
+      bodyLarge: GoogleFonts.inter(
+          fontSize: 16, fontWeight: FontWeight.w400, letterSpacing: 0.5),
+      bodyMedium: GoogleFonts.inter(
+          fontSize: 14, fontWeight: FontWeight.w400, letterSpacing: 0.25),
+      bodySmall: GoogleFonts.inter(
+          fontSize: 12, fontWeight: FontWeight.w400, letterSpacing: 0.4),
+      labelLarge: GoogleFonts.inter(
+          fontSize: 14, fontWeight: FontWeight.w500, letterSpacing: 0.1),
+      labelMedium: GoogleFonts.inter(
+          fontSize: 12, fontWeight: FontWeight.w500, letterSpacing: 0.5),
+      labelSmall: GoogleFonts.inter(
+          fontSize: 11, fontWeight: FontWeight.w500, letterSpacing: 0.5),
+    );
+  } catch (e) {
+    // Fallback to default text theme if Google Fonts fails
+    return const TextTheme();
+  }
 }
 
 ThemeData buildTheme(ColorScheme cs) {
-  final tt = _textTheme();
   return ThemeData(
       useMaterial3: true,
       colorScheme: cs,
-      textTheme: tt,
+      textTheme: _cachedTextTheme,
       scaffoldBackgroundColor: cs.surface,
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           shape: const StadiumBorder(),
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 18),
-          textStyle: tt.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          textStyle: _cachedTextTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -111,7 +116,7 @@ ThemeData buildTheme(ColorScheme cs) {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: cs.primary,
-          textStyle: tt.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+          textStyle: _cachedTextTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
         ),
       ),
       cardTheme: CardThemeData(

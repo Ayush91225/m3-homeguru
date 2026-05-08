@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
+import '../../../services/razorpay_service.dart';
+import '../../../services/user_profile_store.dart';
 
 class TutorStep7Body extends StatefulWidget {
   const TutorStep7Body({super.key, required this.onNext});
@@ -11,23 +14,99 @@ class TutorStep7Body extends StatefulWidget {
 
 class _TutorStep7BodyState extends State<TutorStep7Body> {
   bool _loading = false;
+  final RazorpayService _razorpayService = RazorpayService();
 
-  Future<void> _pay() async {
-    HapticFeedback.mediumImpact();
-    setState(() => _loading = true);
-    // TODO: integrate Razorpay SDK
-    // On success call widget.onNext with payment details
-    await Future.delayed(const Duration(seconds: 2));
+  @override
+  void initState() {
+    super.initState();
+    _razorpayService.initialize(
+      onSuccess: _handlePaymentSuccess,
+      onFailure: _handlePaymentFailure,
+      onExternalWallet: _handleExternalWallet,
+    );
+  }
+
+  @override
+  void dispose() {
+    _razorpayService.dispose();
+    super.dispose();
+  }
+
+  void _handlePaymentSuccess(PaymentSuccessResponse response) {
+    setState(() => _loading = false);
     if (mounted) {
-      setState(() => _loading = false);
       widget.onNext({
-        'paymentId': 'pay_mock_123',
-        'orderId': 'order_mock_456',
-        'signature': 'sig_mock_789',
+        'paymentId': response.paymentId ?? '',
+        'orderId': response.orderId ?? '',
+        'signature': response.signature ?? '',
         'paymentDate': DateTime.now().toIso8601String(),
         'validUntil': DateTime.now().add(const Duration(days: 365)).toIso8601String(),
       });
     }
+  }
+
+  void _handlePaymentFailure(PaymentFailureResponse response) {
+    setState(() => _loading = false);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Payment failed: ${response.message}'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  void _handleExternalWallet(ExternalWalletResponse response) {
+    setState(() => _loading = false);
+  }
+
+  Future<void> _pay() async {
+    HapticFeedback.mediumImpact();
+    setState(() => _loading = true);
+
+    final profile = ProfileStore.of(context);
+    final amountInPaise = 49900;
+    final receipt = 'rcpt_${DateTime.now().millisecondsSinceEpoch}';
+
+    final order = await _razorpayService.createOrder(
+      amount: amountInPaise,
+      receipt: receipt,
+      notes: {
+        'type': 'tutor_listing_fee',
+        'validity': '365 days',
+        'timestamp': DateTime.now().toIso8601String(),
+      },
+    );
+
+    if (order == null) {
+      setState(() => _loading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to create order. Please try again.'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+
+    _razorpayService.openCheckout(
+      orderId: order['id'],
+      amount: amountInPaise,
+      name: profile.name,
+      email: '${profile.handle.replaceAll('@', '')}@homeguru.com',
+      contact: profile.phone,
+      description: 'Annual Listing Fee - Valid for 365 days',
+      notes: {
+        'type': 'tutor_listing_fee',
+        'validity': '365 days',
+        'timestamp': DateTime.now().toIso8601String(),
+      },
+    );
   }
 
   @override

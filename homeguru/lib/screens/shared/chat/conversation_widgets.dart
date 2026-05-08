@@ -35,15 +35,23 @@ class _ImageViewer extends StatelessWidget {
 // ─── Message bubble ───────────────────────────────────────────────────────────
 
 class MessageBubble extends StatelessWidget {
-  const MessageBubble({super.key, required this.message, required this.tutor});
+  const MessageBubble({
+    super.key,
+    required this.message,
+    required this.tutor,
+    this.isTutor = false,
+  });
   final ChatMessage message;
   final ChatTutor tutor;
+  final bool isTutor;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final isMe = message.isMe;
+    final accentContainer = isTutor ? cs.tertiaryContainer : cs.primaryContainer;
+    final onAccentContainer = isTutor ? cs.onTertiaryContainer : cs.onPrimaryContainer;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
@@ -69,7 +77,7 @@ class MessageBubble extends StatelessWidget {
                   ? EdgeInsets.zero
                   : const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: isMe ? cs.primaryContainer : cs.surfaceContainerHigh,
+                color: isMe ? accentContainer : cs.surfaceContainerHigh,
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(18),
                   topRight: const Radius.circular(18),
@@ -114,7 +122,7 @@ class MessageBubble extends StatelessWidget {
                     Text(
                       message.text,
                       style: tt.bodyMedium?.copyWith(
-                        color: isMe ? cs.onPrimaryContainer : cs.onSurface,
+                        color: isMe ? onAccentContainer : cs.onSurface,
                         height: 1.4,
                       ),
                     ),
@@ -128,7 +136,7 @@ class MessageBubble extends StatelessWidget {
                       style: tt.labelSmall?.copyWith(
                         fontSize: 10,
                         color: isMe
-                            ? cs.onPrimaryContainer.withValues(alpha: 0.6)
+                            ? onAccentContainer.withValues(alpha: 0.6)
                             : cs.onSurfaceVariant,
                       ),
                     ),
@@ -197,8 +205,9 @@ class DateDivider extends StatelessWidget {
 
 class BlockedBar extends StatelessWidget {
   final ChatTutor? tutor;
+  final bool isTutor;
 
-  const BlockedBar({super.key, this.tutor});
+  const BlockedBar({super.key, this.tutor, this.isTutor = false});
 
   @override
   Widget build(BuildContext context) {
@@ -214,42 +223,48 @@ class BlockedBar extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       child: SafeArea(
         top: false,
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                'Messaging is disabled for past tutors.',
+        child: isTutor
+            ? Text(
+                'If this learner books new sessions with you, messaging will be enabled.',
                 style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                textAlign: TextAlign.center,
+              )
+            : Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Messaging is disabled for past tutors.',
+                      style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  FilledButton.icon(
+                    icon: const Icon(Icons.refresh_rounded, size: 16),
+                    label: const Text('Book Again'),
+                    onPressed: tutor != null
+                        ? () {
+                            TutorActionSheet.show(
+                              context,
+                              tutorId: tutor!.id,
+                              tutorName: tutor!.name,
+                              tutorImage: tutor!.avatarUrl,
+                              isVerified: tutor!.isVerified,
+                              primarySubject: tutor!.subject,
+                              tutorRating: tutor!.rating,
+                              tutorStudents: tutor!.students,
+                              tutorLocation: tutor!.location,
+                              tutorPricing: tutor!.pricing,
+                            );
+                          }
+                        : null,
+                    style: FilledButton.styleFrom(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      textStyle: const TextStyle(fontSize: 13),
+                    ),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(width: 12),
-            FilledButton.icon(
-              icon: const Icon(Icons.refresh_rounded, size: 16),
-              label: const Text('Book Again'),
-              onPressed: tutor != null
-                  ? () {
-                      TutorActionSheet.show(
-                        context,
-                        tutorId: tutor!.id,
-                        tutorName: tutor!.name,
-                        tutorImage: tutor!.avatarUrl,
-                        isVerified: tutor!.isVerified,
-                        primarySubject: tutor!.subject,
-                        tutorRating: tutor!.rating,
-                        tutorStudents: tutor!.students,
-                        tutorLocation: tutor!.location,
-                        tutorPricing: tutor!.pricing,
-                      );
-                    }
-                  : null,
-              style: FilledButton.styleFrom(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                textStyle: const TextStyle(fontSize: 13),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -263,11 +278,13 @@ class ConversationInputBar extends StatefulWidget {
     required this.tutorFirstName,
     required this.onSend,
     required this.onPickImage,
+    this.isTutor = false,
   });
 
   final String tutorFirstName;
   final ValueChanged<String> onSend;
   final VoidCallback onPickImage;
+  final bool isTutor;
 
   @override
   State<ConversationInputBar> createState() => _ConversationInputBarState();
@@ -293,6 +310,8 @@ class _ConversationInputBarState extends State<ConversationInputBar> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accentColor = widget.isTutor ? cs.tertiary : cs.primary;
+    final onAccent = widget.isTutor ? cs.onTertiary : cs.onPrimary;
 
     return Container(
       decoration: BoxDecoration(
@@ -351,7 +370,7 @@ class _ConversationInputBarState extends State<ConversationInputBar> {
                 shape: BoxShape.circle,
               ),
               child: IconButton(
-                icon: Icon(Icons.send_rounded, color: cs.onPrimary),
+                icon: Icon(Icons.send_rounded, color: onAccent),
                 onPressed: _submit,
                 iconSize: 22,
               ),
@@ -366,14 +385,21 @@ class _ConversationInputBarState extends State<ConversationInputBar> {
 // ─── Tutor info sheet ─────────────────────────────────────────────────────────
 
 class TutorInfoSheet extends StatelessWidget {
-  const TutorInfoSheet({super.key, required this.tutor, required this.isPast});
+  const TutorInfoSheet({
+    super.key,
+    required this.tutor,
+    required this.isPast,
+    this.isTutor = false,
+  });
   final ChatTutor tutor;
   final bool isPast;
+  final bool isTutor;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final accentColor = isTutor ? cs.tertiary : cs.primary;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
@@ -398,59 +424,79 @@ class TutorInfoSheet extends StatelessWidget {
                   style: tt.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
               if (tutor.isVerified) ...[
                 const SizedBox(width: 6),
-                Icon(Icons.verified_rounded, size: 18, color: cs.primary),
+                Icon(Icons.verified_rounded, size: 18, color: accentColor),
               ],
             ],
           ),
           const SizedBox(height: 4),
           Text(tutor.subject,
               style: tt.bodyMedium?.copyWith(
-                  color: cs.primary, fontWeight: FontWeight.w600)),
+                  color: accentColor, fontWeight: FontWeight.w600)),
           const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  icon: const Icon(Icons.person_outline_rounded),
-                  label: const Text('View Profile'),
-                  onPressed: () => Navigator.pop(context),
-                ),
+          if (isTutor && isPast)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                'If this learner books new sessions with you, messaging will be enabled.',
+                style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                textAlign: TextAlign.center,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: FilledButton.icon(
-                  icon: Icon(isPast
-                      ? Icons.refresh_rounded
-                      : Icons.calendar_month_outlined),
-                  label: Text(isPast ? 'Book Again' : 'Sessions'),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    if (isPast) {
-                      TutorActionSheet.show(
-                        context,
-                        tutorId: tutor.id,
-                        tutorName: tutor.name,
-                        tutorImage: tutor.avatarUrl,
-                        isVerified: tutor.isVerified,
-                        primarySubject: tutor.subject,
-                        tutorRating: tutor.rating,
-                        tutorStudents: tutor.students,
-                        tutorLocation: tutor.location,
-                        tutorPricing: tutor.pricing,
-                      );
-                    } else {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => SessionsListingScreen(initialTutor: tutor.name),
-                        ),
-                      );
-                    }
-                  },
+            )
+          else
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.person_outline_rounded),
+                    label: const Text('View Profile'),
+                    onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: accentColor,
+                    ),
+                  ),
                 ),
-              ),
-            ],
-          ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: FilledButton.icon(
+                    icon: Icon(isPast
+                        ? Icons.refresh_rounded
+                        : Icons.calendar_month_outlined),
+                    label: Text(isPast ? 'Book Again' : 'Sessions'),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      if (isPast) {
+                        TutorActionSheet.show(
+                          context,
+                          tutorId: tutor.id,
+                          tutorName: tutor.name,
+                          tutorImage: tutor.avatarUrl,
+                          isVerified: tutor.isVerified,
+                          primarySubject: tutor.subject,
+                          tutorRating: tutor.rating,
+                          tutorStudents: tutor.students,
+                          tutorLocation: tutor.location,
+                          tutorPricing: tutor.pricing,
+                        );
+                      } else {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => SessionsListingScreen(
+                              initialTutor: tutor.name,
+                              isTutor: isTutor,
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                    style: FilledButton.styleFrom(
+                      backgroundColor: accentColor,
+                      foregroundColor: isTutor ? cs.onTertiary : cs.onPrimary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
     );

@@ -8,7 +8,9 @@ import 'month_calendar.dart';
 import 'timezone_sheet.dart';
 
 class CalendarApp extends StatefulWidget {
-  const CalendarApp({super.key});
+  const CalendarApp({super.key, this.isTutor = false});
+  
+  final bool isTutor;
 
   @override
   State<CalendarApp> createState() => _CalendarAppState();
@@ -38,7 +40,7 @@ class _CalendarAppState extends State<CalendarApp> {
     final now = tz.TZDateTime.now(location);
     _today = DateTime(now.year, now.month, now.day);
     _selectedDate = DateTime(now.year, now.month, now.day);
-    _events = createInitialEvents(now);
+    _events = createInitialEvents(now, isTutor: widget.isTutor);
     _convertedEvents = _events; // Initialize cache
     _lastConvertedTimezone = _timezone;
   }
@@ -291,6 +293,7 @@ class _CalendarAppState extends State<CalendarApp> {
                           today: _today,
                           events: _filteredEvents,
                           onSelectDate: _selectDate,
+                          isTutor: widget.isTutor,
                         )
                       : _view == CalendarView.week
                           ? WeekCalendar(
@@ -299,12 +302,14 @@ class _CalendarAppState extends State<CalendarApp> {
                               today: _today,
                               events: _filteredEvents,
                               onSelectDate: _selectDate,
+                              isTutor: widget.isTutor,
                             )
                           : MonthCalendar(
                               selectedDate: _selectedDate,
                               today: _today,
                               events: _filteredEvents,
                               onSelectDate: _selectDate,
+                              isTutor: widget.isTutor,
                             ),
                 ),
               ],

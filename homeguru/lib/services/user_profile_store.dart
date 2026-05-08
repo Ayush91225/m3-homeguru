@@ -18,6 +18,7 @@ class UserProfileStore extends ChangeNotifier {
   static const _kName            = 'profile_name';
   static const _kHandle          = 'profile_handle';
   static const _kBio             = 'profile_bio';
+  static const _kPhone           = 'profile_phone';
 
   File? _avatar;
   File? _cover;
@@ -26,6 +27,7 @@ class UserProfileStore extends ChangeNotifier {
   String _name   = 'Ravi Kumar';
   String _handle = '@ravi.learns';
   String _bio    = 'Class 11 · PCM · JEE 2026';
+  String _phone  = '9999999999';
 
   File? get avatar => _avatar;
   File? get cover  => _cover;
@@ -34,6 +36,7 @@ class UserProfileStore extends ChangeNotifier {
   String get name   => _name;
   String get handle => _handle;
   String get bio    => _bio;
+  String get phone  => _phone;
 
   UserProfileStore._();
 
@@ -48,6 +51,7 @@ class UserProfileStore extends ChangeNotifier {
     store._name   = prefs.getString(_kName)   ?? store._name;
     store._handle = prefs.getString(_kHandle) ?? store._handle;
     store._bio    = prefs.getString(_kBio)    ?? store._bio;
+    store._phone  = prefs.getString(_kPhone)  ?? store._phone;
     final raw = prefs.getString(_kSubProfiles);
     if (raw != null) {
       final list = jsonDecode(raw) as List<dynamic>;
@@ -56,15 +60,17 @@ class UserProfileStore extends ChangeNotifier {
     return store;
   }
 
-  Future<void> updateProfile({required String name, required String handle, required String bio}) async {
+  Future<void> updateProfile({required String name, required String handle, required String bio, String? phone}) async {
     _name   = name;
     _handle = handle;
     _bio    = bio;
+    if (phone != null) _phone = phone;
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_kName,   name);
     await prefs.setString(_kHandle, handle);
     await prefs.setString(_kBio,    bio);
+    if (phone != null) await prefs.setString(_kPhone, phone);
   }
 
   Future<void> setAvatar(File file) async {

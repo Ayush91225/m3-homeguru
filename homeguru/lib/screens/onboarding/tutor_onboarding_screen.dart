@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../widgets/onboarding/onboarding_header.dart';
 import '../../widgets/mascot/open_sprite.dart';
 import 'tutor/step0.dart';
@@ -132,9 +133,15 @@ class _TutorOnboardingScreenState extends State<TutorOnboardingScreen> {
               .animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
           child: _CongratsOverlay(
             tutorName: _firstName,
-            onStart: () {
-              Navigator.of(context).pop();
-              // TODO: navigate to tutor dashboard
+            onStart: () async {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setString('logged_in_user', 'tutor');
+              if (context.mounted) {
+                Navigator.of(context).pushNamedAndRemoveUntil(
+                  '/tutor-dashboard',
+                  (route) => false,
+                );
+              }
             },
           ),
         ),

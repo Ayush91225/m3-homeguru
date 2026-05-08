@@ -11,8 +11,9 @@ import 'cancel_sheet.dart';
 
 class ClassDetailSheet extends StatelessWidget {
   final CalendarEvent event;
+  final bool isTutor;
 
-  const ClassDetailSheet({super.key, required this.event});
+  const ClassDetailSheet({super.key, required this.event, this.isTutor = false});
 
   Color _getToneColor(EventTone tone) {
     switch (tone) {
@@ -54,7 +55,7 @@ class ClassDetailSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final color = _getToneColor(event.tone);
+    final color = isTutor ? cs.tertiary : _getToneColor(event.tone);
     final canJoin = _canJoinNow();
 
     return Container(
@@ -148,7 +149,7 @@ class ClassDetailSheet extends StatelessWidget {
               leading: Icon(Icons.videocam_rounded, color: cs.onSurfaceVariant),
               title: Text(event.meetingId!),
               trailing: IconButton(
-                icon: Icon(Icons.copy_rounded, size: 18, color: cs.primary),
+                icon: Icon(Icons.copy_rounded, size: 18, color: isTutor ? cs.tertiary : cs.primary),
                 onPressed: () {
                   Clipboard.setData(ClipboardData(text: event.meetingId!));
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -176,6 +177,17 @@ class ClassDetailSheet extends StatelessWidget {
                     userName: profile.name,
                     userRole: 'Learner',
                     event: event,
+                    tutor: ChatTutor(
+                      id: event.id,
+                      name: event.teacher ?? event.title,
+                      subject: event.subject ?? event.title,
+                      avatarUrl: event.teacherImage ?? '',
+                      lastMessage: '',
+                      time: '',
+                      isVerified: true,
+                      isOnline: true,
+                    ),
+                    chatMessages: [],
                   ),
                 ),
               );
@@ -214,9 +226,13 @@ class ClassDetailSheet extends StatelessWidget {
                 minimumSize: const Size.fromHeight(48),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24)),
+                side: BorderSide(color: isTutor ? cs.tertiary : cs.primary),
               ),
-              icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
-              label: Text('Message ${(event.teacher ?? '').split(' ').skip(1).join(' ')}'),
+              icon: Icon(Icons.chat_bubble_outline_rounded, size: 18, color: isTutor ? cs.tertiary : cs.primary),
+              label: Text(
+                isTutor ? 'Message ${event.title.split(' ').first}' : 'Message ${(event.teacher ?? '').split(' ').skip(1).join(' ')}',
+                style: TextStyle(color: isTutor ? cs.tertiary : cs.primary),
+              ),
             ),
             const SizedBox(height: 12),
           ],
@@ -230,14 +246,15 @@ class ClassDetailSheet extends StatelessWidget {
                       context: context,
                       isScrollControlled: true,
                       backgroundColor: Colors.transparent,
-                      builder: (context) => RescheduleSheet(event: event),
+                      builder: (context) => RescheduleSheet(event: event, isTutor: isTutor),
                     );
                   },
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size.fromHeight(48),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    side: BorderSide(color: isTutor ? cs.tertiary : cs.outline),
                   ),
-                  child: const Text('Reschedule'),
+                  child: Text('Reschedule', style: TextStyle(color: isTutor ? cs.tertiary : cs.onSurface)),
                 ),
               ),
               const SizedBox(width: 12),
@@ -249,14 +266,15 @@ class ClassDetailSheet extends StatelessWidget {
                       context: context,
                       isScrollControlled: true,
                       backgroundColor: Colors.transparent,
-                      builder: (context) => CancelSheet(event: event),
+                      builder: (context) => CancelSheet(event: event, isTutor: isTutor),
                     );
                   },
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size.fromHeight(48),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    side: BorderSide(color: cs.error),
                   ),
-                  child: const Text('Cancel'),
+                  child: Text('Cancel', style: TextStyle(color: cs.error)),
                 ),
               ),
             ],

@@ -67,14 +67,9 @@ class CollapsibleSection extends StatefulWidget {
 
 class _CollapsibleSectionState extends State<CollapsibleSection> {
   bool _expanded = false;
-  bool _animating = false;
 
   void _toggle() {
-    if (_animating) return;
-    setState(() { _expanded = !_expanded; _animating = true; });
-    Future.delayed(const Duration(milliseconds: 320), () {
-      if (mounted) setState(() => _animating = false);
-    });
+    setState(() => _expanded = !_expanded);
   }
 
   @override
@@ -84,33 +79,26 @@ class _CollapsibleSectionState extends State<CollapsibleSection> {
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         SectionHeader(section: widget.section),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Stack(
             children: [
-              AbsorbPointer(
-                absorbing: _animating,
-                child: AnimatedSize(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                  alignment: Alignment.topCenter,
-                  child: _expanded
-                      ? widget.child
-                      : SizedBox(
-                          height: widget.previewHeight,
-                          child: ClipRect(
-                            child: OverflowBox(
-                              alignment: Alignment.topCenter,
-                              maxHeight: double.infinity,
-                              child: SizedBox(
-                                width: double.infinity,
-                                child: widget.child,
-                              ),
-                            ),
-                          ),
-                        ),
+              AnimatedCrossFade(
+                duration: const Duration(milliseconds: 300),
+                crossFadeState: _expanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+                firstChild: SizedBox(
+                  height: widget.previewHeight,
+                  width: double.infinity,
+                  child: ClipRect(
+                    child: widget.child,
+                  ),
+                ),
+                secondChild: SizedBox(
+                  width: double.infinity,
+                  child: widget.child,
                 ),
               ),
               if (!_expanded)

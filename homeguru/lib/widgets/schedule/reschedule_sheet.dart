@@ -3,8 +3,9 @@ import 'calendar_types.dart';
 
 class RescheduleSheet extends StatefulWidget {
   final CalendarEvent event;
+  final bool isTutor;
 
-  const RescheduleSheet({super.key, required this.event});
+  const RescheduleSheet({super.key, required this.event, this.isTutor = false});
 
   @override
   State<RescheduleSheet> createState() => _RescheduleSheetState();
@@ -50,7 +51,7 @@ class _RescheduleSheetState extends State<RescheduleSheet> {
           const SizedBox(height: 20),
           Row(
             children: [
-              Icon(Icons.schedule_rounded, color: cs.primary),
+              Icon(Icons.schedule_rounded, color: widget.isTutor ? cs.tertiary : cs.primary),
               const SizedBox(width: 12),
               Text('Reschedule Class', style: tt.titleLarge?.copyWith(fontWeight: FontWeight.w600)),
             ],
@@ -68,7 +69,9 @@ class _RescheduleSheetState extends State<RescheduleSheet> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Request will be sent to tutor. Class will be rescheduled only if tutor accepts.',
+                    widget.isTutor
+                        ? 'Request will be sent to learner. Class will be rescheduled only if learner accepts.'
+                        : 'Request will be sent to tutor. Class will be rescheduled only if tutor accepts.',
                     style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
                   ),
                 ),
@@ -135,17 +138,23 @@ class _RescheduleSheetState extends State<RescheduleSheet> {
                   borderRadius: BorderRadius.circular(12),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: isSelected ? cs.primaryContainer : cs.surfaceContainerHighest,
+                      color: isSelected
+                          ? (widget.isTutor ? cs.tertiaryContainer : cs.primaryContainer)
+                          : cs.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: isSelected ? cs.primary : cs.outlineVariant,
+                        color: isSelected
+                            ? (widget.isTutor ? cs.tertiary : cs.primary)
+                            : cs.outlineVariant,
                       ),
                     ),
                     child: Center(
                       child: Text(
                         _timeSlots[index],
                         style: tt.labelMedium?.copyWith(
-                          color: isSelected ? cs.onPrimaryContainer : cs.onSurface,
+                          color: isSelected
+                              ? (widget.isTutor ? cs.onTertiaryContainer : cs.onPrimaryContainer)
+                              : cs.onSurface,
                           fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                         ),
                       ),
@@ -164,8 +173,9 @@ class _RescheduleSheetState extends State<RescheduleSheet> {
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size.fromHeight(48),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    side: BorderSide(color: widget.isTutor ? cs.tertiary : cs.outline),
                   ),
-                  child: const Text('Cancel'),
+                  child: Text('Cancel', style: TextStyle(color: widget.isTutor ? cs.tertiary : cs.onSurface)),
                 ),
               ),
               const SizedBox(width: 12),
@@ -175,14 +185,17 @@ class _RescheduleSheetState extends State<RescheduleSheet> {
                       ? () {
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Reschedule request sent to tutor'),
+                            SnackBar(
+                              content: Text(widget.isTutor
+                                  ? 'Reschedule request sent to learner'
+                                  : 'Reschedule request sent to tutor'),
                               behavior: SnackBarBehavior.floating,
                             ),
                           );
                         }
                       : null,
                   style: FilledButton.styleFrom(
+                    backgroundColor: widget.isTutor ? cs.tertiary : cs.primary,
                     minimumSize: const Size.fromHeight(48),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                   ),

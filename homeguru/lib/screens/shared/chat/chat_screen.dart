@@ -4,10 +4,12 @@ import 'chat_models.dart';
 import 'chat_widgets.dart';
 import 'conversation_screen.dart';
 
-export 'chat_models.dart' show ChatTutor, ChatMessage;
+export 'chat_models.dart' show ChatTutor, ChatMessage, seedLearnerInbox, seedLearnerPast, seedLearnerArchived;
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+  const ChatScreen({super.key, this.isTutor = false});
+  
+  final bool isTutor;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -18,9 +20,24 @@ class _ChatScreenState extends State<ChatScreen> {
   String _search = '';
   final _searchCtrl = TextEditingController();
 
-  late final List<ChatTutor> _inbox = List.of(seedInbox);
-  late final List<ChatTutor> _past = List.of(seedPast);
-  late final List<ChatTutor> _archived = List.of(seedArchived);
+  late final List<ChatTutor> _inbox;
+  late final List<ChatTutor> _past;
+  late final List<ChatTutor> _archived;
+
+  @override
+  void initState() {
+    super.initState();
+    // Use learner data for tutors, tutor data for learners
+    if (widget.isTutor) {
+      _inbox = List.of(seedLearnerInbox);
+      _past = List.of(seedLearnerPast);
+      _archived = List.of(seedLearnerArchived);
+    } else {
+      _inbox = List.of(seedInbox);
+      _past = List.of(seedPast);
+      _archived = List.of(seedArchived);
+    }
+  }
 
   final Map<String, List<ChatMessage>> _messages = {};
   List<ChatMessage> _msgsFor(String id) =>
@@ -159,6 +176,7 @@ class _ChatScreenState extends State<ChatScreen> {
           tutor: tutor,
           isPast: tutor.isPast,
           messages: _msgsFor(tutor.id),
+          isTutor: widget.isTutor,
         ),
       ),
     );
@@ -183,6 +201,7 @@ class _ChatScreenState extends State<ChatScreen> {
         },
         onSend: (text) => _onQuickSend(tutor, text),
         onOpen: () { Navigator.pop(context); _openConversation(tutor); },
+        isTutor: widget.isTutor,
       ),
     );
   }
@@ -210,6 +229,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       onTap: () => _openConversation(list[i]),
                       onLongPress: () => _showQuickSheet(list[i]),
                       isPast: list[i].isPast,
+                      isTutor: widget.isTutor,
                     ),
                   ),
           ),
@@ -246,6 +266,10 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildTabChips(ColorScheme cs, TextTheme tt) {
+    final accentColor = widget.isTutor ? cs.tertiary : cs.primary;
+    final accentContainer = widget.isTutor ? cs.tertiaryContainer : cs.primaryContainer;
+    final onAccentContainer = widget.isTutor ? cs.onTertiaryContainer : cs.onPrimaryContainer;
+    
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
       child: Row(
@@ -267,7 +291,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 5, vertical: 1),
                       decoration: BoxDecoration(
-                        color: selected ? cs.primary : cs.error,
+                        color: selected ? accentColor : cs.error,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -286,14 +310,14 @@ class _ChatScreenState extends State<ChatScreen> {
                 HapticFeedback.selectionClick();
                 setState(() => _tabIndex = i);
               },
-              selectedColor: cs.primaryContainer,
+              selectedColor: accentContainer,
               backgroundColor: cs.surfaceContainerHighest,
               side: BorderSide.none,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20)),
               labelStyle: tt.labelLarge?.copyWith(
                 color:
-                    selected ? cs.onPrimaryContainer : cs.onSurfaceVariant,
+                    selected ? onAccentContainer : cs.onSurfaceVariant,
                 fontWeight:
                     selected ? FontWeight.w600 : FontWeight.w400,
               ),

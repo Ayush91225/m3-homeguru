@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:camera/camera.dart';
@@ -7,13 +6,17 @@ import '../../../services/user_profile_store.dart';
 import '../../../widgets/schedule/cancel_sheet.dart';
 import '../../../widgets/schedule/reschedule_sheet.dart';
 import '../../../widgets/schedule/calendar_types.dart';
+import '../chat/chat_models.dart';
 import 'meeting_details_sheet.dart';
+import 'meet_screen.dart';
 
 class PrejoinScreen extends StatefulWidget {
   final String meetingCode;
   final String userName;
   final String userRole;
   final CalendarEvent? event;
+  final ChatTutor? tutor;
+  final List<ChatMessage>? chatMessages;
 
   const PrejoinScreen({
     super.key,
@@ -21,6 +24,8 @@ class PrejoinScreen extends StatefulWidget {
     required this.userName,
     required this.userRole,
     this.event,
+    this.tutor,
+    this.chatMessages,
   });
 
   @override
@@ -80,7 +85,7 @@ class _PrejoinScreenState extends State<PrejoinScreen> {
       _cameraController = CameraController(
         camera,
         ResolutionPreset.medium,
-        enableAudio: false,
+        enableAudio: true, // Enable audio for VOIP
         imageFormatGroup: ImageFormatGroup.jpeg,
       );
       
@@ -150,7 +155,7 @@ class _PrejoinScreenState extends State<PrejoinScreen> {
     _cameraController = CameraController(
       camera,
       ResolutionPreset.medium,
-      enableAudio: false,
+      enableAudio: true, // Enable audio for VOIP
       imageFormatGroup: ImageFormatGroup.jpeg,
     );
     
@@ -165,11 +170,17 @@ class _PrejoinScreenState extends State<PrejoinScreen> {
   }
 
   void _joinMeeting() {
-    // TODO: Navigate to meeting screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Joining meeting ${widget.meetingCode}...'),
-        behavior: SnackBarBehavior.floating,
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MeetScreen(
+          meetingCode: widget.meetingCode,
+          userName: widget.userName,
+          initialCameraState: _isCameraOn,
+          initialMicState: _isMicOn,
+          tutor: widget.tutor,
+          chatMessages: widget.chatMessages,
+        ),
       ),
     );
   }

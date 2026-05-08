@@ -125,7 +125,7 @@ class StatCard extends StatelessWidget {
       ],
     );
   }
-
+ 
   Widget _buildSmallCard() {
     return Center(
       child: Icon(icon, color: accentColor, size: iconSize),

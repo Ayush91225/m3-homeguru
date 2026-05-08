@@ -9,6 +9,7 @@ class DayCalendar extends StatelessWidget {
   final DateTime today;
   final List<CalendarEvent> events;
   final Function(DateTime) onSelectDate;
+  final bool isTutor;
 
   const DayCalendar({
     super.key,
@@ -16,6 +17,7 @@ class DayCalendar extends StatelessWidget {
     required this.today,
     required this.events,
     required this.onSelectDate,
+    this.isTutor = false,
   });
 
   Color _getToneColor(EventTone tone) {
@@ -77,14 +79,22 @@ class DayCalendar extends StatelessWidget {
                           width: 32,
                           height: 32,
                           decoration: BoxDecoration(
-                            color: isToday ? cs.primary : (isSelected ? cs.primaryContainer : Colors.transparent),
+                            color: isToday
+                                ? (isTutor ? cs.tertiary : cs.primary)
+                                : (isSelected
+                                    ? (isTutor ? cs.tertiaryContainer : cs.primaryContainer)
+                                    : Colors.transparent),
                             shape: BoxShape.circle,
                           ),
                           child: Center(
                             child: Text(
                               '${day.day}',
                               style: tt.bodySmall?.copyWith(
-                                color: isToday ? cs.onPrimary : (isSelected ? cs.onPrimaryContainer : cs.onSurface),
+                                color: isToday
+                                    ? (isTutor ? cs.onTertiary : cs.onPrimary)
+                                    : (isSelected
+                                        ? (isTutor ? cs.onTertiaryContainer : cs.onPrimaryContainer)
+                                        : cs.onSurface),
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -147,7 +157,7 @@ class DayCalendar extends StatelessWidget {
                           ...dayEvents.map((event) {
                             final top = (event.startMinutes / 60) * 80.0 + 4;
                             final height = ((event.endMinutes - event.startMinutes) / 60) * 80.0 - 8;
-                            final color = _getToneColor(event.tone);
+                            final color = isTutor ? cs.tertiary : _getToneColor(event.tone);
 
                             return Positioned(
                               top: top,
@@ -160,7 +170,7 @@ class DayCalendar extends StatelessWidget {
                                     context: context,
                                     isScrollControlled: true,
                                     backgroundColor: Colors.transparent,
-                                    builder: (context) => ClassDetailSheet(event: event),
+                                    builder: (context) => ClassDetailSheet(event: event, isTutor: isTutor),
                                   );
                                 },
                                 child: Container(

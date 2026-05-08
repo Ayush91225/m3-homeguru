@@ -1,0 +1,93 @@
+[
+  {
+    "id": "1",
+    "name": "Aarav Kumar",
+    "image": "https://i.pravatar.cc/150?img=12",
+    "location": "Mumbai, Maharashtra",
+    "totalSessions": 24,
+    "joinedDate": "Jan 2024",
+    "subjects": [
+      {"name": "JEE Maths", "level": "Class 12"},
+      {"name": "Physics", "level": "Class 12"}
+    ]
+  },
+  {
+    "id": "2",
+    "name": "Diya Sharma",
+    "image": "https://i.pravatar.cc/150?img=45",
+    "location": "Delhi",
+    "totalSessions": 18,
+    "joinedDate": "Feb 2024",
+    "subjects": [
+      {"name": "Chemistry", "level": "Class 11"}
+    ]
+  },
+  {
+    "id": "3",
+    "name": "Arjun Patel",
+    "image": "https://i.pravatar.cc/150?img=33",
+    "location": "Ahmedabad, Gujarat",
+    "totalSessions": 32,
+    "joinedDate": "Dec 2023",
+    "subjects": [
+      {"name": "JEE Maths", "level": "Class 12"},
+      {"name": "Chemistry", "level": "Class 12"}
+    ]
+  },
+  {
+    "id": "4",
+    "name": "Ananya Singh",
+    "image": "https://i.pravatar.cc/150?img=47",
+    "location": "Bangalore, Karnataka",
+    "totalSessions": 15,
+    "joinedDate": "Mar 2024",
+    "subjects": [
+      {"name": "Physics", "level": "Class 11"}
+    ]
+  },
+  {
+    "id": "5",
+    "name": "Rohan Verma",
+    "image": "https://i.pravatar.cc/150?img=51",
+    "location": "Pune, Maharashtra",
+    "totalSessions": 28,
+    "joinedDate": "Jan 2024",
+    "subjects": [
+      {"name": "JEE Maths", "level": "Class 12"}
+    ]
+  },
+  {
+    "id": "6",
+    "name": "Ishita Reddy",
+    "image": "https://i.pravatar.cc/150?img=48",
+    "location": "Hyderabad, Telangana",
+    "totalSessions": 21,
+    "joinedDate": "Feb 2024",
+    "subjects": [
+      {"name": "Chemistry", "level": "Class 12"}
+    ]
+  },
+  {
+    "id": "7",
+    "name": "Kabir Joshi",
+    "image": "https://i.pravatar.cc/150?img=52",
+    "location": "Jaipur, Rajasthan",
+    "totalSessions": 12,
+    "joinedDate": "Apr 2024",
+    "subjects": [
+      {"name": "Physics", "level": "Class 11"},
+      {"name": "JEE Maths", "level": "Class 11"}
+    ]
+  },
+  {
+    "id": "8",
+    "name": "Saanvi Gupta",
+    "image": "https://i.pravatar.cc/150?img=49",
+    "location": "Kolkata, West Bengal",
+    "totalSessions": 19,
+    "joinedDate": "Mar 2024",
+    "subjects": [
+      {"name": "Chemistry", "level": "Class 11"}
+    ]
+  }
+]

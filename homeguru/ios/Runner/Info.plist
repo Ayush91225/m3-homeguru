@@ -87,6 +87,8 @@
 		<string>audio</string>
 		<string>voip</string>
 	</array>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>We need speech recognition for live captions during your meetings</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>

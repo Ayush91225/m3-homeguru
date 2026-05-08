@@ -250,8 +250,9 @@ List<SessionData> _generateSessions() {
 // ── Screen ────────────────────────────────────────────────────────────────────
 
 class SessionsListingScreen extends StatefulWidget {
-  const SessionsListingScreen({super.key, this.initialTutor});
+  const SessionsListingScreen({super.key, this.initialTutor, this.isTutor = false});
   final String? initialTutor;
+  final bool isTutor;
 
   @override
   State<SessionsListingScreen> createState() => _SessionsListingScreenState();
@@ -353,6 +354,7 @@ class _SessionsListingScreenState extends State<SessionsListingScreen> {
             onSubjectChanged: (v) => setState(() => _filterSubject = v),
             onTutorChanged: (v) => setState(() => _filterTutor = v),
             onStatusChanged: (v) => setState(() => _filterStatus = v),
+            isTutor: widget.isTutor,
           ),
           Expanded(
             child: sessions.isEmpty
@@ -369,7 +371,7 @@ class _SessionsListingScreenState extends State<SessionsListingScreen> {
                 : ListView.builder(
                     padding: const EdgeInsets.only(bottom: 32),
                     itemCount: sessions.length,
-                    itemBuilder: (context, i) => _SessionTile(session: sessions[i]),
+                    itemBuilder: (context, i) => _SessionTile(session: sessions[i], isTutor: widget.isTutor),
                   ),
           ),
         ],
@@ -391,6 +393,7 @@ class _FilterBar extends StatelessWidget {
   final ValueChanged<String?> onSubjectChanged;
   final ValueChanged<String?> onTutorChanged;
   final ValueChanged<SessionStatus?> onStatusChanged;
+  final bool isTutor;
 
   const _FilterBar({
     required this.filterDate,
@@ -403,6 +406,7 @@ class _FilterBar extends StatelessWidget {
     required this.onSubjectChanged,
     required this.onTutorChanged,
     required this.onStatusChanged,
+    this.isTutor = false,
   });
 
   String _fmtDate(DateTime d) {
@@ -430,6 +434,7 @@ class _FilterBar extends StatelessWidget {
             label: filterDate != null ? _fmtDate(filterDate!) : 'Date',
             active: filterDate != null,
             onTap: onDateTap,
+            isTutor: isTutor,
           ),
           const SizedBox(width: 8),
           // Subject dropdown chip
@@ -440,16 +445,18 @@ class _FilterBar extends StatelessWidget {
             items: subjects,
             value: filterSubject,
             onChanged: onSubjectChanged,
+            isTutor: isTutor,
           ),
           const SizedBox(width: 8),
           // Tutor dropdown chip
           _DropdownChip(
             icon: Icons.person_outline_rounded,
-            label: filterTutor ?? 'Tutor',
+            label: filterTutor ?? (isTutor ? 'Student' : 'Tutor'),
             active: filterTutor != null,
             items: tutors,
             value: filterTutor,
             onChanged: onTutorChanged,
+            isTutor: isTutor,
           ),
           const SizedBox(width: 8),
           // Status chip — cycles: null → conducted → upcoming → null
@@ -471,6 +478,7 @@ class _FilterBar extends StatelessWidget {
                 onStatusChanged(null);
               }
             },
+            isTutor: isTutor,
           ),
         ],
       ),
@@ -482,6 +490,7 @@ class _FilterBar extends StatelessWidget {
     required String label,
     required bool active,
     required VoidCallback onTap,
+    bool isTutor = false,
   }) {
     final cs = Theme.of(context).colorScheme;
     return GestureDetector(
@@ -489,20 +498,26 @@ class _FilterBar extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: active ? cs.primaryContainer : cs.surfaceContainerLow,
+          color: active
+              ? (isTutor ? cs.tertiaryContainer : cs.primaryContainer)
+              : cs.surfaceContainerLow,
           borderRadius: BorderRadius.circular(999),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 14, color: active ? cs.onPrimaryContainer : cs.onSurfaceVariant),
+            Icon(icon, size: 14, color: active
+                ? (isTutor ? cs.onTertiaryContainer : cs.onPrimaryContainer)
+                : cs.onSurfaceVariant),
             const SizedBox(width: 6),
             Text(
               label,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
-                color: active ? cs.onPrimaryContainer : cs.onSurfaceVariant,
+                color: active
+                    ? (isTutor ? cs.onTertiaryContainer : cs.onPrimaryContainer)
+                    : cs.onSurfaceVariant,
               ),
             ),
           ],
@@ -519,6 +534,7 @@ class _DropdownChip extends StatelessWidget {
   final List<String> items;
   final String? value;
   final ValueChanged<String?> onChanged;
+  final bool isTutor;
 
   const _DropdownChip({
     required this.icon,
@@ -527,6 +543,7 @@ class _DropdownChip extends StatelessWidget {
     required this.items,
     required this.value,
     required this.onChanged,
+    this.isTutor = false,
   });
 
   @override
@@ -545,24 +562,32 @@ class _DropdownChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: active ? cs.primaryContainer : cs.surfaceContainerLow,
+          color: active
+              ? (isTutor ? cs.tertiaryContainer : cs.primaryContainer)
+              : cs.surfaceContainerLow,
           borderRadius: BorderRadius.circular(999),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 14, color: active ? cs.onPrimaryContainer : cs.onSurfaceVariant),
+            Icon(icon, size: 14, color: active
+                ? (isTutor ? cs.onTertiaryContainer : cs.onPrimaryContainer)
+                : cs.onSurfaceVariant),
             const SizedBox(width: 6),
             Text(
               label,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
-                color: active ? cs.onPrimaryContainer : cs.onSurfaceVariant,
+                color: active
+                    ? (isTutor ? cs.onTertiaryContainer : cs.onPrimaryContainer)
+                    : cs.onSurfaceVariant,
               ),
             ),
             const SizedBox(width: 4),
-            Icon(Icons.arrow_drop_down_rounded, size: 16, color: active ? cs.onPrimaryContainer : cs.onSurfaceVariant),
+            Icon(Icons.arrow_drop_down_rounded, size: 16, color: active
+                ? (isTutor ? cs.onTertiaryContainer : cs.onPrimaryContainer)
+                : cs.onSurfaceVariant),
           ],
         ),
       ),
@@ -574,7 +599,8 @@ class _DropdownChip extends StatelessWidget {
 
 class _SessionTile extends StatelessWidget {
   final SessionData session;
-  const _SessionTile({required this.session});
+  final bool isTutor;
+  const _SessionTile({required this.session, this.isTutor = false});
 
   String _fmtDate(DateTime d) {
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -653,7 +679,7 @@ class _SessionTile extends StatelessWidget {
                           Text(
                             session.subject,
                             style: tt.labelSmall?.copyWith(
-                              color: cs.primary,
+                              color: isTutor ? cs.tertiary : cs.primary,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -667,9 +693,9 @@ class _SessionTile extends StatelessWidget {
                       // Row 3: tags row
                       Row(
                         children: [
-                          _StatusTag(status: session.status),
+                          _StatusTag(status: session.status, isTutor: isTutor),
                           const SizedBox(width: 6),
-                          _TypeTag(type: session.type, paidAmount: session.paidAmount),
+                          _TypeTag(type: session.type, paidAmount: session.paidAmount, isTutor: isTutor),
                           if (session.classNumber != null && session.totalClasses != null) ...[
                             const SizedBox(width: 6),
                             _MiniTag(
@@ -735,13 +761,14 @@ class _MiniTag extends StatelessWidget {
 
 class _StatusTag extends StatelessWidget {
   final SessionStatus status;
-  const _StatusTag({required this.status});
+  final bool isTutor;
+  const _StatusTag({required this.status, this.isTutor = false});
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final (label, color, bg) = switch (status) {
-      SessionStatus.conducted => ('Conducted', cs.primary, cs.primaryContainer),
+      SessionStatus.conducted => ('Conducted', isTutor ? cs.tertiary : cs.primary, isTutor ? cs.tertiaryContainer : cs.primaryContainer),
       SessionStatus.upcoming  => ('Upcoming', cs.tertiary, cs.tertiaryContainer),
       SessionStatus.cancelled => ('Cancelled', cs.error, cs.errorContainer),
     };
@@ -752,7 +779,8 @@ class _StatusTag extends StatelessWidget {
 class _TypeTag extends StatelessWidget {
   final SessionType type;
   final double? paidAmount;
-  const _TypeTag({required this.type, this.paidAmount});
+  final bool isTutor;
+  const _TypeTag({required this.type, this.paidAmount, this.isTutor = false});
 
   @override
   Widget build(BuildContext context) {
@@ -764,7 +792,7 @@ class _TypeTag extends StatelessWidget {
     };
     final (color, bg) = type == SessionType.demo
         ? (cs.onSurfaceVariant, cs.surfaceContainerLow)
-        : (cs.tertiary, cs.tertiaryContainer.withValues(alpha: 0.5));
+        : (isTutor ? cs.tertiary : cs.primary, (isTutor ? cs.tertiaryContainer : cs.primaryContainer).withValues(alpha: 0.5));
     return _MiniTag(label: label, color: color, bg: bg);
   }
 }

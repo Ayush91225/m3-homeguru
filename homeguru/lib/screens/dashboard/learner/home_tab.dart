@@ -30,31 +30,29 @@ class HomeTab extends StatelessWidget {
 
   Widget _item(BuildContext context, int i) {
     switch (i) {
-      case 0: return RepaintBoundary(child: AIMatchCard(onTap: () => _showMatchingBottomSheet(context)));
+      case 0: return AIMatchCard(onTap: () => _showMatchingBottomSheet(context));
       case 1: return const SizedBox(height: 20);
-      case 2: return const RepaintBoundary(child: StatsCarousel());
+      case 2: return const StatsCarousel();
       case 3: return const SizedBox(height: 20);
-      case 4: return RepaintBoundary(
-        child: UpcomingCard(
-          onScheduleTap: () {
-            final s = context.findAncestorStateOfType<LearnerDashboardState>();
-            s?.onItemTapped(2);
-          },
-        ),
+      case 4: return UpcomingCard(
+        onScheduleTap: () {
+          final s = context.findAncestorStateOfType<LearnerDashboardState>();
+          s?.onItemTapped(2);
+        },
       );
       case 5: return const SizedBox(height: 20);
-      case 6: return const RepaintBoundary(child: ReviewLessons());
+      case 6: return const ReviewLessons();
       case 7: return const SizedBox(height: 20);
-      case 8: return const RepaintBoundary(child: MyTutors());
+      case 8: return const MyTutors();
       case 9: return const SizedBox(height: 20);
-      case 10: return const RepaintBoundary(child: SuggestedTutors());
+      case 10: return const SuggestedTutors();
       case 11: return const SizedBox(height: 20);
-      case 12: return const RepaintBoundary(child: RewardsAchievements());
+      case 12: return const RewardsAchievements();
       case 13: return const SizedBox(height: 20);
       case 14: return _StreakHeader();
-      case 15: return const RepaintBoundary(child: LearningHoursChart());
+      case 15: return const LearningHoursChart();
       case 16: return const SizedBox(height: 20);
-      case 17: return const RepaintBoundary(child: StreakCalendar());
+      case 17: return const StreakCalendar();
       default: return const SizedBox(height: 32);
     }
   }

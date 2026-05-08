@@ -39,13 +39,15 @@ mixin InfiniteScroll<T extends StatefulWidget> on State<T> {
 /// Groups blogs by authorName and shows one ring per unique author.
 /// Tapping opens StoryViewerScreen with all that author's blogs.
 class StoryRing extends StatelessWidget {
-  const StoryRing({super.key, required this.blogs});
+  const StoryRing({super.key, required this.blogs, this.isTutor = false});
   final List<HgBlog> blogs;
+  final bool isTutor;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final accentColor = isTutor ? cs.tertiary : cs.primary;
 
     // Group by author, preserving first-seen order
     final Map<String, List<HgBlog>> grouped = {};
@@ -79,7 +81,7 @@ class StoryRing extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
-                      colors: [cs.primary, cs.tertiary],
+                      colors: [accentColor, cs.tertiary],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -355,13 +357,15 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
 // ─── Blog card (external dev.to) ─────────────────────────────────────────────
 
 class BlogCard extends StatelessWidget {
-  const BlogCard({super.key, required this.article});
+  const BlogCard({super.key, required this.article, this.isTutor = false});
   final FeedArticle article;
+  final bool isTutor;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final accentColor = isTutor ? cs.tertiary : cs.primary;
 
     return InkWell(
       onTap: () => Navigator.push(context,
@@ -407,7 +411,7 @@ class BlogCard extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(article.source,
-                            style: tt.labelSmall?.copyWith(color: cs.primary),
+                            style: tt.labelSmall?.copyWith(color: accentColor),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis),
                       ),
@@ -430,13 +434,17 @@ class BlogCard extends StatelessWidget {
 // ─── HG Blog card ─────────────────────────────────────────────────────────────
 
 class HgBlogCard extends StatelessWidget {
-  const HgBlogCard({super.key, required this.blog});
+  const HgBlogCard({super.key, required this.blog, this.isTutor = false});
   final HgBlog blog;
+  final bool isTutor;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final accentColor = isTutor ? cs.tertiary : cs.primary;
+    final accentContainer = isTutor ? cs.tertiaryContainer : cs.primaryContainer;
+    final onAccentContainer = isTutor ? cs.onTertiaryContainer : cs.onPrimaryContainer;
 
     return InkWell(
       onTap: () => Navigator.push(context,
@@ -472,18 +480,18 @@ class HgBlogCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                         decoration: BoxDecoration(
-                          color: cs.primaryContainer,
+                          color: accentContainer,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(Icons.verified_rounded,
-                                size: 11, color: cs.primary),
+                                size: 11, color: accentColor),
                             const SizedBox(width: 3),
                             Text('HomeGuru',
                                 style: tt.labelSmall?.copyWith(
-                                    color: cs.onPrimaryContainer,
+                                    color: onAccentContainer,
                                     fontWeight: FontWeight.w700)),
                           ],
                         ),
@@ -521,12 +529,12 @@ class HgBlogCard extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
-                                color: cs.secondaryContainer,
+                                color: isTutor ? cs.tertiaryContainer : cs.secondaryContainer,
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(t,
                                   style: tt.labelSmall?.copyWith(
-                                      color: cs.onSecondaryContainer)),
+                                      color: isTutor ? cs.onTertiaryContainer : cs.onSecondaryContainer)),
                             ))
                         .toList(),
                   ),
@@ -543,13 +551,16 @@ class HgBlogCard extends StatelessWidget {
 // ─── News card ────────────────────────────────────────────────────────────────
 
 class NewsCard extends StatelessWidget {
-  const NewsCard({super.key, required this.article});
+  const NewsCard({super.key, required this.article, this.isTutor = false});
   final FeedArticle article;
+  final bool isTutor;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final accentContainer = isTutor ? cs.tertiaryContainer : cs.primaryContainer;
+    final onAccentContainer = isTutor ? cs.onTertiaryContainer : cs.onPrimaryContainer;
 
     return InkWell(
       onTap: () => Navigator.push(context,
@@ -570,12 +581,12 @@ class NewsCard extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                   decoration: BoxDecoration(
-                    color: cs.primaryContainer,
+                    color: accentContainer,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(article.source,
                       style: tt.labelSmall?.copyWith(
-                          color: cs.onPrimaryContainer,
+                          color: onAccentContainer,
                           fontWeight: FontWeight.w600)),
                 ),
                 if (article.publishedAt.isNotEmpty) ...[

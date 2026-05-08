@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desmos Graphing Calculator</title>
+    <script src="https://www.desmos.com/api/v1.11/calculator.js?apiKey=e2d40e1a3fc64221b0cbc16964334674"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { width: 100%; height: 100%; overflow: hidden; }
+        #calculator { width: 100%; height: 100%; }
+    </style>
+</head>
+<body>
+    <div id="calculator"></div>
+    <script>
+        let calculator = null;
+        let isRemote = false;
+        let lastSentState = '';
+
+        // Initialize Desmos Graphing Calculator
+        calculator = Desmos.GraphingCalculator(document.getElementById('calculator'));
+
+        // Send state to Flutter
+        function sendState() {
+            if (!calculator || isRemote) return;
+            try {
+                const state = calculator.getState();
+                const json = JSON.stringify(state);
+                if (json === lastSentState) return;
+                lastSentState = json;
+                if (window.FlutterSync) {
+                    window.FlutterSync.postMessage(json);
+                }
+            } catch (e) {
+                console.error('Error sending state:', e);
+            }
+        }
+
+        // Receive state from Flutter
+        function receiveState(stateJson) {
+            if (!calculator) return;
+            isRemote = true;
+            try {
+                const state = JSON.parse(stateJson);
+                calculator.setState(state);
+                lastSentState = stateJson;
+            } catch (e) {
+                console.error('Error receiving state:', e);
+            }
+            setTimeout(() => { isRemote = false; }, 300);
+        }
+
+        // Listen for changes and broadcast
+        if (calculator.observeEvent) {
+            calculator.observeEvent('change', () => {
+                if (!isRemote) {
+                    setTimeout(sendState, 300);
+                }
+            });
+        }
+
+        // Request sync on load
+        setTimeout(() => {
+            if (window.FlutterSync) {
+                window.FlutterSync.postMessage(JSON.stringify({ action: 'request-sync' }));
+            }
+        }, 500);
+    </script>
+</body>
+</html>

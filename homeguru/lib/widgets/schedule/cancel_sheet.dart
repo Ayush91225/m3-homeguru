@@ -4,8 +4,9 @@ import 'reschedule_sheet.dart';
 
 class CancelSheet extends StatefulWidget {
   final CalendarEvent event;
+  final bool isTutor;
 
-  const CancelSheet({super.key, required this.event});
+  const CancelSheet({super.key, required this.event, this.isTutor = false});
 
   @override
   State<CancelSheet> createState() => _CancelSheetState();
@@ -18,7 +19,7 @@ class _CancelSheetState extends State<CancelSheet> {
   final TextEditingController _otherReasonController = TextEditingController();
   final List<String> _scopes = [
     'Cancel this class only',
-    'Cancel all sessions with this tutor',
+    'Cancel all sessions with this learner',
   ];
   final List<String> _reasons = [
     'Schedule conflict',
@@ -140,10 +141,14 @@ class _CancelSheetState extends State<CancelSheet> {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: isSelected ? cs.primaryContainer : cs.surfaceContainerHighest,
+                  color: isSelected
+                      ? (widget.isTutor ? cs.tertiaryContainer : cs.primaryContainer)
+                      : cs.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: isSelected ? cs.primary : cs.outlineVariant,
+                    color: isSelected
+                        ? (widget.isTutor ? cs.tertiary : cs.primary)
+                        : cs.outlineVariant,
                   ),
                 ),
                 child: Row(
@@ -151,13 +156,17 @@ class _CancelSheetState extends State<CancelSheet> {
                     Icon(
                       isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
                       size: 20,
-                      color: isSelected ? cs.primary : cs.onSurfaceVariant,
+                      color: isSelected
+                          ? (widget.isTutor ? cs.tertiary : cs.primary)
+                          : cs.onSurfaceVariant,
                     ),
                     const SizedBox(width: 12),
                     Text(
                       _scopes[index],
                       style: tt.bodyMedium?.copyWith(
-                        color: isSelected ? cs.onPrimaryContainer : cs.onSurface,
+                        color: isSelected
+                            ? (widget.isTutor ? cs.onTertiaryContainer : cs.onPrimaryContainer)
+                            : cs.onSurface,
                         fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                       ),
                     ),
@@ -176,8 +185,9 @@ class _CancelSheetState extends State<CancelSheet> {
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size.fromHeight(48),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  side: BorderSide(color: widget.isTutor ? cs.tertiary : cs.outline),
                 ),
-                child: const Text('Go Back'),
+                child: Text('Go Back', style: TextStyle(color: widget.isTutor ? cs.tertiary : cs.onSurface)),
               ),
             ),
             const SizedBox(width: 12),
@@ -185,6 +195,7 @@ class _CancelSheetState extends State<CancelSheet> {
               child: FilledButton(
                 onPressed: _selectedScope != null ? _handleContinue : null,
                 style: FilledButton.styleFrom(
+                  backgroundColor: widget.isTutor ? cs.tertiary : cs.primary,
                   minimumSize: const Size.fromHeight(48),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                 ),
@@ -214,7 +225,7 @@ class _CancelSheetState extends State<CancelSheet> {
               Expanded(
                 child: Text(
                   _selectedScope == 1
-                      ? 'All sessions with this tutor will be cancelled'
+                      ? 'All sessions with this learner will be cancelled'
                       : 'This action cannot be undone',
                   style: tt.bodySmall?.copyWith(color: cs.onSurface),
                 ),
@@ -238,10 +249,14 @@ class _CancelSheetState extends State<CancelSheet> {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: isSelected ? cs.primaryContainer : cs.surfaceContainerHighest,
+                  color: isSelected
+                      ? (widget.isTutor ? cs.tertiaryContainer : cs.primaryContainer)
+                      : cs.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: isSelected ? cs.primary : cs.outlineVariant,
+                    color: isSelected
+                        ? (widget.isTutor ? cs.tertiary : cs.primary)
+                        : cs.outlineVariant,
                   ),
                 ),
                 child: Row(
@@ -249,13 +264,17 @@ class _CancelSheetState extends State<CancelSheet> {
                     Icon(
                       isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
                       size: 20,
-                      color: isSelected ? cs.primary : cs.onSurfaceVariant,
+                      color: isSelected
+                          ? (widget.isTutor ? cs.tertiary : cs.primary)
+                          : cs.onSurfaceVariant,
                     ),
                     const SizedBox(width: 12),
                     Text(
                       _reasons[index],
                       style: tt.bodyMedium?.copyWith(
-                        color: isSelected ? cs.onPrimaryContainer : cs.onSurface,
+                        color: isSelected
+                            ? (widget.isTutor ? cs.onTertiaryContainer : cs.onPrimaryContainer)
+                            : cs.onSurface,
                         fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                       ),
                     ),
@@ -289,8 +308,9 @@ class _CancelSheetState extends State<CancelSheet> {
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size.fromHeight(48),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  side: BorderSide(color: widget.isTutor ? cs.tertiary : cs.outline),
                 ),
-                child: const Text('Go Back'),
+                child: Text('Go Back', style: TextStyle(color: widget.isTutor ? cs.tertiary : cs.onSurface)),
               ),
             ),
             const SizedBox(width: 12),
@@ -307,8 +327,8 @@ class _CancelSheetState extends State<CancelSheet> {
                       }
                     : null,
                 style: FilledButton.styleFrom(
-                  backgroundColor: cs.error,
-                  foregroundColor: cs.onError,
+                  backgroundColor: widget.isTutor ? cs.tertiary : cs.error,
+                  foregroundColor: widget.isTutor ? cs.onTertiary : cs.onError,
                   minimumSize: const Size.fromHeight(48),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                 ),
@@ -369,6 +389,7 @@ class _CancelSheetState extends State<CancelSheet> {
               child: FilledButton(
                 onPressed: _handleReschedule,
                 style: FilledButton.styleFrom(
+                  backgroundColor: widget.isTutor ? cs.tertiary : cs.primary,
                   minimumSize: const Size.fromHeight(48),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                 ),

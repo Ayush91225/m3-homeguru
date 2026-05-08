@@ -10,10 +10,12 @@ class ConversationScreen extends StatefulWidget {
     required this.tutor,
     this.isPast = false,
     required this.messages,
+    this.isTutor = false,
   });
   final ChatTutor tutor;
   final bool isPast;
   final List<ChatMessage> messages;
+  final bool isTutor;
 
   @override
   State<ConversationScreen> createState() => _ConversationScreenState();
@@ -135,12 +137,13 @@ class _ConversationScreenState extends State<ConversationScreen> {
         children: [
           Expanded(child: _buildMessageList()),
           if (widget.isPast)
-            BlockedBar(tutor: widget.tutor)
+            BlockedBar(tutor: widget.tutor, isTutor: widget.isTutor)
           else
             ConversationInputBar(
               tutorFirstName: widget.tutor.name.split(' ').first,
               onSend: _onSend,
               onPickImage: _pickImage,
+              isTutor: widget.isTutor,
             ),
         ],
       ),
@@ -201,7 +204,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
                       if (widget.tutor.isVerified) ...[
                         const SizedBox(width: 4),
                         Icon(Icons.verified_rounded,
-                            size: 14, color: cs.primary),
+                            size: 14, color: widget.isTutor ? cs.tertiary : cs.primary),
                       ],
                     ],
                   ),
@@ -250,7 +253,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
         return Column(
           children: [
             if (showDate) DateDivider(time: msg.time),
-            MessageBubble(message: msg, tutor: widget.tutor),
+            MessageBubble(message: msg, tutor: widget.tutor, isTutor: widget.isTutor),
           ],
         );
       },
@@ -263,7 +266,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
       builder: (_) =>
-          TutorInfoSheet(tutor: widget.tutor, isPast: widget.isPast),
+          TutorInfoSheet(tutor: widget.tutor, isPast: widget.isPast, isTutor: widget.isTutor),
     );
   }
 

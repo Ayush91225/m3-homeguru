@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
+import '../../services/razorpay_service.dart';
+import '../../services/user_profile_store.dart';
 
-class PaymentPendingSheet extends StatelessWidget {
+class PaymentPendingSheet extends StatefulWidget {
   final String tutorName;
   final String tutorImage;
   final String subject;
@@ -29,10 +32,122 @@ class PaymentPendingSheet extends StatelessWidget {
     this.onPaymentComplete,
   });
 
-  double get totalPrice => sessionsBooked * perHourPrice;
+  @override
+  State<PaymentPendingSheet> createState() => _PaymentPendingSheetState();
+}
+
+class _PaymentPendingSheetState extends State<PaymentPendingSheet> {
+  final RazorpayService _razorpayService = RazorpayService();
+  bool _isProcessing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _razorpayService.initialize(
+      onSuccess: _handlePaymentSuccess,
+      onFailure: _handlePaymentFailure,
+      onExternalWallet: _handleExternalWallet,
+    );
+  }
+
+  @override
+  void dispose() {
+    _razorpayService.dispose();
+    super.dispose();
+  }
+
+  void _handlePaymentSuccess(PaymentSuccessResponse response) {
+    setState(() => _isProcessing = false);
+    if (mounted) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Payment successful! ID: ${response.paymentId}'),
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      widget.onPaymentComplete?.call();
+    }
+  }
+
+  void _handlePaymentFailure(PaymentFailureResponse response) {
+    setState(() => _isProcessing = false);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Payment failed: ${response.message}'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  void _handleExternalWallet(ExternalWalletResponse response) {
+    setState(() => _isProcessing = false);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('External wallet: ${response.walletName}'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _processPayment() async {
+    setState(() => _isProcessing = true);
+
+    final profile = ProfileStore.of(context);
+    final amountInPaise = totalPrice.toInt() * 100;
+    final receipt = 'rcpt_${DateTime.now().millisecondsSinceEpoch}';
+
+    final order = await _razorpayService.createOrder(
+      amount: amountInPaise,
+      receipt: receipt,
+      notes: {
+        'subject': widget.subject,
+        'level': widget.level,
+        'sessions': widget.sessionsBooked,
+        'tutor': widget.tutorName,
+      },
+    );
+
+    if (order == null) {
+      setState(() => _isProcessing = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to create order. Please try again.'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+
+    _razorpayService.openCheckout(
+      orderId: order['id'],
+      amount: amountInPaise,
+      name: profile.name,
+      email: '${profile.handle.replaceAll('@', '')}@homeguru.com',
+      contact: profile.phone,
+      description: '${widget.sessionsBooked} sessions with ${widget.tutorName}',
+      notes: {
+        'subject': widget.subject,
+        'level': widget.level,
+        'sessions': widget.sessionsBooked,
+        'tutor': widget.tutorName,
+      },
+    );
+  }
+
+  double get totalPrice => widget.sessionsBooked * widget.perHourPrice;
 
   Duration get timeRemaining {
-    final deadline = bookingAcceptedAt.add(const Duration(hours: 4));
+    final deadline = widget.bookingAcceptedAt.add(const Duration(hours: 4));
     return deadline.difference(DateTime.now());
   }
 
@@ -119,7 +234,7 @@ class PaymentPendingSheet extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 28,
-                  backgroundImage: CachedNetworkImageProvider(tutorImage),
+                  backgroundImage: CachedNetworkImageProvider(widget.tutorImage),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -127,11 +242,11 @@ class PaymentPendingSheet extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        tutorName,
+                        widget.tutorName,
                         style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w600),
                       ),
                       Text(
-                        subject,
+                        widget.subject,
                         style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
                       ),
                     ],
@@ -152,49 +267,49 @@ class PaymentPendingSheet extends StatelessWidget {
                 children: [
                   _DetailRow(
                     label: 'Subject',
-                    value: subject,
+                    value: widget.subject,
                     cs: cs,
                     tt: tt,
                   ),
                   const SizedBox(height: 12),
                   _DetailRow(
                     label: 'Level',
-                    value: level,
+                    value: widget.level,
                     cs: cs,
                     tt: tt,
                   ),
                   const SizedBox(height: 12),
                   _DetailRow(
                     label: 'Sessions Booked',
-                    value: '$sessionsBooked sessions',
+                    value: '${widget.sessionsBooked} sessions',
                     cs: cs,
                     tt: tt,
                   ),
                   const SizedBox(height: 12),
                   _DetailRow(
                     label: 'Preferred Slot',
-                    value: preferredSlot,
+                    value: widget.preferredSlot,
                     cs: cs,
                     tt: tt,
                   ),
                   const SizedBox(height: 12),
                   _DetailRow(
                     label: 'Per Hour Price',
-                    value: '₹${perHourPrice.toStringAsFixed(0)}',
+                    value: '₹${widget.perHourPrice.toStringAsFixed(0)}',
                     cs: cs,
                     tt: tt,
                   ),
                   const SizedBox(height: 12),
                   _DetailRow(
                     label: 'Classes per Week',
-                    value: '$classesPerWeek classes',
+                    value: '${widget.classesPerWeek} classes',
                     cs: cs,
                     tt: tt,
                   ),
                   const SizedBox(height: 12),
                   _DetailRow(
                     label: 'Duration',
-                    value: '$durationMonths ${durationMonths == 1 ? 'month' : 'months'}',
+                    value: '${widget.durationMonths} ${widget.durationMonths == 1 ? 'month' : 'months'}',
                     cs: cs,
                     tt: tt,
                   ),
@@ -257,23 +372,23 @@ class PaymentPendingSheet extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: FilledButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      onPaymentComplete?.call();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Payment successful! ₹${totalPrice.toStringAsFixed(0)} paid.'),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    },
+                    onPressed: _isProcessing ? null : _processPayment,
                     style: FilledButton.styleFrom(
                       backgroundColor: cs.primary,
                       foregroundColor: cs.onPrimary,
                       minimumSize: const Size.fromHeight(48),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                     ),
-                    child: const Text('Pay Now'),
+                    child: _isProcessing
+                        ? SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: cs.onPrimary,
+                            ),
+                          )
+                        : const Text('Pay Now'),
                   ),
                 ),
               ],

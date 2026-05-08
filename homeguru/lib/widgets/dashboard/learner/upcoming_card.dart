@@ -3,6 +3,7 @@ import '../../schedule/reschedule_sheet.dart';
 import '../../schedule/cancel_sheet.dart';
 import '../../schedule/calendar_types.dart';
 import '../../../screens/shared/meet/prejoin_screen.dart';
+import '../../../screens/shared/chat/chat_models.dart';
 import '../../../services/user_profile_store.dart';
 
 class UpcomingCard extends StatefulWidget {
@@ -35,6 +36,7 @@ class _UpcomingCardState extends State<UpcomingCard> {
         'location': 'Pune',
         'dateTime': now,
         'isActive': true,
+        'isPaid': true,
       },
       {
         'tutor': 'Priya Sharma',
@@ -44,6 +46,7 @@ class _UpcomingCardState extends State<UpcomingCard> {
         'location': 'Delhi',
         'dateTime': now.add(const Duration(hours: 2)),
         'isActive': false,
+        'isPaid': false,
       },
       {
         'tutor': 'Ananya Reddy',
@@ -53,6 +56,7 @@ class _UpcomingCardState extends State<UpcomingCard> {
         'location': 'Bangalore',
         'dateTime': now.add(const Duration(hours: 4)),
         'isActive': false,
+        'isPaid': true,
       },
       {
         'tutor': 'Meera Patel',
@@ -62,6 +66,27 @@ class _UpcomingCardState extends State<UpcomingCard> {
         'location': 'Ahmedabad',
         'dateTime': now.add(const Duration(hours: 6)),
         'isActive': false,
+        'isPaid': false,
+      },
+      {
+        'tutor': 'Rajesh Kumar',
+        'image': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop',
+        'subject': 'Physics',
+        'specialization': 'JEE Mains',
+        'location': 'Mumbai',
+        'dateTime': now.add(const Duration(hours: 8)),
+        'isActive': false,
+        'isPaid': true,
+      },
+      {
+        'tutor': 'Sneha Iyer',
+        'image': 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=400&h=400&fit=crop',
+        'subject': 'Mathematics',
+        'specialization': 'CBSE Grade 9-10',
+        'location': 'Chennai',
+        'dateTime': now.add(const Duration(hours: 10)),
+        'isActive': false,
+        'isPaid': false,
       },
     ];
   }
@@ -82,7 +107,7 @@ class _UpcomingCardState extends State<UpcomingCard> {
   String _getTimeUntil(DateTime dateTime) {
     final now = DateTime.now();
     final diff = dateTime.difference(now);
-    if (diff.inMinutes < 1) return 'Now';
+    if (diff.inMinutes < 1) return 'Starting now';
     if (diff.inMinutes < 60) return '${diff.inMinutes}min';
     if (diff.inHours < 24) return '${diff.inHours}h ${diff.inMinutes % 60}min';
     return '${diff.inDays}d ${diff.inHours % 24}h';
@@ -228,26 +253,47 @@ class _UpcomingCardState extends State<UpcomingCard> {
                         ],
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: cs.tertiaryContainer,
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.schedule_rounded, size: 14, color: cs.onTertiaryContainer),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Starts in ${_getTimeUntil(startTime)}',
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: cs.tertiaryContainer,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.schedule_rounded, size: 14, color: cs.onTertiaryContainer),
+                              const SizedBox(width: 6),
+                              Text(
+                                _getTimeUntil(startTime) == 'Starting now' ? 'Starting now' : 'Starts in ${_getTimeUntil(startTime)}',
+                                style: tt.labelSmall?.copyWith(
+                                  color: cs.onTertiaryContainer,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: session['isPaid'] == true ? cs.primary : cs.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            session['isPaid'] == true ? 'Paid' : 'Demo',
                             style: tt.labelSmall?.copyWith(
-                              color: cs.onTertiaryContainer,
+                              color: session['isPaid'] == true ? cs.onPrimary : cs.onSurfaceVariant,
                               fontWeight: FontWeight.w600,
+                              fontSize: 9,
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -516,6 +562,17 @@ class _SplitButtonState extends State<_SplitButton> {
                           sessionNumber: 1,
                           totalSessions: 10,
                         ),
+                        tutor: ChatTutor(
+                          id: widget.session['tutor'],
+                          name: widget.session['tutor'],
+                          subject: widget.session['subject'],
+                          avatarUrl: widget.session['image'],
+                          lastMessage: '',
+                          time: '',
+                          isVerified: true,
+                          isOnline: true,
+                        ),
+                        chatMessages: [],
                       ),
                     ),
                   );

@@ -5,12 +5,16 @@ class ChatMessage {
     required this.text,
     required this.isMe,
     this.imageUrl,
+    this.isInCallMessage = false,
+    this.meetingCode,
     DateTime? time,
   }) : time = time ?? DateTime.now();
 
   final String text;
   final bool isMe;
   final String? imageUrl;
+  final bool isInCallMessage;
+  final String? meetingCode;
   final DateTime time;
 }
 
@@ -128,6 +132,101 @@ final seedInbox = [
     students: 31,
     location: 'Jaipur',
     pricing: {'History': 500, 'Political Science': 500},
+  ),
+];
+
+// Learner seed data for tutors
+final seedLearnerInbox = [
+  ChatTutor(
+    id: 'l1',
+    name: 'Aarav Kumar',
+    subject: 'Class 12 - JEE',
+    avatarUrl: 'https://i.pravatar.cc/150?img=33',
+    lastMessage: 'Thank you for the session! Can we schedule another one?',
+    time: '11:20 AM',
+    unread: 1,
+    isOnline: true,
+    isVerified: false,
+    rating: 0,
+    students: 0,
+    location: 'Delhi',
+    pricing: {},
+  ),
+  ChatTutor(
+    id: 'l2',
+    name: 'Diya Patel',
+    subject: 'Class 10 - CBSE',
+    avatarUrl: 'https://i.pravatar.cc/150?img=45',
+    lastMessage: 'I need help with quadratic equations.',
+    time: '10:05 AM',
+    unread: 2,
+    isOnline: false,
+    isVerified: false,
+    rating: 0,
+    students: 0,
+    location: 'Mumbai',
+    pricing: {},
+  ),
+  ChatTutor(
+    id: 'l3',
+    name: 'Rohan Singh',
+    subject: 'Class 11 - NEET',
+    avatarUrl: 'https://i.pravatar.cc/150?img=51',
+    lastMessage: 'Can you explain the organic chemistry chapter again?',
+    time: 'Yesterday',
+    isOnline: true,
+    isVerified: false,
+    rating: 0,
+    students: 0,
+    location: 'Bangalore',
+    pricing: {},
+  ),
+  ChatTutor(
+    id: 'l4',
+    name: 'Ananya Reddy',
+    subject: 'Class 9 - ICSE',
+    avatarUrl: 'https://i.pravatar.cc/150?img=26',
+    lastMessage: 'The homework was really helpful!',
+    time: 'Yesterday',
+    isOnline: false,
+    isVerified: false,
+    rating: 0,
+    students: 0,
+    location: 'Hyderabad',
+    pricing: {},
+  ),
+];
+
+final seedLearnerPast = [
+  ChatTutor(
+    id: 'l5',
+    name: 'Ishaan Sharma',
+    subject: 'Class 12 - Boards',
+    avatarUrl: 'https://i.pravatar.cc/150?img=60',
+    lastMessage: 'Thanks for all your help! I passed with 95%!',
+    time: '2 weeks ago',
+    isPast: true,
+    isVerified: false,
+    rating: 0,
+    students: 0,
+    location: 'Pune',
+    pricing: {},
+  ),
+];
+
+final seedLearnerArchived = [
+  ChatTutor(
+    id: 'l6',
+    name: 'Kavya Menon',
+    subject: 'Class 8 - CBSE',
+    avatarUrl: 'https://i.pravatar.cc/150?img=29',
+    lastMessage: 'See you next year!',
+    time: '1 month ago',
+    isVerified: false,
+    rating: 0,
+    students: 0,
+    location: 'Kochi',
+    pricing: {},
   ),
 ];
 
