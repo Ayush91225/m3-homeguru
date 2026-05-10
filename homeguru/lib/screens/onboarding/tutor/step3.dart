@@ -53,22 +53,24 @@ class _TutorStep3BodyState extends State<TutorStep3Body> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _InstructionsCard(
-                    onAudioCompleted: _onAudioCompleted,
-                    acknowledged: _acknowledged,
-                    onAcknowledgeChanged: (v) => setState(() => _acknowledged = v),
-                  ),
-                  if (_audioCompleted) ...[
-                    const SizedBox(height: 24),
-                    Text(
-                      'Swipe up to see what\'s next',
-                      style: tt.labelMedium?.copyWith(
-                        color: cs.onSurfaceVariant,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  if (!_acknowledged) ...[
+                    _InstructionsCard(
+                      onAudioCompleted: _onAudioCompleted,
+                      acknowledged: _acknowledged,
+                      onAcknowledgeChanged: (v) => setState(() => _acknowledged = v),
                     ),
-                    const SizedBox(height: 8),
-                    Icon(Icons.keyboard_arrow_down_rounded, color: cs.onSurfaceVariant, size: 32),
+                    if (_audioCompleted) ...[
+                      const SizedBox(height: 24),
+                      Text(
+                        'Swipe up to see what\'s next',
+                        style: tt.labelMedium?.copyWith(
+                          color: cs.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Icon(Icons.keyboard_arrow_down_rounded, color: cs.onSurfaceVariant, size: 32),
+                    ],
                   ],
                 ],
               ),
@@ -295,6 +297,26 @@ class _InstructionsCardState extends State<_InstructionsCard> with SingleTickerP
   late AnimationController _waveController;
   Duration _duration = Duration.zero;
   Duration _position = Duration.zero;
+  bool _showLanguageDropdown = false;
+
+  final List<String> _languages = [
+    'English', 'Hindi', 'Bengali', 'Gujarati', 'Kannada',
+    'Malayalam', 'Marathi', 'Odia', 'Punjabi', 'Tamil', 'Telugu'
+  ];
+
+  final Map<String, String> _audioFiles = {
+    'English': 'https://app.homeguruworld.com/audio/onboarding/english.mp3',
+    'Hindi': 'https://app.homeguruworld.com/audio/onboarding/hindi.mp3',
+    'Bengali': 'https://app.homeguruworld.com/audio/onboarding/bengali.mp3',
+    'Gujarati': 'https://app.homeguruworld.com/audio/onboarding/gujarati.mp3',
+    'Kannada': 'https://app.homeguruworld.com/audio/onboarding/kannada.mp3',
+    'Malayalam': 'https://app.homeguruworld.com/audio/onboarding/malayalam.mp3',
+    'Marathi': 'https://app.homeguruworld.com/audio/onboarding/marathi.mp3',
+    'Odia': 'https://app.homeguruworld.com/audio/onboarding/odia.mp3',
+    'Punjabi': 'https://app.homeguruworld.com/audio/onboarding/punjabi.mp3',
+    'Tamil': 'https://app.homeguruworld.com/audio/onboarding/tamil.mp3',
+    'Telugu': 'https://app.homeguruworld.com/audio/onboarding/telugu.mp3',
+  };
 
   @override
   void initState() {
@@ -354,7 +376,7 @@ class _InstructionsCardState extends State<_InstructionsCard> with SingleTickerP
           });
         }
         setState(() => _isPlaying = true);
-        await _audioPlayer.play(UrlSource('https://samplelib.com/mp3/sample-9s.mp3'));
+        await _audioPlayer.play(UrlSource(_audioFiles[_selectedLanguage]!));
       }
     } catch (e) {
       setState(() => _isPlaying = false);
@@ -368,7 +390,13 @@ class _InstructionsCardState extends State<_InstructionsCard> with SingleTickerP
 
   void _changeLanguage(String lang) {
     if (_selectedLanguage == lang) return;
-    setState(() => _selectedLanguage = lang);
+    setState(() {
+      _selectedLanguage = lang;
+      _hasCompleted = false;
+      _progress = 0.0;
+      _isPlaying = false;
+    });
+    _audioPlayer.stop();
   }
 
   @override
@@ -423,54 +451,94 @@ class _InstructionsCardState extends State<_InstructionsCard> with SingleTickerP
               )),
           const SizedBox(height: 16),
 
-          // Language selector - M3 split button
+          // Language selector dropdown
           Row(
             children: [
               Icon(Icons.language_rounded, size: 18, color: cs.onTertiaryContainer.withValues(alpha: 0.7)),
               const SizedBox(width: 8),
-              Container(
-                height: 36,
-                decoration: BoxDecoration(
+              Expanded(
+                child: Material(
                   color: cs.surface,
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(left: 16),
-                      child: Text(_selectedLanguage,
-                        style: tt.bodySmall?.copyWith(
-                          color: cs.onSurface,
-                          fontWeight: FontWeight.w600,
-                        )),
-                    ),
-                    Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                      width: 1,
-                      color: cs.outlineVariant,
-                    ),
-                    Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () {
-                          final newLang = _selectedLanguage == 'English' ? 'Hindi' : 'English';
-                          _changeLanguage(newLang);
-                        },
-                        borderRadius: const BorderRadius.horizontal(right: Radius.circular(18)),
-                        child: Container(
-                          width: 36,
-                          height: 36,
-                          alignment: Alignment.center,
-                          child: Icon(Icons.swap_horiz_rounded, color: cs.onSurface, size: 18),
-                        ),
+                  borderRadius: BorderRadius.circular(12),
+                  child: InkWell(
+                    onTap: () {
+                      setState(() => _showLanguageDropdown = !_showLanguageDropdown);
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(_selectedLanguage,
+                            style: tt.bodySmall?.copyWith(
+                              color: cs.onSurface,
+                              fontWeight: FontWeight.w600,
+                            )),
+                          Icon(
+                            _showLanguageDropdown ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                            color: cs.onSurface,
+                            size: 18,
+                          ),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ),
             ],
           ),
+          if (_showLanguageDropdown) ...[
+            const SizedBox(height: 8),
+            Container(
+              constraints: const BoxConstraints(maxHeight: 200),
+              decoration: BoxDecoration(
+                color: cs.surface,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: _languages.length,
+                itemBuilder: (context, index) {
+                  final lang = _languages[index];
+                  final isSelected = lang == _selectedLanguage;
+                  return Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        _changeLanguage(lang);
+                        setState(() => _showLanguageDropdown = false);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              lang,
+                              style: tt.bodySmall?.copyWith(
+                                color: isSelected ? cs.tertiary : cs.onSurface,
+                                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                              ),
+                            ),
+                            if (isSelected)
+                              Icon(Icons.check_rounded, size: 16, color: cs.tertiary),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
           const SizedBox(height: 20),
 
           SizedBox(

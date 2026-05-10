@@ -368,4 +368,34 @@ class TutorOnboardingService {
       };
     }
   }
+
+  /// Generate audio for instructions
+  static Future<Map<String, dynamic>> generateAudio(String language) async {
+    try {
+      final response = await http.post(
+        Uri.parse('https://app.homeguruworld.com/api/audio/generate'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'language': language}),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {
+          'success': true,
+          'audioUrl': data['audioUrl'],
+        };
+      } else {
+        return {
+          'success': false,
+          'error': data['error'] ?? 'Failed to generate audio',
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'error': 'Network error: ${e.toString()}',
+      };
+    }
+  }
 }
