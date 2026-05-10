@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../../widgets/onboarding/onboarding_header.dart';
 import '../../widgets/mascot/open_sprite.dart';
 import 'tutor/step0.dart';
@@ -96,10 +98,38 @@ class _TutorOnboardingScreenState extends State<TutorOnboardingScreen> {
   void _goStep5() => _push(
     const _StepState(stepValue: 5, showHeader: true, title: 'Teaching assessment', subtitle: '10 questions · ~15 minutes · proctored'),
     TutorStep5Body(
-      onPass: () { _testPassed = true; _testScore = 75; _goStep6(); },
-      onFail: () { _testPassed = false; _testScore = 40; _goStep6(); },
+      onPass: () async {
+        await _fetchTestScore();
+        _testPassed = true;
+        _goStep6();
+      },
+      onFail: () async {
+        await _fetchTestScore();
+        _testPassed = false;
+        _goStep6();
+      },
     ),
   );
+
+  Future<void> _fetchTestScore() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final tutorId = prefs.getString('tutorId');
+      if (tutorId == null) return;
+
+      final response = await http.get(
+        Uri.parse('https://app.homeguruworld.com/api/onboarding/tutor/register?tutorId=$tutorId'),
+      );
+
+      final data = jsonDecode(response.body);
+      if (data['success'] == true && data['data']['testScore'] != null) {
+        _testScore = data['data']['testScore'];
+      }
+    } catch (e) {
+      // Use default score if fetch fails
+      _testScore = _testPassed ? 75 : 40;
+    }
+  }
 
   void _goStep6() => _push(
     _StepState(stepValue: 6, showHeader: true, title: _testPassed ? 'Assessment passed!' : 'Assessment result', subtitle: _testPassed ? 'Well done!' : 'Better luck next time.'),

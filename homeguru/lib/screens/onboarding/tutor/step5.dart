@@ -21,11 +21,50 @@ class _TutorStep5BodyState extends State<TutorStep5Body> {
   int _pollCount = 0;
   static const _pollInterval = Duration(seconds: 10);
   static const _maxPolls = 180; // 30 min timeout
+  bool _blocked = false;
+  DateTime? _retryDate;
+  int _daysLeft = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkTestStatus();
+  }
 
   @override
   void dispose() {
     _pollTimer?.cancel();
     super.dispose();
+  }
+
+  Future<void> _checkTestStatus() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final tutorId = prefs.getString('tutorId');
+      if (tutorId == null) return;
+
+      final response = await http.get(
+        Uri.parse('https://app.homeguruworld.com/api/onboarding/tutor/register?tutorId=$tutorId'),
+      );
+
+      final data = jsonDecode(response.body);
+      if (data['success'] == true && data['data']['testRetryAvailableAt'] != null) {
+        final retryTime = DateTime.parse(data['data']['testRetryAvailableAt']);
+        final now = DateTime.now();
+        
+        if (now.isBefore(retryTime)) {
+          if (mounted) {
+            setState(() {
+              _blocked = true;
+              _retryDate = retryTime;
+              _daysLeft = retryTime.difference(now).inDays;
+            });
+          }
+        }
+      }
+    } catch (e) {
+      // Ignore errors
+    }
   }
 
   Future<void> _sendNow() async {
@@ -89,7 +128,8 @@ class _TutorStep5BodyState extends State<TutorStep5Body> {
         if (data['success'] == true && data['status'] == 'completed') {
           t.cancel();
           if (mounted) {
-            setState(() => _state = data['result']['passed'] ? _State.passed : _State.timeout);
+            final passed = data['result']['passed'] == true;
+            setState(() => _state = passed ? _State.passed : _State.failed);
           }
         }
       } catch (e) {
@@ -130,7 +170,8 @@ class _TutorStep5BodyState extends State<TutorStep5Body> {
 
       if (data['success'] == true && data['data']['testCompleted'] == true) {
         if (mounted) {
-          setState(() => _state = data['data']['testPassed'] ? _State.passed : _State.timeout);
+          final passed = data['data']['testPassed'] == true;
+          setState(() => _state = passed ? _State.passed : _State.failed);
         }
       } else {
         if (mounted) {
@@ -192,7 +233,42 @@ class _TutorStep5BodyState extends State<TutorStep5Body> {
                 const SizedBox(height: 28),
 
                 // State-based UI
-                if (_state == _State.idle) ...[
+                if (_blocked) ...[
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: cs.errorContainer,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: cs.error),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(Icons.block_rounded, color: cs.error, size: 48),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Test Retry Blocked',
+                          style: tt.titleMedium?.copyWith(
+                            color: cs.onErrorContainer,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'You did not pass the previous test. You can retry after $_daysLeft days.',
+                          style: tt.bodyMedium?.copyWith(color: cs.onErrorContainer),
+                          textAlign: TextAlign.center,
+                        ),
+                        if (_retryDate != null) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            'Available on: ${_retryDate!.day}/${_retryDate!.month}/${_retryDate!.year}',
+                            style: tt.bodySmall?.copyWith(color: cs.onErrorContainer.withValues(alpha: 0.7)),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ] else if (_state == _State.idle) ...[
                   _OptionCard(
                     cs: cs, tt: tt,
                     icon: Icons.send_rounded,
@@ -252,9 +328,20 @@ class _TutorStep5BodyState extends State<TutorStep5Body> {
                     icon: Icons.check_circle_rounded,
                     iconColor: cs.tertiary,
                     bgColor: cs.tertiaryContainer,
-                    title: 'Test completed!',
-                    body: 'Your result is ready. Tap Continue to see your score.',
+                    title: 'Test Passed!',
+                    body: 'Congratulations! You passed the teaching assessment. Tap Continue to proceed.',
                     onColor: cs.onTertiaryContainer,
+                  ),
+
+                if (_state == _State.failed)
+                  _StatusCard(
+                    cs: cs, tt: tt,
+                    icon: Icons.cancel_rounded,
+                    iconColor: cs.error,
+                    bgColor: cs.errorContainer,
+                    title: 'Test Not Passed',
+                    body: 'You did not meet the minimum 60% score. You can retake the test after 45 days.',
+                    onColor: cs.onErrorContainer,
                   ),
 
                 if (_state == _State.timeout)
@@ -288,7 +375,17 @@ class _TutorStep5BodyState extends State<TutorStep5Body> {
             child: FilledButton(
               onPressed: widget.onPass,
               style: FilledButton.styleFrom(backgroundColor: cs.tertiary, foregroundColor: cs.onTertiary),
-              child: const Text('See my result'),
+              child: const Text('Continue'),
+            ),
+          ),
+
+        if (_state == _State.failed)
+          Padding(
+            padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 16),
+            child: FilledButton(
+              onPressed: widget.onFail,
+              style: FilledButton.styleFrom(backgroundColor: cs.error, foregroundColor: cs.onError),
+              child: const Text('Back to Dashboard'),
             ),
           ),
       ],
@@ -296,7 +393,7 @@ class _TutorStep5BodyState extends State<TutorStep5Body> {
   }
 }
 
-enum _State { idle, generating, waiting, scheduled, checking, passed, timeout }
+enum _State { idle, generating, waiting, scheduled, checking, passed, failed, timeout }
 
 // ─────────────────────────────────────────────────────────────────────────────
 
