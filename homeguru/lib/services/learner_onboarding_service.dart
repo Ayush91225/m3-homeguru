@@ -14,6 +14,9 @@ class LearnerOnboardingService {
     String? referralCode,
   }) async {
     try {
+      print('[LEARNER-REGISTER] Sending request...');
+      print('[LEARNER-REGISTER] Data: firstName=$firstName, lastName=$lastName, email=$email, phone=$phone');
+      
       final response = await http.post(
         Uri.parse('$baseUrl/register'),
         headers: {'Content-Type': 'application/json'},
@@ -27,9 +30,13 @@ class LearnerOnboardingService {
         }),
       );
 
+      print('[LEARNER-REGISTER] Response status: ${response.statusCode}');
+      print('[LEARNER-REGISTER] Response body: ${response.body}');
+
       final result = jsonDecode(response.body);
 
       if (response.statusCode == 200 && result['success'] == true) {
+        print('[LEARNER-REGISTER] Success! LearnerId: ${result['data']['learnerId']}');
         return {
           'success': true,
           'learnerId': result['data']['learnerId'],
@@ -37,12 +44,14 @@ class LearnerOnboardingService {
           'currentStep': result['data']['currentStep'],
         };
       } else {
+        print('[LEARNER-REGISTER] Failed: ${result['error']}');
         return {
           'success': false,
-          'error': result['error'] ?? 'Registration failed',
+          'error': result['error'] ?? result['details'] ?? 'Registration failed',
         };
       }
     } catch (e) {
+      print('[LEARNER-REGISTER] Exception: $e');
       return {
         'success': false,
         'error': 'Network error: ${e.toString()}',
