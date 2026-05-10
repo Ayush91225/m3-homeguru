@@ -7,7 +7,7 @@ import '../../../models/tutor_onboarding_model.dart';
 
 class TutorStep1Body extends StatefulWidget {
   const TutorStep1Body({super.key, required this.onNext});
-  final void Function(String email, String phoneCountry, String firstName, String lastName) onNext;
+  final void Function(String email, String phoneCountry, String firstName, String lastName, String password) onNext;
 
   @override
   State<TutorStep1Body> createState() => _TutorStep1BodyState();
@@ -125,7 +125,7 @@ class _TutorStep1BodyState extends State<TutorStep1Body> {
         // Don't set currentStep - API returns string but model expects int
         
         // Navigate to email verification regardless of whether it's new or existing user
-        widget.onNext(_emailCtrl.text.trim(), _phoneCountry, _firstNameCtrl.text.trim(), _lastNameCtrl.text.trim());
+        widget.onNext(_emailCtrl.text.trim(), _phoneCountry, _firstNameCtrl.text.trim(), _lastNameCtrl.text.trim(), _passwordCtrl.text);
       } else {
         // Check if error message indicates user should verify email
         final errorMsg = result['error'] ?? 'Registration failed';
@@ -135,7 +135,7 @@ class _TutorStep1BodyState extends State<TutorStep1Body> {
             SnackBar(content: Text(errorMsg), backgroundColor: Colors.orange),
           );
           // Still navigate to email verification
-          widget.onNext(_emailCtrl.text.trim(), _phoneCountry, _firstNameCtrl.text.trim(), _lastNameCtrl.text.trim());
+          widget.onNext(_emailCtrl.text.trim(), _phoneCountry, _firstNameCtrl.text.trim(), _lastNameCtrl.text.trim(), _passwordCtrl.text);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(errorMsg)),

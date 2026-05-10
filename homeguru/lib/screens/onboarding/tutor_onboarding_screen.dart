@@ -45,6 +45,7 @@ class _TutorOnboardingScreenState extends State<TutorOnboardingScreen> {
   ];
 
   String _email = '';
+  String _password = '';
   String _phoneCountry = 'India';
   String _firstName = '';
   String _lastName = '';
@@ -67,15 +68,15 @@ class _TutorOnboardingScreenState extends State<TutorOnboardingScreen> {
 
   void _goStep1() => _push(
     const _StepState(stepValue: 1, showHeader: true, title: 'Create your account', subtitle: 'Tell us a bit about yourself.'),
-    TutorStep1Body(onNext: (email, phoneCountry, firstName, lastName) {
-      _email = email; _phoneCountry = phoneCountry; _firstName = firstName; _lastName = lastName;
+    TutorStep1Body(onNext: (email, phoneCountry, firstName, lastName, password) {
+      _email = email; _phoneCountry = phoneCountry; _firstName = firstName; _lastName = lastName; _password = password;
       _goStep1a();
     }),
   );
 
   void _goStep1a() => _push(
     const _StepState(stepValue: 1, showHeader: true, title: 'Verify your email', subtitle: 'Check your inbox to continue.'),
-    TutorStep1aBody(email: _email, onNext: _goStep2),
+    TutorStep1aBody(email: _email, password: _password, onNext: _goStep2),
   );
 
   void _goStep2() => _push(

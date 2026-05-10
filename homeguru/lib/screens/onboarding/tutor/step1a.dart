@@ -4,8 +4,9 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class TutorStep1aBody extends StatefulWidget {
-  const TutorStep1aBody({super.key, required this.email, required this.onNext});
+  const TutorStep1aBody({super.key, required this.email, required this.password, required this.onNext});
   final String email;
+  final String password;
   final VoidCallback onNext;
 
   @override
@@ -19,10 +20,50 @@ class _TutorStep1aBodyState extends State<TutorStep1aBody> {
   Future<void> _checkVerified() async {
     HapticFeedback.mediumImpact();
     setState(() => _loading = true);
-    await Future.delayed(const Duration(seconds: 2));
-    if (mounted) {
-      setState(() => _loading = false);
-      widget.onNext();
+    
+    try {
+      // Call backend API to check verification status with password
+      final response = await http.post(
+        Uri.parse('https://app.homeguruworld.com/api/auth/check-verification'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': widget.email, 'password': widget.password}),
+      );
+      
+      final data = jsonDecode(response.body);
+      
+      if (mounted) {
+        setState(() => _loading = false);
+        
+        if (data['success'] == true && data['verified'] == true) {
+          // Email is verified, proceed to next step
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Email verified successfully!'),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          widget.onNext();
+        } else {
+          // Email not verified yet
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please verify your email first. Check your inbox.'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error checking verification: ${e.toString()}'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
