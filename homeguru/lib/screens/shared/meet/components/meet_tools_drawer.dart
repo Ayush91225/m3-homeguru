@@ -160,18 +160,18 @@ class _MeetToolsDrawerState extends State<MeetToolsDrawer> {
                                         child: _CircleButton(
                                           icon: Icons.timer_rounded,
                                           label: 'Timer',
-                                          onTap: () {
+                                          onTap: () async {
                                             Navigator.pop(context);
-                                            Future.delayed(const Duration(milliseconds: 100), () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (ctx) => StudyTimerScreen(
-                                                    onClose: () => Navigator.pop(ctx),
-                                                  ),
+                                            await Future.delayed(const Duration(milliseconds: 100));
+                                            if (!context.mounted) return;
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (ctx) => StudyTimerScreen(
+                                                  onClose: () => Navigator.pop(ctx),
                                                 ),
-                                              );
-                                            });
+                                              ),
+                                            );
                                           },
                                         ),
                                       ),
@@ -182,25 +182,25 @@ class _MeetToolsDrawerState extends State<MeetToolsDrawer> {
                                         child: _CircleButton(
                                           icon: Icons.quiz_rounded,
                                           label: 'Quiz',
-                                          onTap: () {
+                                          onTap: () async {
                                             Navigator.pop(context);
-                                            Future.delayed(const Duration(milliseconds: 100), () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (ctx) => Scaffold(
-                                                    appBar: AppBar(
-                                                      title: const Text('Quiz'),
-                                                      leading: IconButton(
-                                                        icon: const Icon(Icons.close),
-                                                        onPressed: () => Navigator.pop(ctx),
-                                                      ),
+                                            await Future.delayed(const Duration(milliseconds: 100));
+                                            if (!context.mounted) return;
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (ctx) => Scaffold(
+                                                  appBar: AppBar(
+                                                    title: const Text('Quiz'),
+                                                    leading: IconButton(
+                                                      icon: const Icon(Icons.close),
+                                                      onPressed: () => Navigator.pop(ctx),
                                                     ),
-                                                    body: const QuizScreen(isHost: true),
                                                   ),
+                                                  body: const QuizScreen(isHost: true),
                                                 ),
-                                              );
-                                            });
+                                              ),
+                                            );
                                           },
                                         ),
                                       ),
@@ -211,18 +211,18 @@ class _MeetToolsDrawerState extends State<MeetToolsDrawer> {
                                         child: _CircleButton(
                                           icon: Icons.calculate_rounded,
                                           label: 'Sci Calc',
-                                          onTap: () {
+                                          onTap: () async {
                                             Navigator.pop(context);
-                                            Future.delayed(const Duration(milliseconds: 100), () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (ctx) => ScientificCalculatorScreen(
-                                                    onClose: () => Navigator.pop(ctx),
-                                                  ),
+                                            await Future.delayed(const Duration(milliseconds: 100));
+                                            if (!context.mounted) return;
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (ctx) => ScientificCalculatorScreen(
+                                                  onClose: () => Navigator.pop(ctx),
                                                 ),
-                                              );
-                                            });
+                                              ),
+                                            );
                                           },
                                         ),
                                       ),
@@ -243,25 +243,25 @@ class _MeetToolsDrawerState extends State<MeetToolsDrawer> {
                                           iconBg: cs.errorContainer,
                                           title: 'YouTube',
                                           subtitle: 'Watch together',
-                                          onTap: () {
+                                          onTap: () async {
                                             Navigator.pop(context);
-                                            Future.delayed(const Duration(milliseconds: 100), () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (ctx) => Scaffold(
-                                                    appBar: AppBar(
-                                                      title: const Text('YouTube'),
-                                                      leading: IconButton(
-                                                        icon: const Icon(Icons.close),
-                                                        onPressed: () => Navigator.pop(ctx),
-                                                      ),
+                                            await Future.delayed(const Duration(milliseconds: 100));
+                                            if (!context.mounted) return;
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (ctx) => Scaffold(
+                                                  appBar: AppBar(
+                                                    title: const Text('YouTube'),
+                                                    leading: IconButton(
+                                                      icon: const Icon(Icons.close),
+                                                      onPressed: () => Navigator.pop(ctx),
                                                     ),
-                                                    body: const YouTubePlayerScreen(),
                                                   ),
+                                                  body: const YouTubePlayerScreen(),
                                                 ),
-                                              );
-                                            });
+                                              ),
+                                            );
                                           },
                                         ),
                                       ),
@@ -275,16 +275,16 @@ class _MeetToolsDrawerState extends State<MeetToolsDrawer> {
                                           iconBg: cs.tertiaryContainer,
                                           title: 'AI Notes',
                                           subtitle: 'Transcription',
-                                          onTap: () {
+                                          onTap: () async {
                                             Navigator.pop(context);
-                                            Future.delayed(const Duration(milliseconds: 100), () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (ctx) => const AINotesScreen(),
-                                                ),
-                                              );
-                                            });
+                                            await Future.delayed(const Duration(milliseconds: 100));
+                                            if (!context.mounted) return;
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (ctx) => const AINotesScreen(),
+                                              ),
+                                            );
                                           },
                                         ),
                                       ),
@@ -301,18 +301,18 @@ class _MeetToolsDrawerState extends State<MeetToolsDrawer> {
                                   iconBg: cs.secondaryContainer,
                                   title: 'Academy',
                                   subtitle: 'Browse image library',
-                                  onTap: () {
+                                  onTap: () async {
                                     Navigator.pop(context);
-                                    Future.delayed(const Duration(milliseconds: 100), () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (ctx) => AcademyScreen(
-                                            onShareMedia: widget.onShareMedia,
-                                          ),
+                                    await Future.delayed(const Duration(milliseconds: 100));
+                                    if (!context.mounted) return;
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (ctx) => AcademyScreen(
+                                          onShareMedia: widget.onShareMedia,
                                         ),
-                                      );
-                                    });
+                                      ),
+                                    );
                                   },
                                 ),
                                 const SizedBox(height: 8),
@@ -329,18 +329,18 @@ class _MeetToolsDrawerState extends State<MeetToolsDrawer> {
                                           iconColor: cs.primary,
                                           iconBg: cs.primaryContainer,
                                           title: 'Graph Calc',
-                                          onTap: () {
+                                          onTap: () async {
                                             Navigator.pop(context);
-                                            Future.delayed(const Duration(milliseconds: 100), () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (ctx) => GraphingCalculatorScreen(
-                                                    onClose: () => Navigator.pop(ctx),
-                                                  ),
+                                            await Future.delayed(const Duration(milliseconds: 100));
+                                            if (!context.mounted) return;
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (ctx) => GraphingCalculatorScreen(
+                                                  onClose: () => Navigator.pop(ctx),
                                                 ),
-                                              );
-                                            });
+                                              ),
+                                            );
                                           },
                                         ),
                                       ),
@@ -353,16 +353,16 @@ class _MeetToolsDrawerState extends State<MeetToolsDrawer> {
                                           iconColor: cs.tertiary,
                                           iconBg: cs.tertiaryContainer,
                                           title: 'Shared Notes',
-                                          onTap: () {
+                                          onTap: () async {
                                             Navigator.pop(context);
-                                            Future.delayed(const Duration(milliseconds: 100), () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (ctx) => const SharedNotesScreen(),
-                                                ),
-                                              );
-                                            });
+                                            await Future.delayed(const Duration(milliseconds: 100));
+                                            if (!context.mounted) return;
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (ctx) => const SharedNotesScreen(),
+                                              ),
+                                            );
                                           },
                                         ),
                                       ),
@@ -380,16 +380,16 @@ class _MeetToolsDrawerState extends State<MeetToolsDrawer> {
                                         child: _CircleButton(
                                           icon: Icons.bar_chart_rounded,
                                           label: 'Polls',
-                                          onTap: () {
+                                          onTap: () async {
                                             Navigator.pop(context);
-                                            Future.delayed(const Duration(milliseconds: 100), () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (ctx) => const PollsScreen(),
-                                                ),
-                                              );
-                                            });
+                                            await Future.delayed(const Duration(milliseconds: 100));
+                                            if (!context.mounted) return;
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (ctx) => const PollsScreen(),
+                                              ),
+                                            );
                                           },
                                         ),
                                       ),
@@ -400,16 +400,16 @@ class _MeetToolsDrawerState extends State<MeetToolsDrawer> {
                                         child: _CircleButton(
                                           icon: Icons.folder_rounded,
                                           label: 'Library',
-                                          onTap: () {
+                                          onTap: () async {
                                             Navigator.pop(context);
-                                            Future.delayed(const Duration(milliseconds: 100), () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (ctx) => const LibraryScreen(),
-                                                ),
-                                              );
-                                            });
+                                            await Future.delayed(const Duration(milliseconds: 100));
+                                            if (!context.mounted) return;
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (ctx) => const LibraryScreen(),
+                                              ),
+                                            );
                                           },
                                         ),
                                       ),
@@ -420,16 +420,16 @@ class _MeetToolsDrawerState extends State<MeetToolsDrawer> {
                                         child: _CircleButton(
                                           icon: Icons.monitor_rounded,
                                           label: 'Slides',
-                                          onTap: () {
+                                          onTap: () async {
                                             Navigator.pop(context);
-                                            Future.delayed(const Duration(milliseconds: 100), () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (ctx) => const SlidesScreen(),
-                                                ),
-                                              );
-                                            });
+                                            await Future.delayed(const Duration(milliseconds: 100));
+                                            if (!context.mounted) return;
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (ctx) => const SlidesScreen(),
+                                              ),
+                                            );
                                           },
                                         ),
                                       ),
@@ -447,16 +447,16 @@ class _MeetToolsDrawerState extends State<MeetToolsDrawer> {
                                   title: 'Flashcards',
                                   subtitle: 'Study cards',
                                   fullWidth: true,
-                                  onTap: () {
+                                  onTap: () async {
                                     Navigator.pop(context);
-                                    Future.delayed(const Duration(milliseconds: 100), () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (ctx) => const FlashcardsScreen(),
-                                        ),
-                                      );
-                                    });
+                                    await Future.delayed(const Duration(milliseconds: 100));
+                                    if (!context.mounted) return;
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (ctx) => const FlashcardsScreen(),
+                                      ),
+                                    );
                                   },
                                 ),
                             ],
@@ -513,19 +513,19 @@ class _HeroPill extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: onTap ?? () {
+        onTap: onTap ?? () async {
           if (title == 'Whiteboard') {
             Navigator.pop(context);
-            Future.delayed(const Duration(milliseconds: 100), () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (ctx) => WhiteboardScreen(
-                    onClose: () => Navigator.pop(ctx),
-                  ),
+            await Future.delayed(const Duration(milliseconds: 100));
+            if (!context.mounted) return;
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (ctx) => WhiteboardScreen(
+                  onClose: () => Navigator.pop(ctx),
                 ),
-              );
-            });
+              ),
+            );
           } else {
             Navigator.pop(context);
             ScaffoldMessenger.of(context).showSnackBar(
@@ -544,7 +544,7 @@ class _HeroPill extends StatelessWidget {
             color: cs.surfaceContainerLow,
             borderRadius: BorderRadius.circular(40),
             border: Border.all(
-              color: cs.outlineVariant.withOpacity(0.5),
+              color: cs.outlineVariant.withValues(alpha: 0.5),
               width: 1,
             ),
           ),
@@ -626,7 +626,7 @@ class _CircleButton extends StatelessWidget {
               color: cs.surfaceContainerLow,
               shape: BoxShape.circle,
               border: Border.all(
-                color: cs.outlineVariant.withOpacity(0.5),
+                color: cs.outlineVariant.withValues(alpha: 0.5),
                 width: 1,
               ),
             ),
@@ -695,7 +695,7 @@ class _RectCard extends StatelessWidget {
             color: cs.surfaceContainerLow,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: cs.outlineVariant.withOpacity(0.5),
+              color: cs.outlineVariant.withValues(alpha: 0.5),
               width: 1,
             ),
           ),

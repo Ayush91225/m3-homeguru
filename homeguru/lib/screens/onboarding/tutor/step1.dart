@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../../../widgets/onboarding/phone_field.dart';
+import '../../../services/tutor_onboarding_service.dart';
+import '../../../models/tutor_onboarding_model.dart';
 
 class TutorStep1Body extends StatefulWidget {
   const TutorStep1Body({super.key, required this.onNext});
@@ -20,6 +23,7 @@ class _TutorStep1BodyState extends State<TutorStep1Body> {
   final _confirmCtrl = TextEditingController();
   final _referralCtrl = TextEditingController();
 
+  String _phoneNumber = '';
   bool _phoneValid = false;
   String _phoneCountry = 'India';
   bool _otpSent = false;
@@ -43,12 +47,26 @@ class _TutorStep1BodyState extends State<TutorStep1Body> {
   }
 
   Future<void> _sendOtp() async {
-    if (!_phoneValid) return;
+    if (!_phoneValid || _phoneNumber.isEmpty) return;
     FocusScope.of(context).unfocus();
     HapticFeedback.lightImpact();
     setState(() => _sendingOtp = true);
-    await Future.delayed(const Duration(seconds: 1));
-    if (mounted) setState(() { _sendingOtp = false; _otpSent = true; });
+    
+    final result = await TutorOnboardingService.sendOTP(_phoneNumber);
+    
+    if (mounted) {
+      setState(() => _sendingOtp = false);
+      if (result['success'] == true) {
+        setState(() => _otpSent = true);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('OTP sent via WhatsApp'), backgroundColor: Colors.green),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result['error'] ?? 'Failed to send OTP')),
+        );
+      }
+    }
   }
 
   Future<void> _verifyOtp() async {
@@ -56,8 +74,22 @@ class _TutorStep1BodyState extends State<TutorStep1Body> {
     FocusScope.of(context).unfocus();
     HapticFeedback.lightImpact();
     setState(() => _verifyingOtp = true);
-    await Future.delayed(const Duration(seconds: 1));
-    if (mounted) setState(() { _verifyingOtp = false; _otpVerified = true; });
+    
+    final result = await TutorOnboardingService.verifyOTP(_phoneNumber, _otpCtrl.text.trim());
+    
+    if (mounted) {
+      setState(() => _verifyingOtp = false);
+      if (result['success'] == true) {
+        setState(() => _otpVerified = true);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Phone verified successfully!'), backgroundColor: Colors.green),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result['error'] ?? 'Invalid OTP')),
+        );
+      }
+    }
   }
 
   Future<void> _submit() async {
@@ -71,10 +103,45 @@ class _TutorStep1BodyState extends State<TutorStep1Body> {
     FocusScope.of(context).unfocus();
     HapticFeedback.mediumImpact();
     setState(() => _loading = true);
-    await Future.delayed(const Duration(seconds: 1));
+    
+    // Call registration API
+    final tutorData = TutorOnboarding();
+    tutorData.set('firstName', _firstNameCtrl.text.trim());
+    tutorData.set('lastName', _lastNameCtrl.text.trim());
+    tutorData.set('email', _emailCtrl.text.trim());
+    tutorData.set('phone', _phoneNumber);
+    tutorData.set('password', _passwordCtrl.text);
+    if (_referralCtrl.text.trim().isNotEmpty) {
+      tutorData.set('referralCode', _referralCtrl.text.trim());
+    }
+    
+    final result = await TutorOnboardingService.register(tutorData);
+    
     if (mounted) {
       setState(() => _loading = false);
-      widget.onNext(_emailCtrl.text.trim(), _phoneCountry, _firstNameCtrl.text.trim(), _lastNameCtrl.text.trim());
+      if (result['success'] == true) {
+        // Save tutorId for next steps
+        tutorData.tutorId = result['tutorId'];
+        // Don't set currentStep - API returns string but model expects int
+        
+        // Navigate to email verification regardless of whether it's new or existing user
+        widget.onNext(_emailCtrl.text.trim(), _phoneCountry, _firstNameCtrl.text.trim(), _lastNameCtrl.text.trim());
+      } else {
+        // Check if error message indicates user should verify email
+        final errorMsg = result['error'] ?? 'Registration failed';
+        if (errorMsg.toLowerCase().contains('verify') || errorMsg.toLowerCase().contains('already')) {
+          // Show message and redirect to email verification anyway
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(errorMsg), backgroundColor: Colors.orange),
+          );
+          // Still navigate to email verification
+          widget.onNext(_emailCtrl.text.trim(), _phoneCountry, _firstNameCtrl.text.trim(), _lastNameCtrl.text.trim());
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(errorMsg)),
+          );
+        }
+      }
     }
   }
 
@@ -145,6 +212,10 @@ class _TutorStep1BodyState extends State<TutorStep1Body> {
                       onChanged: (dial, number, valid, country) {
                         _phoneValid = valid;
                         _phoneCountry = country;
+                        _phoneNumber = dial + number;
+                        if (_otpSent && !_otpVerified) {
+                          setState(() { _otpSent = false; _otpCtrl.clear(); });
+                        }
                       },
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) return 'Enter your phone number';

@@ -94,12 +94,12 @@ class QuizPreviewMode extends StatelessWidget {
                                         height: 20,
                                         decoration: BoxDecoration(
                                           color: isCorrect
-                                            ? Colors.green.withOpacity(0.1)
+                                            ? Colors.green.withValues(alpha: 0.1)
                                             : cs.surfaceContainerLow,
                                           border: Border.all(
                                             color: isCorrect
                                               ? Colors.green
-                                              : cs.outlineVariant.withOpacity(0.5),
+                                              : cs.outlineVariant.withValues(alpha: 0.5),
                                           ),
                                           borderRadius: BorderRadius.circular(4),
                                         ),
@@ -134,7 +134,7 @@ class QuizPreviewMode extends StatelessWidget {
                   Divider(
                     height: 1,
                     indent: 60,
-                    color: cs.outlineVariant.withOpacity(0.3),
+                    color: cs.outlineVariant.withValues(alpha: 0.3),
                   ),
                 ],
               );

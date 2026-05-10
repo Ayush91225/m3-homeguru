@@ -611,51 +611,6 @@ class _RequestCard extends StatelessWidget {
   }
 }
 
-class _ViewAllCard extends StatelessWidget {
-  final VoidCallback onTap;
-
-  const _ViewAllCard({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 160,
-        decoration: BoxDecoration(
-          color: cs.surface,
-          borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.arrow_forward_rounded,
-                size: 32,
-                color: cs.onSurfaceVariant,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'View All',
-                style: tt.bodyMedium?.copyWith(
-                  color: cs.onSurface,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-
 class _DetailRow extends StatelessWidget {
   final IconData icon;
   final String label;

@@ -56,6 +56,7 @@ dependencies:
   flutter_local_notifications: ^18.0.1
   speech_to_text: ^7.3.0
   web_socket_channel: ^3.0.1
+  crypto: ^3.0.3
   youtube_player_flutter: ^9.1.3
   flutter_inappwebview: ^6.1.5
 
@@ -98,6 +99,7 @@ flutter:
     - assets/desmos_scientific.html
     - assets/desmos_graphing.html
     - assets/youtube_player.html
+    - assets/html/youtube_player.html
 
 flutter_launcher_icons:
   android: true

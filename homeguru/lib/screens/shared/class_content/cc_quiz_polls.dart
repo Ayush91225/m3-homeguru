@@ -118,7 +118,7 @@ class _QuizSectionState extends State<QuizSection> {
                           child: Row(
                             children: [
                               Expanded(child: Text(opt.value, style: tt.bodySmall)),
-                              if (trailing case final t?) t,
+                              trailing ?? const SizedBox.shrink(),
                             ],
                           ),
                         ),

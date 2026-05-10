@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:flutter/services.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import '../../../services/meeting_signaling_service.dart';
 
 class YouTubePlayerScreen extends StatefulWidget {
@@ -14,8 +15,7 @@ class YouTubePlayerScreen extends StatefulWidget {
 
 class _YouTubePlayerScreenState extends State<YouTubePlayerScreen> {
   final _urlController = TextEditingController();
-  String? _videoId;
-  bool _isHost = false;
+  String? _currentVideoId;
   StreamSubscription? _syncSubscription;
 
   static const _suggested = [
@@ -35,49 +35,47 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen> {
     _syncSubscription = widget.signalingService?.messages.listen((msg) {
       if (msg['action'] == 'youtube-sync' && msg['state'] != null) {
         final state = msg['state'];
-
-        if (state['videoId'] != null) {
-          if (state['videoId'] == null) {
-            setState(() {
-              _videoId = null;
-              _isHost = false;
-            });
-          } else if (state['videoId'] != _videoId) {
-            setState(() {
-              _videoId = state['videoId'];
-              _isHost = false;
-            });
-          }
+        if (state['videoId'] != null && state['videoId'] != _currentVideoId) {
+          _openFullscreenVideo(state['videoId'], isHost: false);
         }
       }
     });
   }
 
   String? _extractVideoId(String input) {
-    final regex = RegExp(r'(?:youtu\.be\/|v=|embed\/|shorts\/)([a-zA-Z0-9_-]{11})');
-    final match = regex.firstMatch(input);
-    return match?.group(1);
+    return YoutubePlayer.convertUrlToId(input);
   }
 
-  void _selectVideo(String id) {
-    setState(() {
-      _videoId = id;
-      _isHost = true;
-    });
-    widget.signalingService?.send({'action': 'youtube-sync', 'state': {'videoId': id}});
+  void _openFullscreenVideo(String videoId, {bool isHost = true}) {
+    setState(() => _currentVideoId = videoId);
+    
+    if (isHost) {
+      widget.signalingService?.send({'action': 'youtube-sync', 'state': {'videoId': videoId}});
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => _FullscreenVideoPlayer(
+          videoId: videoId,
+          isHost: isHost,
+          onClose: () {
+            setState(() => _currentVideoId = null);
+            if (isHost) {
+              widget.signalingService?.send({'action': 'youtube-sync', 'state': {'videoId': null}});
+            }
+          },
+        ),
+      ),
+    );
   }
 
   void _handleShare() {
     final id = _extractVideoId(_urlController.text);
-    if (id != null) _selectVideo(id);
-  }
-
-  void _resetVideo() {
-    setState(() {
-      _videoId = null;
-      _isHost = false;
-    });
-    widget.signalingService?.send({'action': 'youtube-sync', 'state': {'videoId': null}});
+    if (id != null) {
+      _openFullscreenVideo(id);
+      _urlController.clear();
+    }
   }
 
   @override
@@ -90,153 +88,6 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-
-    if (_videoId != null) {
-      final embedUrl = 'https://www.youtube.com/embed/$_videoId?autoplay=1&rel=0&modestbranding=1&playsinline=1&controls=${_isHost ? 1 : 0}&enablejsapi=1&origin=https://flutter.dev';
-      
-      return Container(
-        decoration: BoxDecoration(
-          color: cs.surface,
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(24),
-          child: Stack(
-            children: [
-              Container(
-                color: Colors.black,
-                child: InAppWebView(
-                  initialUrlRequest: URLRequest(url: WebUri(embedUrl)),
-                  initialSettings: InAppWebViewSettings(
-                    mediaPlaybackRequiresUserGesture: false,
-                    allowsInlineMediaPlayback: true,
-                    javaScriptEnabled: true,
-                    javaScriptCanOpenWindowsAutomatically: true,
-                    useHybridComposition: true,
-                    allowsBackForwardNavigationGestures: false,
-                    transparentBackground: false,
-                    disableContextMenu: true,
-                    supportZoom: false,
-                    useShouldOverrideUrlLoading: false,
-                    clearCache: false,
-                    cacheEnabled: true,
-                  ),
-                ),
-              ),
-              if (!_isHost) 
-                Positioned.fill(
-                  child: GestureDetector(
-                    onTap: () {},
-                    child: Container(color: Colors.transparent),
-                  ),
-                ),
-              Positioned(
-                top: 0, left: 0, right: 0,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [Colors.black.withValues(alpha: 0.7), Colors.transparent],
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 6, height: 6,
-                        decoration: BoxDecoration(
-                          color: cs.error,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        _isHost ? 'YOU CONTROL PLAYBACK' : 'SYNCED PLAYBACK',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.9),
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                      const Spacer(),
-                      Material(
-                        color: cs.surfaceContainerLow.withValues(alpha: 0.3),
-                        borderRadius: BorderRadius.circular(20),
-                        child: InkWell(
-                          onTap: _resetVideo,
-                          borderRadius: BorderRadius.circular(20),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.refresh, size: 13, color: Colors.white),
-                                const SizedBox(width: 4),
-                                const Text('Change', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600)),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Material(
-                        color: cs.surfaceContainerLow.withValues(alpha: 0.3),
-                        shape: const CircleBorder(),
-                        child: InkWell(
-                          onTap: () => Navigator.pop(context),
-                          customBorder: const CircleBorder(),
-                          child: Container(
-                            width: 32, height: 32,
-                            alignment: Alignment.center,
-                            child: const Icon(Icons.close, size: 15, color: Colors.white),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              if (!_isHost)
-                Positioned(
-                  bottom: 16, left: 0, right: 0,
-                  child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: cs.surfaceContainerLow.withValues(alpha: 0.9),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 6, height: 6,
-                            decoration: BoxDecoration(
-                              color: cs.tertiary,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Host controls playback',
-                            style: TextStyle(
-                              color: cs.onSurface,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      );
-    }
 
     return Container(
       decoration: BoxDecoration(
@@ -253,7 +104,8 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen> {
             child: Row(
               children: [
                 Container(
-                  width: 36, height: 36,
+                  width: 36,
+                  height: 36,
                   decoration: BoxDecoration(
                     color: cs.errorContainer,
                     borderRadius: BorderRadius.circular(16),
@@ -278,7 +130,8 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen> {
                     onTap: () => Navigator.pop(context),
                     customBorder: const CircleBorder(),
                     child: Container(
-                      width: 32, height: 32,
+                      width: 32,
+                      height: 32,
                       alignment: Alignment.center,
                       child: Icon(Icons.close, size: 15, color: cs.onSurfaceVariant),
                     ),
@@ -316,6 +169,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen> {
                                 ),
                                 style: TextStyle(fontSize: 13, color: cs.onSurface, fontWeight: FontWeight.w500),
                                 onSubmitted: (_) => _handleShare(),
+                                onChanged: (_) => setState(() {}),
                               ),
                             ),
                           ],
@@ -360,7 +214,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen> {
                     color: cs.surface,
                     borderRadius: BorderRadius.circular(16),
                     child: InkWell(
-                      onTap: () => _selectVideo(v['id']!),
+                      onTap: () => _openFullscreenVideo(v['id']!),
                       borderRadius: BorderRadius.circular(16),
                       child: Container(
                         padding: const EdgeInsets.all(10),
@@ -373,18 +227,32 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen> {
                             ClipRRect(
                               borderRadius: BorderRadius.circular(12),
                               child: Container(
-                                width: 120, height: 72,
+                                width: 120,
+                                height: 72,
                                 color: Colors.black,
                                 child: Stack(
                                   children: [
                                     Image.network(
                                       'https://img.youtube.com/vi/${v['id']}/mqdefault.jpg',
-                                      width: 120, height: 72,
+                                      width: 120,
+                                      height: 72,
                                       fit: BoxFit.cover,
                                       errorBuilder: (context, error, stackTrace) => Container(color: Colors.black),
                                     ),
+                                    Center(
+                                      child: Container(
+                                        width: 32,
+                                        height: 32,
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withValues(alpha: 0.7),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(Icons.play_arrow, color: Colors.white, size: 20),
+                                      ),
+                                    ),
                                     Positioned(
-                                      bottom: 4, right: 4,
+                                      bottom: 4,
+                                      right: 4,
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                         decoration: BoxDecoration(
@@ -427,7 +295,8 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  width: 6, height: 6,
+                  width: 6,
+                  height: 6,
                   decoration: BoxDecoration(
                     color: cs.tertiary,
                     shape: BoxShape.circle,
@@ -439,6 +308,165 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _FullscreenVideoPlayer extends StatefulWidget {
+  const _FullscreenVideoPlayer({
+    required this.videoId,
+    required this.isHost,
+    required this.onClose,
+  });
+
+  final String videoId;
+  final bool isHost;
+  final VoidCallback onClose;
+
+  @override
+  State<_FullscreenVideoPlayer> createState() => _FullscreenVideoPlayerState();
+}
+
+class _FullscreenVideoPlayerState extends State<_FullscreenVideoPlayer> {
+  late YoutubePlayerController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Force landscape and hide system UI
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+
+    _controller = YoutubePlayerController(
+      initialVideoId: widget.videoId,
+      flags: YoutubePlayerFlags(
+        autoPlay: true,
+        mute: false,
+        enableCaption: true,
+        controlsVisibleAtStart: true,
+        hideControls: !widget.isHost,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+
+    // Restore portrait and system UI
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+    ]);
+    SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.manual,
+      overlays: SystemUiOverlay.values,
+    );
+
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
+    return WillPopScope(
+      onWillPop: () async {
+        widget.onClose();
+        SystemChrome.setPreferredOrientations([
+          DeviceOrientation.portraitUp,
+        ]);
+        SystemChrome.setEnabledSystemUIMode(
+          SystemUiMode.manual,
+          overlays: SystemUiOverlay.values,
+        );
+        return true;
+      },
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: Stack(
+          children: [
+            Center(
+              child: YoutubePlayer(
+                controller: _controller,
+                showVideoProgressIndicator: true,
+                progressIndicatorColor: cs.tertiary,
+                progressColors: ProgressBarColors(
+                  playedColor: cs.tertiary,
+                  handleColor: cs.tertiary,
+                ),
+              ),
+            ),
+            SafeArea(
+              child: Positioned(
+                top: 8,
+                left: 8,
+                child: Row(
+                  children: [
+                    Material(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      shape: const CircleBorder(),
+                      child: InkWell(
+                        onTap: () {
+                          widget.onClose();
+                          Navigator.pop(context);
+                        },
+                        customBorder: const CircleBorder(),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          alignment: Alignment.center,
+                          child: const Icon(
+                            Icons.close,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (!widget.isHost) ...[
+                      const SizedBox(width: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.7),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                color: cs.tertiary,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'SYNCED PLAYBACK',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

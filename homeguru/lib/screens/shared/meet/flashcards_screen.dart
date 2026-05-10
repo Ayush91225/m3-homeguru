@@ -338,7 +338,7 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
       final newCount = _cards.where((c) => c.status == 'new').length;
       final learningCount = _cards.where((c) => c.status == 'learning').length;
       final masteredCount = _cards.where((c) => c.status == 'mastered').length;
-      final progress = (_cards.length > 0 ? (masteredCount / _cards.length * 100).round() : 0);
+      final progress = (_cards.isNotEmpty ? (masteredCount / _cards.length * 100).round() : 0);
 
       return Scaffold(
         backgroundColor: cs.surface,

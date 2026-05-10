@@ -310,7 +310,6 @@ class _ConversationInputBarState extends State<ConversationInputBar> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accentColor = widget.isTutor ? cs.tertiary : cs.primary;
     final onAccent = widget.isTutor ? cs.onTertiary : cs.onPrimary;
 
     return Container(

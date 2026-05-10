@@ -63,15 +63,9 @@ class _QuizScreenState extends State<QuizScreen> {
   String _topicInput = '';
   int _questionCount = 10;
   
-  // Manual mode
-  String _manualQuestion = '';
-  List<String> _manualOptions = ['', '', '', ''];
-  int _manualCorrect = 0;
-  
   final _markingScheme = {'correct': 4, 'incorrect': -1, 'skipped': 0};
   List<int?> _myAnswers = [];
   List<Map<String, dynamic>> _submissions = [];
-  String? _expandedUser;
 
   @override
   void initState() {

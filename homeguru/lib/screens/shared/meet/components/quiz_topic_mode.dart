@@ -135,7 +135,7 @@ class _QuizTopicModeState extends State<QuizTopicMode> {
                     selectedColor: cs.primaryContainer,
                     backgroundColor: cs.surfaceContainerLow,
                     side: BorderSide(
-                      color: cs.outlineVariant.withOpacity(0.5),
+                      color: cs.outlineVariant.withValues(alpha: 0.5),
                       width: 1,
                     ),
                     shape: RoundedRectangleBorder(

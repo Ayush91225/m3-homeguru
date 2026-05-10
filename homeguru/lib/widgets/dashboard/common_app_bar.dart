@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../screens/dashboard/learner/profile_screen.dart';
+import '../../../screens/dashboard/tutor/tutor_profile_screen.dart';
 import '../../../services/user_profile_store.dart';
 
 class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -42,13 +43,14 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
               
               return GestureDetector(
                 onTap: () {
-                  if (isLearner) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const ProfileScreen()),
-                    );
-                  }
-                  // TODO: Add tutor profile screen navigation
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => isLearner
+                          ? const ProfileScreen()
+                          : const TutorProfileScreen(),
+                    ),
+                  );
                 },
                 child: Builder(builder: (context) {
                   final avatar = ProfileStore.of(context).avatar;

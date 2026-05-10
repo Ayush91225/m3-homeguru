@@ -155,7 +155,6 @@ class _TutorStep7BodyState extends State<TutorStep7Body> {
                     _IncludeRow('Verified tutor badge on your profile', cs, tt),
                     _IncludeRow('Appear in student search results', cs, tt),
                     _IncludeRow('Unlimited student bookings', cs, tt),
-                    _IncludeRow('No commission on first ₹10,000 earned', cs, tt),
                   ]),
                 ),
 

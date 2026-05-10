@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class TutorStep1aBody extends StatefulWidget {
   const TutorStep1aBody({super.key, required this.email, required this.onNext});
@@ -27,12 +29,45 @@ class _TutorStep1aBodyState extends State<TutorStep1aBody> {
   Future<void> _resend() async {
     HapticFeedback.lightImpact();
     setState(() => _resending = true);
-    await Future.delayed(const Duration(seconds: 1));
-    if (mounted) {
-      setState(() => _resending = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Email resent to ${widget.email}'), behavior: SnackBarBehavior.floating),
+    
+    try {
+      final response = await http.post(
+        Uri.parse('https://app.homeguruworld.com/api/auth/resend-verification'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': widget.email}),
       );
+      
+      final data = jsonDecode(response.body);
+      
+      if (mounted) {
+        setState(() => _resending = false);
+        if (data['success'] == true) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Verification email sent to ${widget.email}'),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(data['error'] ?? 'Failed to send email'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _resending = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 

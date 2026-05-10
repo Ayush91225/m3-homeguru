@@ -11,8 +11,6 @@ class CallNotificationService {
   static String? _currentMeetingCode;
   static String? _currentTutorName;
   static DateTime? _callStartTime;
-  static bool _isCameraOn = true;
-  static bool _isMicOn = true;
   static const _actionChannel = MethodChannel('com.navchetna.homeguru/call_actions');
   static Function(String)? onActionCallback;
 
@@ -108,8 +106,6 @@ class CallNotificationService {
       _currentMeetingCode = meetingCode;
       _currentTutorName = tutorName;
       _callStartTime ??= DateTime.now();
-      _isCameraOn = isCameraOn;
-      _isMicOn = isMicOn;
 
       final title = tutorName != null && tutorName.isNotEmpty
           ? 'Ongoing class with $tutorName'
@@ -157,9 +153,6 @@ class CallNotificationService {
     required bool isMicOn,
   }) async {
     if (_currentMeetingCode == null) return;
-
-    _isCameraOn = isCameraOn;
-    _isMicOn = isMicOn;
 
     await startCallNotification(
       meetingCode: _currentMeetingCode!,

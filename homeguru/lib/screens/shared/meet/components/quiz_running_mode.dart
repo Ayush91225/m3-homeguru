@@ -77,7 +77,7 @@ class QuizRunningMode extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.1),
+                          color: Colors.green.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -93,7 +93,7 @@ class QuizRunningMode extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.red.withOpacity(0.1),
+                          color: Colors.red.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -173,7 +173,7 @@ class QuizRunningMode extends StatelessWidget {
                             height: 36,
                             decoration: BoxDecoration(
                               color: isSelected
-                                ? Colors.white.withOpacity(0.2)
+                                ? Colors.white.withValues(alpha: 0.2)
                                 : Theme.of(context).colorScheme.surface,
                               borderRadius: BorderRadius.circular(10),
                             ),

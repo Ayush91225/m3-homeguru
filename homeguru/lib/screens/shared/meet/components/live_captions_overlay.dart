@@ -61,9 +61,11 @@ class _LiveCaptionsOverlayState extends State<LiveCaptionsOverlay>
       },
       listenFor: const Duration(seconds: 30),
       pauseFor: const Duration(seconds: 3),
-      partialResults: true,
+      listenOptions: stt.SpeechListenOptions(
+        partialResults: true,
+        cancelOnError: false,
+      ),
       localeId: 'en_US',
-      cancelOnError: false,
     );
   }
 
@@ -133,7 +135,7 @@ class _LiveCaptionsOverlayState extends State<LiveCaptionsOverlay>
             // Status indicator
             AnimatedBuilder(
               animation: _pulseController,
-              builder: (_, __) {
+              builder: (_, _) {
                 return Container(
                   width: 8,
                   height: 8,

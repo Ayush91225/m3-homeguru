@@ -118,7 +118,7 @@ class _LoginSheetContentState extends State<_LoginSheetContent> {
                     alignment: Alignment.topCenter,
                     children: <Widget>[
                       ...previousChildren,
-                      if (currentChild case final c?) c,
+                      currentChild ?? const SizedBox.shrink(),
                     ],
                   );
                 },

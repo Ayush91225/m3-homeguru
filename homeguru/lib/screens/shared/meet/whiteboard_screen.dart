@@ -65,7 +65,7 @@ class _WhiteboardScreenState extends State<WhiteboardScreen> {
 
   void _sendFullSync() async {
     final result = await _controller.runJavaScriptReturningResult('window.getWhiteboardData();');
-    if (result != null && result.toString() != 'null') {
+    if (result.toString() != 'null') {
       try {
         final data = jsonDecode(result.toString());
         widget.signalingService?.sendWhiteboardUpdate(

@@ -85,7 +85,7 @@ class _QuizHostingModeState extends State<QuizHostingMode> {
                         Text(
                           '${widget.submissions.length} SUBMITTED · ${widget.questions.length}Q',
                           style: tt.labelSmall?.copyWith(
-                            color: cs.onPrimaryContainer.withOpacity(0.8),
+                            color: cs.onPrimaryContainer.withValues(alpha: 0.8),
                             letterSpacing: 1.2,
                           ),
                         ),
@@ -181,7 +181,7 @@ class _QuizHostingModeState extends State<QuizHostingMode> {
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: rank == 0 
-                          ? cs.primary.withOpacity(0.3)
+                          ? cs.primary.withValues(alpha: 0.3)
                           : cs.outlineVariant,
                         width: rank == 0 ? 2 : 1,
                       ),
@@ -242,7 +242,7 @@ class _QuizHostingModeState extends State<QuizHostingMode> {
                                               vertical: 2,
                                             ),
                                             decoration: BoxDecoration(
-                                              color: Colors.green.withOpacity(0.1),
+                                              color: Colors.green.withValues(alpha: 0.1),
                                               borderRadius: BorderRadius.circular(6),
                                             ),
                                             child: Text(
@@ -332,8 +332,8 @@ class _QuizHostingModeState extends State<QuizHostingMode> {
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
                                         color: isCorrect 
-                                          ? Colors.green.withOpacity(0.3)
-                                          : Colors.red.withOpacity(0.3),
+                                          ? Colors.green.withValues(alpha: 0.3)
+                                          : Colors.red.withValues(alpha: 0.3),
                                       ),
                                     ),
                                     child: Row(

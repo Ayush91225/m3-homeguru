@@ -197,7 +197,11 @@ class _ChatScreenState extends State<ChatScreen> {
         isArchived: isArchived,
         onArchive: () {
           Navigator.pop(context);
-          if (isArchived) _unarchiveTutor(tutor); else _archiveTutor(tutor);
+          if (isArchived) {
+            _unarchiveTutor(tutor);
+          } else {
+            _archiveTutor(tutor);
+          }
         },
         onSend: (text) => _onQuickSend(tutor, text),
         onOpen: () { Navigator.pop(context); _openConversation(tutor); },

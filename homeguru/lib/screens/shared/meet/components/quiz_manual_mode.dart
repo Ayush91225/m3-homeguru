@@ -114,7 +114,7 @@ class _QuizManualModeState extends State<QuizManualMode> {
                     decoration: BoxDecoration(
                       color: cs.surfaceContainerLow,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: cs.outlineVariant.withOpacity(0.5)),
+                      border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.5)),
                     ),
                     child: Row(
                       children: [
@@ -218,7 +218,7 @@ class _QuizManualModeState extends State<QuizManualMode> {
                             color: isCorrect ? Colors.green : cs.surfaceContainerLow,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: isCorrect ? Colors.green : cs.outlineVariant.withOpacity(0.5),
+                              color: isCorrect ? Colors.green : cs.outlineVariant.withValues(alpha: 0.5),
                             ),
                           ),
                           child: Center(
@@ -245,7 +245,7 @@ class _QuizManualModeState extends State<QuizManualMode> {
                             hintText: 'Option ${String.fromCharCode(65 + i)}',
                             filled: true,
                             fillColor: isCorrect 
-                              ? Colors.green.withOpacity(0.05)
+                              ? Colors.green.withValues(alpha: 0.05)
                               : cs.surfaceContainerLow,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -255,7 +255,7 @@ class _QuizManualModeState extends State<QuizManualMode> {
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide(
                                 color: isCorrect 
-                                  ? Colors.green.withOpacity(0.3)
+                                  ? Colors.green.withValues(alpha: 0.3)
                                   : cs.outlineVariant,
                               ),
                             ),
