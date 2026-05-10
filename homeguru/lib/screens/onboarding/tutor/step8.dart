@@ -15,9 +15,10 @@ class TutorStep8Body extends StatefulWidget {
 }
 
 class _TutorStep8BodyState extends State<TutorStep8Body> with SingleTickerProviderStateMixin {
-  int _state = 0; // 0=intro, 1=loading, 2=checking, 3=verified, 4=failed
+  int _state = 0; // 0=intro, 1=loading, 2=checking, 3=verified, 4=failed, 5=name_mismatch
   String? _errorMsg;
   String _verificationId = '';
+  Map<String, dynamic>? _nameMatchData;
 
   AnimationController? _checkCtrl;
   Animation<double>? _checkAnim;
@@ -124,8 +125,22 @@ class _TutorStep8BodyState extends State<TutorStep8Body> with SingleTickerProvid
       if (res['success'] == true && res['aadhaarVerified'] == true) {
         await _clearSession();
         if (mounted) {
-          setState(() => _state = 3);
-          _checkCtrl?.forward();
+          // Check name match score
+          final score = res['nameMatchScore'] ?? 100;
+          if (score < 90) {
+            setState(() {
+              _state = 5;
+              _nameMatchData = {
+                'profileName': res['profileName'] ?? '',
+                'aadhaarName': res['aadhaarName'] ?? '',
+                'aadhaarPhoto': res['aadhaarPhoto'] ?? '',
+                'score': score,
+              };
+            });
+          } else {
+            setState(() => _state = 3);
+            _checkCtrl?.forward();
+          }
         }
       } else {
         final status = (res['status'] ?? '').toString().toUpperCase();
@@ -159,28 +174,37 @@ class _TutorStep8BodyState extends State<TutorStep8Body> with SingleTickerProvid
               : _state == 1 ? _buildLoading(cs, tt)
               : _state == 2 ? _buildChecking(cs, tt)
               : _state == 3 ? _buildVerified(cs, tt)
+              : _state == 5 ? _buildNameMismatch(cs, tt)
               : _buildFailed(cs, tt),
           ),
         ),
-        if (_state == 0 || _state == 3)
+        if (_state == 0 || _state == 3 || _state == 5)
           Padding(
             padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 16),
-            child: FilledButton(
-              onPressed: _state == 0 ? _initiateDigiLocker : widget.onNext,
-              style: FilledButton.styleFrom(backgroundColor: cs.tertiary, foregroundColor: cs.onTertiary),
-              child: Text(_state == 0 ? 'Verify via DigiLocker' : 'Continue'),
-            ),
+            child: _state == 5
+              ? Row(children: [
+                  Expanded(child: OutlinedButton(
+                    onPressed: widget.onNext,
+                    child: const Text('Continue Anyway'),
+                  )),
+                  const SizedBox(width: 12),
+                  Expanded(child: FilledButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: FilledButton.styleFrom(backgroundColor: cs.tertiary),
+                    child: const Text('Update Name'),
+                  )),
+                ])
+              : FilledButton(
+                  onPressed: _state == 0 ? _initiateDigiLocker : widget.onNext,
+                  style: FilledButton.styleFrom(backgroundColor: cs.tertiary, foregroundColor: cs.onTertiary),
+                  child: Text(_state == 0 ? 'Verify via DigiLocker' : 'Continue'),
+                ),
           ),
       ],
     );
   }
 
   Widget _buildIntro(ColorScheme cs, TextTheme tt) => Column(children: [
-    Icon(Icons.verified_user_rounded, size: 64, color: cs.tertiary),
-    const SizedBox(height: 24),
-    Text('Identity Verification', style: tt.headlineMedium?.copyWith(fontWeight: FontWeight.bold, color: cs.onSurface)),
-    const SizedBox(height: 12),
-    Text('Verify your identity via DigiLocker to keep our platform safe for students.', textAlign: TextAlign.center, style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
     const SizedBox(height: 32),
     Container(
       padding: const EdgeInsets.all(20),
@@ -260,6 +284,65 @@ class _TutorStep8BodyState extends State<TutorStep8Body> with SingleTickerProvid
       child: const Text('Try Again'),
     ),
   ]));
+
+  Widget _buildNameMismatch(ColorScheme cs, TextTheme tt) {
+    final data = _nameMatchData ?? {};
+    final profileName = data['profileName'] ?? '';
+    final aadhaarName = data['aadhaarName'] ?? '';
+    final photo = data['aadhaarPhoto'] ?? '';
+    final score = data['score'] ?? 0;
+
+    return SingleChildScrollView(child: Column(children: [
+      const SizedBox(height: 16),
+      Container(width: 80, height: 80, decoration: BoxDecoration(color: Colors.orange.shade100, shape: BoxShape.circle),
+        child: Icon(Icons.warning_rounded, size: 48, color: Colors.orange.shade700)),
+      const SizedBox(height: 24),
+      Text('Name Mismatch Detected', style: tt.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: cs.onSurface)),
+      const SizedBox(height: 8),
+      Text('Match score: $score%', style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
+      const SizedBox(height: 24),
+      if (photo.isNotEmpty)
+        ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.network(photo, width: 120, height: 120, fit: BoxFit.cover)),
+      const SizedBox(height: 24),
+      Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.blue.shade200)),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Icon(Icons.person_outline, size: 18, color: Colors.blue.shade700),
+            const SizedBox(width: 8),
+            Text('Profile Name', style: tt.labelSmall?.copyWith(color: Colors.blue.shade900, fontWeight: FontWeight.bold)),
+          ]),
+          const SizedBox(height: 6),
+          Text(profileName, style: tt.bodyLarge?.copyWith(color: Colors.blue.shade900, fontWeight: FontWeight.bold)),
+        ]),
+      ),
+      const SizedBox(height: 12),
+      Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(color: Colors.green.shade50, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.green.shade200)),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Icon(Icons.badge_outlined, size: 18, color: Colors.green.shade700),
+            const SizedBox(width: 8),
+            Text('Aadhaar Name', style: tt.labelSmall?.copyWith(color: Colors.green.shade900, fontWeight: FontWeight.bold)),
+          ]),
+          const SizedBox(height: 6),
+          Text(aadhaarName, style: tt.bodyLarge?.copyWith(color: Colors.green.shade900, fontWeight: FontWeight.bold)),
+        ]),
+      ),
+      const SizedBox(height: 20),
+      Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(12)),
+        child: Row(children: [
+          Icon(Icons.info_outline, size: 16, color: Colors.orange.shade700),
+          const SizedBox(width: 8),
+          Expanded(child: Text('Please update your profile name to match Aadhaar or continue anyway.', style: tt.bodySmall?.copyWith(color: Colors.orange.shade900))),
+        ]),
+      ),
+    ]));
+  }
 }
 
 class _DigiLockerScreen extends StatelessWidget {

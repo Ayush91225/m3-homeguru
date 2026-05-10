@@ -250,7 +250,8 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
                       child: Row(
                         children: [
                           Container(
-                            width: 24, height: 24,
+                            width: 24,
+                            height: 24,
                             decoration: BoxDecoration(
                               color: cs.surface,
                               borderRadius: BorderRadius.circular(8),
