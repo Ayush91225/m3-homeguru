@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../services/user_profile_store.dart';
+import '../../../../services/tutor_profile_service.dart';
 
-class TutorProfileHeader extends StatelessWidget {
+class TutorProfileHeader extends StatefulWidget {
   const TutorProfileHeader({
     super.key,
     required this.onPickCover,
@@ -16,56 +18,83 @@ class TutorProfileHeader extends StatelessWidget {
   final double topPad;
   final bool viewMode;
 
-  static const _coverH  = 170.0;
+  static const _coverH = 170.0;
   static const _avatarR = 46.0;
   static const _overlap = 32.0;
 
   static double get overlap => _overlap;
 
   @override
+  State<TutorProfileHeader> createState() => _TutorProfileHeaderState();
+}
+
+class _TutorProfileHeaderState extends State<TutorProfileHeader> {
+  String? _networkPhotoUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNetworkPhoto();
+  }
+
+  Future<void> _loadNetworkPhoto() async {
+    final prefs = await SharedPreferences.getInstance();
+    final tutorId = prefs.getString('userId');
+    if (tutorId == null) return;
+
+    final result = await TutorProfileService.getTutorProfile(tutorId);
+    if (result['success'] == true && mounted) {
+      final data = result['data'] as Map<String, dynamic>;
+      final photo = data['profilePhoto'] as String?;
+      if (photo != null && photo.isNotEmpty) {
+        setState(() => _networkPhotoUrl = photo);
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final cs    = Theme.of(context).colorScheme;
+    final cs = Theme.of(context).colorScheme;
     final store = ProfileStore.of(context);
 
     return Stack(
       clipBehavior: Clip.none,
       children: [
         SizedBox(
-          height: _coverH + topPad,
+          height: TutorProfileHeader._coverH + widget.topPad,
           width: double.infinity,
           child: _Cover(cs: cs, image: store.cover),
         ),
         Positioned(
-          top: topPad + 4,
+          top: widget.topPad + 4,
           left: 4,
           child: IconButton(
             icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
             onPressed: () => Navigator.pop(context),
           ),
         ),
-        if (!viewMode)
+        if (!widget.viewMode)
           Positioned(
             bottom: 10,
             right: 14,
-            child: _EditCoverPill(onTap: onPickCover),
+            child: _EditCoverPill(onTap: widget.onPickCover),
           ),
         Positioned(
-          bottom: -_overlap,
+          bottom: -TutorProfileHeader._overlap,
           left: 20,
           child: _AvatarWidget(
             cs: cs,
-            radius: _avatarR,
-            image: store.avatar,
-            onTap: onPickAvatar,
-            viewMode: viewMode,
+            radius: TutorProfileHeader._avatarR,
+            localImage: store.avatar,
+            networkUrl: _networkPhotoUrl,
+            onTap: widget.onPickAvatar,
+            viewMode: widget.viewMode,
           ),
         ),
       ],
     );
   }
 }
-
-// ─── Cover ────────────────────────────────────────────────────────────────────
 
 class _Cover extends StatelessWidget {
   const _Cover({required this.cs, required this.image});
@@ -83,8 +112,8 @@ class _Cover extends StatelessWidget {
               ? Image.file(image!, fit: BoxFit.cover)
               : Container(color: cs.surfaceContainerLow),
           if (image == null) ...[
-            _Blob(top: -90,  right: -90, size: 280, color: const Color(0xFFBF5000), opacity: isDark ? 0.28 : 0.13),
-            _Blob(top: -70,  left: -50,  size: 340, color: const Color(0xFFFF9F5C), opacity: isDark ? 0.14 : 0.08),
+            _Blob(top: -90, right: -90, size: 280, color: const Color(0xFFBF5000), opacity: isDark ? 0.28 : 0.13),
+            _Blob(top: -70, left: -50, size: 340, color: const Color(0xFFFF9F5C), opacity: isDark ? 0.14 : 0.08),
             _Blob(bottom: -70, left: -70, size: 220, color: const Color(0xFFE67E22), opacity: isDark ? 0.18 : 0.09),
           ],
           Positioned.fill(
@@ -163,13 +192,15 @@ class _AvatarWidget extends StatelessWidget {
   const _AvatarWidget({
     required this.cs,
     required this.radius,
-    required this.image,
+    required this.localImage,
+    required this.networkUrl,
     required this.onTap,
     required this.viewMode,
   });
   final ColorScheme cs;
   final double radius;
-  final File? image;
+  final File? localImage;
+  final String? networkUrl;
   final VoidCallback onTap;
   final bool viewMode;
 
@@ -187,11 +218,7 @@ class _AvatarWidget extends StatelessWidget {
               color: cs.tertiaryContainer,
               boxShadow: [BoxShadow(color: cs.shadow.withValues(alpha: 0.18), blurRadius: 8, offset: const Offset(0, 2))],
             ),
-            child: ClipOval(
-              child: image != null
-                  ? Image.file(image!, fit: BoxFit.cover)
-                  : Icon(Icons.person_rounded, size: radius, color: cs.onTertiaryContainer),
-            ),
+            child: ClipOval(child: _buildImage()),
           ),
           if (!viewMode)
             Positioned(
@@ -209,5 +236,21 @@ class _AvatarWidget extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildImage() {
+    if (localImage != null) {
+      return Image.file(localImage!, fit: BoxFit.cover, width: radius * 2, height: radius * 2);
+    }
+    if (networkUrl != null && networkUrl!.isNotEmpty) {
+      return Image.network(
+        networkUrl!,
+        fit: BoxFit.cover,
+        width: radius * 2,
+        height: radius * 2,
+        errorBuilder: (_, __, ___) => Icon(Icons.person_rounded, size: radius, color: cs.onTertiaryContainer),
+      );
+    }
+    return Icon(Icons.person_rounded, size: radius, color: cs.onTertiaryContainer);
   }
 }

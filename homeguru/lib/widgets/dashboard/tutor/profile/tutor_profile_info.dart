@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-import '../../../../services/user_profile_store.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../services/tutor_profile_service.dart';
+import '../../../../screens/dashboard/tutor/profile/tutor_profile_edit_screen.dart';
 import 'boost_profile_sheet.dart';
 import 'boost_analytics_screen.dart';
 
 class TutorProfileInfo extends StatefulWidget {
   const TutorProfileInfo({super.key, this.viewMode = false});
-  
+
   final bool viewMode;
 
   @override
@@ -13,13 +15,67 @@ class TutorProfileInfo extends StatefulWidget {
 }
 
 class _TutorProfileInfoState extends State<TutorProfileInfo> {
-  static const _joined = 'Teaching since March 2024';
-  static const _verified = true;
-  
   bool _isBoosted = false;
   DateTime? _boostEndDate;
   String? _boostCity;
   int? _boostBudget;
+
+  // Real data from API
+  String _name = '';
+  String _bio = '';
+  String _email = '';
+  bool _isVerified = false;
+  bool _isActive = false;
+  List<String> _subjects = [];
+  String _createdAt = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    final tutorId = prefs.getString('userId');
+    if (tutorId == null) return;
+
+    final result = await TutorProfileService.getTutorProfile(tutorId);
+    if (result['success'] == true && mounted) {
+      final data = result['data'] as Map<String, dynamic>;
+      final profile = data['profile'] as Map<String, dynamic>?;
+      setState(() {
+        _name = '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}'.trim();
+        _bio = profile?['bio'] ?? '';
+        _email = data['email'] ?? '';
+        _isVerified = data['isVerified'] == true;
+        _isActive = data['isActive'] == true;
+
+        // Extract subject names from rates
+        if (data['rates'] != null) {
+          _subjects = (data['rates'] as List).map((r) => r['subject'].toString()).toList();
+        } else if (data['subjects'] != null) {
+          _subjects = _extractSubjectNames(data['subjects'] as Map<String, dynamic>);
+        }
+      });
+    }
+  }
+
+  List<String> _extractSubjectNames(Map<String, dynamic> subjectsData) {
+    final names = <String>{};
+    final schooling = subjectsData['schooling'];
+    if (schooling != null && schooling['subjectsByBoardAndGrade'] != null) {
+      final byBoard = schooling['subjectsByBoardAndGrade'] as Map<String, dynamic>;
+      for (final board in byBoard.values) {
+        if (board is Map) {
+          for (final subjects in board.values) {
+            if (subjects is List) names.addAll(subjects.cast<String>());
+          }
+        }
+      }
+    }
+    return names.toList();
+  }
 
   void _showBoostSheet() {
     showModalBottomSheet(
@@ -59,7 +115,6 @@ class _TutorProfileInfoState extends State<TutorProfileInfo> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final store = ProfileStore.of(context);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
@@ -69,10 +124,12 @@ class _TutorProfileInfoState extends State<TutorProfileInfo> {
           Row(
             children: [
               Flexible(
-                child: Text(store.name,
-                    style: tt.titleLarge?.copyWith(fontWeight: FontWeight.w500)),
+                child: Text(
+                  _name.isNotEmpty ? _name : 'Tutor',
+                  style: tt.titleLarge?.copyWith(fontWeight: FontWeight.w500),
+                ),
               ),
-              if (_verified) ...[ 
+              if (_isVerified) ...[
                 const SizedBox(width: 5),
                 Icon(Icons.verified_rounded, size: 16, color: cs.tertiary),
               ],
@@ -91,58 +148,65 @@ class _TutorProfileInfoState extends State<TutorProfileInfo> {
                     children: [
                       Icon(Icons.workspace_premium, size: 10, color: Colors.white),
                       SizedBox(width: 2),
-                      Text(
-                        'PREMIUM',
-                        style: TextStyle(
-                          fontSize: 8,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
+                      Text('PREMIUM', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: 0.5)),
                     ],
                   ),
                 ),
                 const SizedBox(width: 4),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: cs.tertiary,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
+                  decoration: BoxDecoration(color: cs.tertiary, borderRadius: BorderRadius.circular(4)),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.rocket_launch, size: 10, color: cs.onTertiary),
                       const SizedBox(width: 2),
-                      Text(
-                        'BOOSTED',
-                        style: TextStyle(
-                          fontSize: 8,
-                          fontWeight: FontWeight.w800,
-                          color: cs.onTertiary,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
+                      Text('BOOSTED', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: cs.onTertiary, letterSpacing: 0.5)),
                     ],
                   ),
                 ),
               ],
             ],
           ),
-          const SizedBox(height: 1),
-          Text(store.handle, style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
-          const SizedBox(height: 4),
-          Text(store.bio, style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+          if (_email.isNotEmpty) ...[
+            const SizedBox(height: 1),
+            Text(_email, style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+          ],
+          if (_bio.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(_bio, style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant), maxLines: 2, overflow: TextOverflow.ellipsis),
+          ],
           const SizedBox(height: 10),
-          Wrap(
-            spacing: 14,
-            runSpacing: 4,
-            children: [
-              _Meta(icon: Icons.calendar_today_outlined, label: _joined, cs: cs, tt: tt),
-              _Meta(icon: Icons.school_outlined, label: 'Mathematics, Physics', cs: cs, tt: tt),
-            ],
-          ),
+          if (_subjects.isNotEmpty)
+            Wrap(
+              spacing: 14,
+              runSpacing: 4,
+              children: [
+                _Meta(icon: Icons.school_outlined, label: _subjects.take(3).join(', '), cs: cs, tt: tt),
+              ],
+            ),
+          if (!_isActive && !widget.viewMode) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: cs.errorContainer.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, size: 16, color: cs.error),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Complete your profile to go live',
+                      style: tt.labelSmall?.copyWith(color: cs.error),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           if (!widget.viewMode) ...[
             const SizedBox(height: 16),
             Row(
@@ -150,7 +214,12 @@ class _TutorProfileInfoState extends State<TutorProfileInfo> {
                 Expanded(
                   flex: 3,
                   child: FilledButton.icon(
-                    onPressed: () {},
+                    onPressed: () async {
+                      final result = await Navigator.push(context, MaterialPageRoute(
+                        builder: (_) => const TutorProfileEditScreen(),
+                      ));
+                      if (result == true) _loadProfile();
+                    },
                     icon: const Icon(Icons.edit_outlined, size: 18),
                     label: const Text('Edit Profile'),
                     style: FilledButton.styleFrom(
@@ -190,45 +259,9 @@ class _TutorProfileInfoState extends State<TutorProfileInfo> {
               ],
             ),
           ],
-          const SizedBox(height: 20),
-          _StatsRow(cs: cs, tt: tt, viewMode: widget.viewMode),
           const SizedBox(height: 4),
         ],
       ),
-    );
-  }
-}
-
-class _StatsRow extends StatelessWidget {
-  const _StatsRow({required this.cs, required this.tt, required this.viewMode});
-  final ColorScheme cs;
-  final TextTheme tt;
-  final bool viewMode;
-
-  @override
-  Widget build(BuildContext context) {
-    final stats = viewMode
-        ? [('4.8', 'Rating'), ('156', 'Reviews'), ('320+', 'Students'), ('2.5k', 'Hours')]
-        : [('42', 'Students'), ('156', 'Sessions'), ('240h', 'Teaching'), ('4.8', 'Rating')];
-    
-    return Row(
-      children: List.generate(stats.length, (i) => Expanded(
-        child: Container(
-          margin: EdgeInsets.only(right: i < stats.length - 1 ? 8 : 0),
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: cs.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Column(
-            children: [
-              Text(stats[i].$1, style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
-              const SizedBox(height: 1),
-              Text(stats[i].$2, style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant, fontSize: 10)),
-            ],
-          ),
-        ),
-      )),
     );
   }
 }

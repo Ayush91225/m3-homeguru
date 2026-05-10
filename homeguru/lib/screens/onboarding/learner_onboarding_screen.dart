@@ -59,12 +59,8 @@ class _LearnerOnboardingScreenState extends State<LearnerOnboardingScreen> {
   String _firstName = '';
   String _lastName = '';
   String _interest = '';
-  String _source = '';
-  // ignore: unused_field
-  String _subject = '';
   List<String> _realSubjects = [];
   final Map<String, int> _proficiency = {};
-  // ignore: unused_field
   Map<String, dynamic> _profile = {};
   int _categoryIndex = -1;
 
@@ -148,7 +144,6 @@ class _LearnerOnboardingScreenState extends State<LearnerOnboardingScreen> {
     _push(
       const _StepState(stepValue: 2, showHeader: true, title: 'Where did you\nhear about us?', subtitle: 'Help us understand how you found HomeGuru.'),
       LearnerStep2Body(onNext: (source) async {
-        _source = source;
         await _saveSource(source);
         _goStep3();
       }),
@@ -175,7 +170,6 @@ class _LearnerOnboardingScreenState extends State<LearnerOnboardingScreen> {
         subtitle: _interest == 'academic' ? 'Pick a subject you want to learn.' : 'Pick a skill you want to develop.',
       ),
       LearnerStep4Body(interest: _interest, onNext: (subjects) async {
-        _subject = subjects;
         final all = subjects.split(',').map((s) => s.trim()).toList();
         _realSubjects = all.where((s) => s != 'Others').toList();
         await _saveSubjects(_realSubjects);
@@ -223,10 +217,18 @@ class _LearnerOnboardingScreenState extends State<LearnerOnboardingScreen> {
       final learnerId = prefs.getString('learnerId') ?? prefs.getString('userId');
       if (learnerId == null) return;
 
-      print('[ONBOARDING] Saving source: $source');
-      // TODO: Add API endpoint for saving source
+      final result = await LearnerOnboardingService.updateSource(
+        learnerId: learnerId,
+        source: source,
+      );
+
+      if (result['success'] == true) {
+        debugPrint('[ONBOARDING] Source saved successfully');
+      } else {
+        debugPrint('[ONBOARDING] Source save failed: ${result['error']}');
+      }
     } catch (e) {
-      print('[ONBOARDING] Error saving source: $e');
+      debugPrint('[ONBOARDING] Error saving source: $e');
     }
   }
 
@@ -236,10 +238,18 @@ class _LearnerOnboardingScreenState extends State<LearnerOnboardingScreen> {
       final learnerId = prefs.getString('learnerId') ?? prefs.getString('userId');
       if (learnerId == null) return;
 
-      print('[ONBOARDING] Saving interest: $interest');
-      // TODO: Add API endpoint for saving interest
+      final result = await LearnerOnboardingService.updateInterests(
+        learnerId: learnerId,
+        interests: [interest],
+      );
+
+      if (result['success'] == true) {
+        debugPrint('[ONBOARDING] Interest saved successfully');
+      } else {
+        debugPrint('[ONBOARDING] Interest save failed: ${result['error']}');
+      }
     } catch (e) {
-      print('[ONBOARDING] Error saving interest: $e');
+      debugPrint('[ONBOARDING] Error saving interest: $e');
     }
   }
 
@@ -256,12 +266,12 @@ class _LearnerOnboardingScreenState extends State<LearnerOnboardingScreen> {
       );
 
       if (result['success'] == true) {
-        print('[ONBOARDING] Subjects saved successfully');
+        debugPrint('[ONBOARDING] Subjects saved successfully');
       } else {
-        print('[ONBOARDING] Subjects save failed: ${result['error']}');
+        debugPrint('[ONBOARDING] Subjects save failed: ${result['error']}');
       }
     } catch (e) {
-      print('[ONBOARDING] Error saving subjects: $e');
+      debugPrint('[ONBOARDING] Error saving subjects: $e');
     }
   }
 
@@ -271,10 +281,10 @@ class _LearnerOnboardingScreenState extends State<LearnerOnboardingScreen> {
       final learnerId = prefs.getString('learnerId') ?? prefs.getString('userId');
       if (learnerId == null) return;
 
-      print('[ONBOARDING] Saving proficiency: $proficiency');
+      debugPrint('[ONBOARDING] Saving proficiency: $proficiency');
       // TODO: Add API endpoint for saving proficiency levels
     } catch (e) {
-      print('[ONBOARDING] Error saving proficiency: $e');
+      debugPrint('[ONBOARDING] Error saving proficiency: $e');
     }
   }
 
@@ -285,7 +295,7 @@ class _LearnerOnboardingScreenState extends State<LearnerOnboardingScreen> {
       final learnerId = prefs.getString('learnerId') ?? prefs.getString('userId');
       
       if (learnerId == null) {
-        print('[ONBOARDING] Error: learnerId/userId not found');
+        debugPrint('[ONBOARDING] Error: learnerId/userId not found');
         return;
       }
 
@@ -303,12 +313,12 @@ class _LearnerOnboardingScreenState extends State<LearnerOnboardingScreen> {
       );
 
       if (result['success'] == true) {
-        print('[ONBOARDING] Profile saved successfully');
+        debugPrint('[ONBOARDING] Profile saved successfully');
       } else {
-        print('[ONBOARDING] Profile save failed: ${result['error']}');
+        debugPrint('[ONBOARDING] Profile save failed: ${result['error']}');
       }
     } catch (e) {
-      print('[ONBOARDING] Error saving profile: $e');
+      debugPrint('[ONBOARDING] Error saving profile: $e');
     }
   }
 
@@ -319,7 +329,7 @@ class _LearnerOnboardingScreenState extends State<LearnerOnboardingScreen> {
       final learnerId = prefs.getString('learnerId') ?? prefs.getString('userId');
       
       if (learnerId == null) {
-        print('[ONBOARDING] Error: learnerId/userId not found');
+        debugPrint('[ONBOARDING] Error: learnerId/userId not found');
         return;
       }
 
@@ -345,12 +355,12 @@ class _LearnerOnboardingScreenState extends State<LearnerOnboardingScreen> {
       );
 
       if (result['success'] == true) {
-        print('[ONBOARDING] Education saved successfully');
+        debugPrint('[ONBOARDING] Education saved successfully');
       } else {
-        print('[ONBOARDING] Education save failed: ${result['error']}');
+        debugPrint('[ONBOARDING] Education save failed: ${result['error']}');
       }
     } catch (e) {
-      print('[ONBOARDING] Error saving education: $e');
+      debugPrint('[ONBOARDING] Error saving education: $e');
     }
   }
 
@@ -423,13 +433,13 @@ class _LearnerOnboardingScreenState extends State<LearnerOnboardingScreen> {
         
         final result = jsonDecode(response.body);
         if (result['success'] == true) {
-          print('[ONBOARDING] Marked as complete');
+          debugPrint('[ONBOARDING] Marked as complete');
         } else {
-          print('[ONBOARDING] Failed to mark complete: ${result['error']}');
+          debugPrint('[ONBOARDING] Failed to mark complete: ${result['error']}');
         }
       }
     } catch (e) {
-      print('[ONBOARDING] Error marking complete: $e');
+      debugPrint('[ONBOARDING] Error marking complete: $e');
     }
     
     if (!mounted) return;

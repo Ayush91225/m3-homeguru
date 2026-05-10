@@ -192,6 +192,39 @@ class LearnerOnboardingService {
     }
   }
 
+  /// Update referral source
+  static Future<Map<String, dynamic>> updateSource({
+    required String learnerId,
+    required String source,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/source'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'learnerId': learnerId,
+          'source': source,
+        }),
+      );
+
+      final result = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && result['success'] == true) {
+        return {'success': true};
+      } else {
+        return {
+          'success': false,
+          'error': result['error'] ?? 'Source update failed',
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'error': 'Network error: ${e.toString()}',
+      };
+    }
+  }
+
   /// Step 5: Update interests and complete onboarding
   static Future<Map<String, dynamic>> updateInterests({
     required String learnerId,
