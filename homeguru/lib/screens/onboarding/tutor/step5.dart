@@ -1,6 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class TutorStep5Body extends StatefulWidget {
   const TutorStep5Body({super.key, required this.onPass, required this.onFail});
@@ -27,21 +30,71 @@ class _TutorStep5BodyState extends State<TutorStep5Body> {
 
   Future<void> _sendNow() async {
     HapticFeedback.mediumImpact();
-    // TODO: call API to send test link via WhatsApp
     setState(() => _state = _State.waiting);
-    _startPolling();
+    
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final tutorId = prefs.getString('tutorId');
+      
+      if (tutorId == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Session expired')),
+          );
+        }
+        return;
+      }
+
+      final response = await http.post(
+        Uri.parse('https://app.homeguruworld.com/api/onboarding/tutor/test/generate'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'tutorId': tutorId}),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (data['success'] == true) {
+        _startPolling(data['testId'], tutorId);
+      } else {
+        if (mounted) {
+          setState(() => _state = _State.idle);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(data['error'] ?? 'Failed to generate test')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _state = _State.idle);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
   }
 
-  void _startPolling() {
+  void _startPolling(String testId, String tutorId) {
     _pollCount = 0;
     _pollTimer = Timer.periodic(_pollInterval, (t) async {
       _pollCount++;
-      // TODO: call API GET /tutor/test/result → { status: 'pending'|'passed'|'failed' }
-      // Simulate pass after 3 polls for demo
-      if (_pollCount >= 3) {
-        t.cancel();
-        if (mounted) setState(() => _state = _State.passed);
+      
+      try {
+        final response = await http.get(
+          Uri.parse('https://app.homeguruworld.com/api/onboarding/tutor/test/result?testId=$testId&tutorId=$tutorId'),
+        );
+
+        final data = jsonDecode(response.body);
+
+        if (data['success'] == true && data['status'] == 'completed') {
+          t.cancel();
+          if (mounted) {
+            setState(() => _state = data['result']['passed'] ? _State.passed : _State.timeout);
+          }
+        }
+      } catch (e) {
+        // Continue polling
       }
+
       if (_pollCount >= _maxPolls) {
         t.cancel();
         if (mounted) setState(() => _state = _State.timeout);
@@ -52,10 +105,48 @@ class _TutorStep5BodyState extends State<TutorStep5Body> {
   Future<void> _checkTestCompletion() async {
     HapticFeedback.mediumImpact();
     setState(() => _state = _State.checking);
-    // TODO: call API GET /tutor/test/result → { status: 'pending'|'passed'|'failed' }
-    // Simulate checking for demo - pretend test is completed
-    await Future.delayed(const Duration(seconds: 1));
-    if (mounted) setState(() => _state = _State.passed);
+    
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final tutorId = prefs.getString('tutorId');
+      
+      if (tutorId == null) {
+        if (mounted) {
+          setState(() => _state = _State.waiting);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Session expired')),
+          );
+        }
+        return;
+      }
+
+      // Get test data from tutor profile
+      final response = await http.get(
+        Uri.parse('https://app.homeguruworld.com/api/onboarding/tutor/register?tutorId=$tutorId'),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (data['success'] == true && data['data']['testCompleted'] == true) {
+        if (mounted) {
+          setState(() => _state = data['data']['testPassed'] ? _State.passed : _State.timeout);
+        }
+      } else {
+        if (mounted) {
+          setState(() => _state = _State.waiting);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Test not completed yet')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _state = _State.waiting);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
   }
 
   String _fmt(DateTime dt) =>
