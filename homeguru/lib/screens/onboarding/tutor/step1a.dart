@@ -4,9 +4,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class TutorStep1aBody extends StatefulWidget {
-  const TutorStep1aBody({super.key, required this.email, required this.password, required this.onNext});
+  const TutorStep1aBody({super.key, required this.email, required this.onNext});
   final String email;
-  final String password;
   final VoidCallback onNext;
 
   @override
@@ -22,11 +21,11 @@ class _TutorStep1aBodyState extends State<TutorStep1aBody> {
     setState(() => _loading = true);
     
     try {
-      // Call backend API to check verification status with password
+      // Call backend API to check verification status
       final response = await http.post(
         Uri.parse('https://app.homeguruworld.com/api/auth/check-verification'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': widget.email, 'password': widget.password}),
+        body: jsonEncode({'email': widget.email}),
       );
       
       final data = jsonDecode(response.body);

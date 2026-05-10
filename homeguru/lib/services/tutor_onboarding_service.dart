@@ -16,14 +16,16 @@ class TutorOnboardingService {
       case 2:
         return updateProfile(data.tutorId!, data);
       case 3:
-        return updateSubjects(data.tutorId!, data);
+        return completeJourney(data.tutorId!, data.get('acknowledged') ?? false);
       case 4:
-        return submitTest(data.tutorId!, data.get('testResults'));
+        return updateSubjects(data.tutorId!, data);
       case 5:
-        return updatePayment(data.tutorId!, data);
+        return submitTest(data.tutorId!, data.get('testResults'));
       case 6:
-        return updateIdVerification(data.tutorId!, data);
+        return updatePayment(data.tutorId!, data);
       case 7:
+        return updateIdVerification(data.tutorId!, data);
+      case 8:
         return updateBankDetails(data.tutorId!, data);
       default:
         return {'success': false, 'error': 'Invalid step'};
@@ -81,6 +83,36 @@ class TutorOnboardingService {
         return {
           'success': false,
           'error': result['error'] ?? 'Profile update failed',
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'error': 'Network error: ${e.toString()}',
+      };
+    }
+  }
+
+  /// Step 3: Mark journey/acknowledgment as completed
+  static Future<Map<String, dynamic>> completeJourney(
+    String tutorId,
+    bool acknowledged,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/journey'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'tutorId': tutorId, 'acknowledged': acknowledged}),
+      );
+
+      final result = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && result['success'] == true) {
+        return {'success': true};
+      } else {
+        return {
+          'success': false,
+          'error': result['error'] ?? 'Journey update failed',
         };
       }
     } catch (e) {

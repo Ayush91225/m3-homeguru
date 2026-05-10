@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../services/tutor_onboarding_service.dart';
 
 class TutorStep3Body extends StatefulWidget {
   const TutorStep3Body({super.key, required this.onNext});
@@ -218,12 +220,37 @@ class _TutorStep3BodyState extends State<TutorStep3Body> {
           ),
         ],
 
-        Padding(
+          Padding(
           padding: EdgeInsets.fromLTRB(hPad, 12, hPad, 16),
           child: FilledButton(
-            onPressed: _canContinue ? () {
+            onPressed: _canContinue ? () async {
               HapticFeedback.mediumImpact();
-              widget.onNext();
+              
+              // Get tutorId from SharedPreferences
+              final prefs = await SharedPreferences.getInstance();
+              final tutorId = prefs.getString('tutorId');
+              
+              if (tutorId == null) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Session expired. Please start over.')),
+                  );
+                }
+                return;
+              }
+              
+              // Save journey acknowledgment to API
+              final result = await TutorOnboardingService.completeJourney(tutorId, true);
+              
+              if (result['success'] == true) {
+                widget.onNext();
+              } else {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(result['error'] ?? 'Failed to save acknowledgment')),
+                  );
+                }
+              }
             } : null,
             style: FilledButton.styleFrom(
               backgroundColor: cs.tertiary,

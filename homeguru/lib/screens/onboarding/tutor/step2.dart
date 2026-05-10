@@ -3,7 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:country_state_city/country_state_city.dart' as csc;
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+
+import '../../../services/tutor_onboarding_service.dart';
+import '../../../models/tutor_onboarding_model.dart';
 
 class TutorStep2Body extends StatefulWidget {
   const TutorStep2Body({
@@ -172,19 +176,50 @@ class _TutorStep2BodyState extends State<TutorStep2Body> {
     if (_country == null) { _showSnack('Please select your country'); return; }
     if (_languages.isEmpty) { _showSnack('Please add at least one language'); return; }
     if (_bioCtrl.text.trim().length < 200) { _showSnack('Bio must be at least 200 characters'); return; }
+    
     HapticFeedback.mediumImpact();
-    widget.onNext({
-      'firstName': _firstNameCtrl.text.trim(),
-      'lastName': _lastNameCtrl.text.trim(),
-      'dob': _dob!.toIso8601String(),
-      'gender': _gender,
-      'country': _country?.name,
-      'state': _state?.name,
-      'city': _city?.name,
-      'languages': _languages,
-      'bio': _bioCtrl.text.trim(),
-      'certificates': _certs.map((f) => f.path).toList(),
-    });
+    
+    // Get tutorId from SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    final tutorId = prefs.getString('tutorId');
+    
+    if (tutorId == null) {
+      _showSnack('Session expired. Please start over.');
+      return;
+    }
+    
+    // Save to API
+    final tutorData = TutorOnboarding();
+    tutorData.tutorId = tutorId;
+    tutorData.set('firstName', _firstNameCtrl.text.trim());
+    tutorData.set('lastName', _lastNameCtrl.text.trim());
+    tutorData.set('dob', _dob!.toIso8601String());
+    tutorData.set('gender', _gender);
+    tutorData.set('country', _country?.name);
+    tutorData.set('state', _state?.name);
+    tutorData.set('city', _city?.name);
+    tutorData.set('languages', _languages);
+    tutorData.set('bio', _bioCtrl.text.trim());
+    tutorData.set('certificates', _certs.map((f) => f.path).toList());
+    
+    final result = await TutorOnboardingService.updateProfile(tutorId, tutorData);
+    
+    if (result['success'] == true) {
+      widget.onNext({
+        'firstName': _firstNameCtrl.text.trim(),
+        'lastName': _lastNameCtrl.text.trim(),
+        'dob': _dob!.toIso8601String(),
+        'gender': _gender,
+        'country': _country?.name,
+        'state': _state?.name,
+        'city': _city?.name,
+        'languages': _languages,
+        'bio': _bioCtrl.text.trim(),
+        'certificates': _certs.map((f) => f.path).toList(),
+      });
+    } else {
+      _showSnack(result['error'] ?? 'Failed to save profile');
+    }
   }
 
   @override

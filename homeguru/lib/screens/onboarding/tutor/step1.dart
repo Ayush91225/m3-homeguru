@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../widgets/onboarding/phone_field.dart';
 import '../../../services/tutor_onboarding_service.dart';
@@ -121,8 +122,13 @@ class _TutorStep1BodyState extends State<TutorStep1Body> {
       setState(() => _loading = false);
       if (result['success'] == true) {
         // Save tutorId for next steps
-        tutorData.tutorId = result['tutorId'];
-        // Don't set currentStep - API returns string but model expects int
+        final tutorId = result['tutorId'];
+        tutorData.tutorId = tutorId;
+        
+        // Store tutorId in SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('tutorId', tutorId);
+        await prefs.setString('tutorEmail', _emailCtrl.text.trim());
         
         // Navigate to email verification regardless of whether it's new or existing user
         widget.onNext(_emailCtrl.text.trim(), _phoneCountry, _firstNameCtrl.text.trim(), _lastNameCtrl.text.trim(), _passwordCtrl.text);

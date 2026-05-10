@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'step4_data.dart';
+import '../../../services/tutor_onboarding_service.dart';
+import '../../../models/tutor_onboarding_model.dart';
 
 class TutorStep4Body extends StatefulWidget {
   const TutorStep4Body({super.key, required this.onNext});
@@ -88,22 +91,62 @@ class _TutorStep4BodyState extends State<TutorStep4Body> {
     return true;
   }
 
-  void _submit() {
+  void _submit() async {
     HapticFeedback.mediumImpact();
-    widget.onNext({
-      'levels': _levels.toList(),
-      'boards': _boards.toList(),
-      'classGroups': _classGroups.toList(),
-      'schoolSubjects': _schoolSubjects.map((b, g) => MapEntry(b, g.map((gr, s) => MapEntry(gr, s.toList())))),
-      'competitiveExams': _compExams.map((k, v) => MapEntry(k, v.toList())),
-      'studyAbroadExams': _studyAbroadExams.toList(),
-      'nonAcademic': _nonAcademic.toList(),
-      'musicTypes': _musicTypes.map((k, v) => MapEntry(k, v.toList())),
-      'danceStyles': _danceStyles.toList(),
-      'codingCourses': _codingCourses.toList(),
-      'foreignLanguages': _foreignLangs.toList(),
-      'regionalLanguages': _regionalLangs.toList(),
-    });
+    
+    // Get tutorId from SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    final tutorId = prefs.getString('tutorId');
+    
+    if (tutorId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Session expired. Please start over.')),
+        );
+      }
+      return;
+    }
+    
+    // Save to API
+    final tutorData = TutorOnboarding();
+    tutorData.tutorId = tutorId;
+    tutorData.set('levels', _levels.toList());
+    tutorData.set('boards', _boards.toList());
+    tutorData.set('classGroups', _classGroups.toList());
+    tutorData.set('schoolSubjects', _schoolSubjects.map((b, g) => MapEntry(b, g.map((gr, s) => MapEntry(gr, s.toList())))));
+    tutorData.set('competitiveExams', _compExams.map((k, v) => MapEntry(k, v.toList())));
+    tutorData.set('studyAbroadExams', _studyAbroadExams.toList());
+    tutorData.set('nonAcademic', _nonAcademic.toList());
+    tutorData.set('musicTypes', _musicTypes.map((k, v) => MapEntry(k, v.toList())));
+    tutorData.set('danceStyles', _danceStyles.toList());
+    tutorData.set('codingCourses', _codingCourses.toList());
+    tutorData.set('foreignLanguages', _foreignLangs.toList());
+    tutorData.set('regionalLanguages', _regionalLangs.toList());
+    
+    final result = await TutorOnboardingService.updateSubjects(tutorId, tutorData);
+    
+    if (result['success'] == true) {
+      widget.onNext({
+        'levels': _levels.toList(),
+        'boards': _boards.toList(),
+        'classGroups': _classGroups.toList(),
+        'schoolSubjects': _schoolSubjects.map((b, g) => MapEntry(b, g.map((gr, s) => MapEntry(gr, s.toList())))),
+        'competitiveExams': _compExams.map((k, v) => MapEntry(k, v.toList())),
+        'studyAbroadExams': _studyAbroadExams.toList(),
+        'nonAcademic': _nonAcademic.toList(),
+        'musicTypes': _musicTypes.map((k, v) => MapEntry(k, v.toList())),
+        'danceStyles': _danceStyles.toList(),
+        'codingCourses': _codingCourses.toList(),
+        'foreignLanguages': _foreignLangs.toList(),
+        'regionalLanguages': _regionalLangs.toList(),
+      });
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result['error'] ?? 'Failed to save subjects')),
+        );
+      }
+    }
   }
 
   @override
