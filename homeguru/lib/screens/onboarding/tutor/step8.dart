@@ -127,7 +127,7 @@ class _TutorStep8BodyState extends State<TutorStep8Body> with SingleTickerProvid
         if (mounted) {
           // Check name match score
           final score = res['nameMatchScore'] ?? 100;
-          if (score < 90) {
+          if (score < 85) {
             setState(() {
               _state = 5;
               _nameMatchData = {
@@ -182,18 +182,11 @@ class _TutorStep8BodyState extends State<TutorStep8Body> with SingleTickerProvid
           Padding(
             padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 16),
             child: _state == 5
-              ? Row(children: [
-                  Expanded(child: OutlinedButton(
-                    onPressed: widget.onNext,
-                    child: const Text('Continue Anyway'),
-                  )),
-                  const SizedBox(width: 12),
-                  Expanded(child: FilledButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: FilledButton.styleFrom(backgroundColor: cs.tertiary),
-                    child: const Text('Update Name'),
-                  )),
-                ])
+              ? FilledButton(
+                  onPressed: () => _showNameUpdateSheet(context),
+                  style: FilledButton.styleFrom(backgroundColor: cs.tertiary),
+                  child: const Text('Update Profile Name'),
+                )
               : FilledButton(
                   onPressed: _state == 0 ? _initiateDigiLocker : widget.onNext,
                   style: FilledButton.styleFrom(backgroundColor: cs.tertiary, foregroundColor: cs.onTertiary),
@@ -338,10 +331,83 @@ class _TutorStep8BodyState extends State<TutorStep8Body> with SingleTickerProvid
         child: Row(children: [
           Icon(Icons.info_outline, size: 16, color: Colors.orange.shade700),
           const SizedBox(width: 8),
-          Expanded(child: Text('Please update your profile name to match Aadhaar or continue anyway.', style: tt.bodySmall?.copyWith(color: Colors.orange.shade900))),
+          Expanded(child: Text('Please update your profile name to match Aadhaar exactly. If Aadhaar details are incorrect, you may need to use a different Aadhaar number.', style: tt.bodySmall?.copyWith(color: Colors.orange.shade900))),
         ]),
       ),
     ]));
+  }
+
+  void _showNameUpdateSheet(BuildContext context) {
+    final data = _nameMatchData ?? {};
+    final aadhaarName = data['aadhaarName'] ?? '';
+    final names = (data['profileName'] ?? '').split(' ');
+    final firstCtrl = TextEditingController(text: names.isNotEmpty ? names[0] : '');
+    final lastCtrl = TextEditingController(text: names.length > 1 ? names.sublist(1).join(' ') : '');
+    bool updating = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => StatefulBuilder(builder: (ctx, setModalState) {
+        return Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom, left: 24, right: 24, top: 24),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Text('Update Your Name', style: Theme.of(ctx).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Text('Match your name with Aadhaar: $aadhaarName', style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(color: Theme.of(ctx).colorScheme.onSurfaceVariant)),
+            const SizedBox(height: 24),
+            TextField(
+              controller: firstCtrl,
+              decoration: const InputDecoration(labelText: 'First Name', border: OutlineInputBorder()),
+              onChanged: (_) => setModalState(() {}),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: lastCtrl,
+              decoration: const InputDecoration(labelText: 'Last Name', border: OutlineInputBorder()),
+              onChanged: (_) => setModalState(() {}),
+            ),
+            const SizedBox(height: 24),
+            Row(children: [
+              Expanded(child: OutlinedButton(
+                onPressed: updating ? null : () => Navigator.pop(ctx),
+                child: const Text('Cancel'),
+              )),
+              const SizedBox(width: 12),
+              Expanded(child: FilledButton(
+                onPressed: (firstCtrl.text.trim().isEmpty || lastCtrl.text.trim().isEmpty || updating)
+                  ? null
+                  : () async {
+                      setModalState(() => updating = true);
+                      try {
+                        final prefs = await SharedPreferences.getInstance();
+                        final tutorId = prefs.getString('userId') ?? '';
+                        final response = await http.patch(
+                          Uri.parse('https://app.homeguruworld.com/api/onboarding/tutor/profile'),
+                          headers: {'Content-Type': 'application/json'},
+                          body: jsonEncode({'tutorId': tutorId, 'firstName': firstCtrl.text.trim(), 'lastName': lastCtrl.text.trim()}),
+                        );
+                        if (response.statusCode == 200 && mounted) {
+                          Navigator.pop(ctx);
+                          setState(() { _state = 0; _nameMatchData = null; });
+                        } else {
+                          if (mounted) ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Failed to update name')));
+                        }
+                      } catch (_) {
+                        if (mounted) ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Network error')));
+                      } finally {
+                        setModalState(() => updating = false);
+                      }
+                    },
+                child: updating ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Update Name'),
+              )),
+            ]),
+            const SizedBox(height: 24),
+          ]),
+        );
+      }),
+    );
   }
 }
 
