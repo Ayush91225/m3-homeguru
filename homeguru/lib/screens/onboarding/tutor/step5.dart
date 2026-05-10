@@ -30,7 +30,7 @@ class _TutorStep5BodyState extends State<TutorStep5Body> {
 
   Future<void> _sendNow() async {
     HapticFeedback.mediumImpact();
-    setState(() => _state = _State.waiting);
+    setState(() => _state = _State.generating);
     
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -54,6 +54,7 @@ class _TutorStep5BodyState extends State<TutorStep5Body> {
       final data = jsonDecode(response.body);
 
       if (data['success'] == true) {
+        setState(() => _state = _State.waiting);
         _startPolling(data['testId'], tutorId);
       } else {
         if (mounted) {
@@ -212,6 +213,17 @@ class _TutorStep5BodyState extends State<TutorStep5Body> {
                     body: 'Link will be sent to your WhatsApp on ${_fmt(_scheduledAt!)}.\n\nOpen it on your laptop/desktop and complete the test.',
                   ),
 
+                if (_state == _State.generating)
+                  _StatusCard(
+                    cs: cs, tt: tt,
+                    icon: Icons.auto_awesome_rounded,
+                    iconColor: cs.tertiary,
+                    bgColor: cs.surfaceContainerLow,
+                    title: 'Generating your test...',
+                    body: 'Creating personalized questions based on your profile and subjects.\n\nThis may take 30-60 seconds.',
+                    showSpinner: true,
+                  ),
+
                 if (_state == _State.waiting)
                   _StatusCard(
                     cs: cs, tt: tt,
@@ -284,7 +296,7 @@ class _TutorStep5BodyState extends State<TutorStep5Body> {
   }
 }
 
-enum _State { idle, waiting, scheduled, checking, passed, timeout }
+enum _State { idle, generating, waiting, scheduled, checking, passed, timeout }
 
 // ─────────────────────────────────────────────────────────────────────────────
 
