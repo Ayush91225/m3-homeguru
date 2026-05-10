@@ -126,12 +126,36 @@ class _LearnerStep1BodyState extends State<LearnerStep1Body> {
         await prefs.setString('learnerEmail', _emailCtrl.text.trim());
         await prefs.setString('learnerFirstName', _firstNameCtrl.text.trim());
         await prefs.setString('learnerLastName', _lastNameCtrl.text.trim());
+        await prefs.setString('learnerPassword', _passwordCtrl.text); // Store password for verification
         
+        // Navigate to email verification regardless of whether it's new or existing user
         widget.onNext(_emailCtrl.text.trim(), _phoneCountry, _firstNameCtrl.text.trim(), _lastNameCtrl.text.trim());
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result['error'] ?? 'Registration failed')),
-        );
+        // Check if error message indicates user should verify email
+        final errorMsg = result['error'] ?? 'Registration failed';
+        if (errorMsg.toLowerCase().contains('verify') || errorMsg.toLowerCase().contains('already')) {
+          // Show message and redirect to email verification anyway
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(errorMsg), backgroundColor: Colors.orange),
+          );
+          
+          // Save available data
+          final prefs = await SharedPreferences.getInstance();
+          if (result['learnerId'] != null) {
+            await prefs.setString('learnerId', result['learnerId']);
+          }
+          await prefs.setString('learnerEmail', _emailCtrl.text.trim());
+          await prefs.setString('learnerFirstName', _firstNameCtrl.text.trim());
+          await prefs.setString('learnerLastName', _lastNameCtrl.text.trim());
+          await prefs.setString('learnerPassword', _passwordCtrl.text);
+          
+          // Still navigate to email verification
+          widget.onNext(_emailCtrl.text.trim(), _phoneCountry, _firstNameCtrl.text.trim(), _lastNameCtrl.text.trim());
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(errorMsg)),
+          );
+        }
       }
     }
   }

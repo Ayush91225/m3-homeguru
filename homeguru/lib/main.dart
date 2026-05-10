@@ -13,6 +13,7 @@ import 'screens/dashboard/learner/search_results_screen.dart';
 import 'screens/dashboard/tutor/tutor_dashboard.dart';
 import 'screens/shared/guruai/guruai_screen.dart';
 import 'screens/onboarding/tutor_onboarding_screen.dart';
+import 'screens/onboarding/learner_onboarding_screen.dart';
 import 'services/user_profile_store.dart';
 import 'services/call_notification_service.dart';
 
@@ -89,8 +90,36 @@ class _HomeGuruAppState extends State<HomeGuruApp> {
     if (authToken != null && userId != null && userRole != null) {
       // User is logged in
       if (userRole == 'learner') {
-        if (mounted) {
-          setState(() => _initialRoute = const LearnerDashboard());
+        // Check onboarding status for learner
+        try {
+          final response = await http.get(
+            Uri.parse('https://app.homeguruworld.com/api/onboarding/learner/register?learnerId=$userId'),
+          );
+          
+          if (response.statusCode == 200) {
+            final data = jsonDecode(response.body);
+            if (mounted) {
+              setState(() {
+                if (data['success'] == true && data['data']['onboardingComplete'] == true) {
+                  _initialRoute = const LearnerDashboard();
+                } else {
+                  // Resume onboarding
+                  final step = data['data']['currentStep'] ?? 'source';
+                  _initialRoute = LearnerOnboardingScreen(resumeStep: step);
+                }
+              });
+            }
+          } else {
+            // API error, go to dashboard
+            if (mounted) {
+              setState(() => _initialRoute = const LearnerDashboard());
+            }
+          }
+        } catch (e) {
+          // Network error, go to dashboard
+          if (mounted) {
+            setState(() => _initialRoute = const LearnerDashboard());
+          }
         }
       } else if (userRole == 'tutor') {
         // Check onboarding status for tutor
@@ -179,6 +208,13 @@ class _HomeGuruAppState extends State<HomeGuruApp> {
                 final resumeStep = args?['resumeStep'] as String?;
                 return MaterialPageRoute(
                   builder: (context) => TutorOnboardingScreen(resumeStep: resumeStep),
+                );
+              }
+              if (settings.name == '/learner-onboarding') {
+                final args = settings.arguments as Map<String, dynamic>?;
+                final resumeStep = args?['resumeStep'] as String?;
+                return MaterialPageRoute(
+                  builder: (context) => LearnerOnboardingScreen(resumeStep: resumeStep),
                 );
               }
               return null;

@@ -14,11 +14,12 @@ import 'learner/step7.dart';
 import 'learner/step8.dart';
 
 class LearnerOnboardingScreen extends StatefulWidget {
-  const LearnerOnboardingScreen({super.key});
+  final String? resumeStep;
+  const LearnerOnboardingScreen({super.key, this.resumeStep});
 
-  static void show(BuildContext context) {
+  static void show(BuildContext context, {String? resumeStep}) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const LearnerOnboardingScreen()),
+      MaterialPageRoute(builder: (_) => LearnerOnboardingScreen(resumeStep: resumeStep)),
     );
   }
 
@@ -61,6 +62,45 @@ class _LearnerOnboardingScreenState extends State<LearnerOnboardingScreen> {
   // ignore: unused_field
   Map<String, dynamic> _profile = {};
   int _categoryIndex = -1;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.resumeStep != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _resumeFromStep(widget.resumeStep!);
+      });
+    }
+  }
+
+  void _resumeFromStep(String step) {
+    switch (step) {
+      case 'verify':
+        _goStep1a();
+        break;
+      case 'source':
+        _goStep2();
+        break;
+      case 'interests':
+        _goStep3();
+        break;
+      case 'subjects':
+        _goStep4();
+        break;
+      case 'level':
+        // Need subjects loaded first, go to subjects
+        _goStep4();
+        break;
+      case 'profile':
+        _goStep7();
+        break;
+      case 'education':
+        _goStep8();
+        break;
+      default:
+        _goStep2();
+    }
+  }
 
   _StepState get _current => _history.last;
 

@@ -185,6 +185,14 @@ class _LoginViewState extends State<_LoginView> {
   bool _obscure = true;
   bool _loading = false;
   String _error = '';
+  String _selectedRole = 'tutor'; // Default to tutor
+
+  @override
+  void initState() {
+    super.initState();
+    // Use widget.role if provided, otherwise default to tutor
+    _selectedRole = widget.role ?? 'tutor';
+  }
 
   @override
   void dispose() {
@@ -199,7 +207,8 @@ class _LoginViewState extends State<_LoginView> {
     
     final email = _emailCtrl.text.trim();
     final pass = _passCtrl.text;
-    final role = widget.role ?? 'tutor';
+    
+    print('[LOGIN] Attempting login with role: $_selectedRole, email: $email');
     
     HapticFeedback.mediumImpact();
     setState(() {
@@ -211,36 +220,47 @@ class _LoginViewState extends State<_LoginView> {
       final response = await http.post(
         Uri.parse('https://app.homeguruworld.com/api/auth/login'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'password': pass, 'role': role}),
+        body: jsonEncode({'email': email, 'password': pass, 'role': _selectedRole}),
       );
+      
+      print('[LOGIN] Response status: ${response.statusCode}');
+      print('[LOGIN] Response body: ${response.body}');
       
       if (!mounted) return;
       
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         
+        print('[LOGIN] Login successful, role from API: ${data['role']}');
+        
         // Store session
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('authToken', data['token']);
         await prefs.setString('userId', data['userId']);
         await prefs.setString('userRole', data['role']);
-        await prefs.setString('logged_in_user', data['role']); // For persistence check
+        await prefs.setString('logged_in_user', data['role']);
         
         if (!mounted) return;
         
+        final userRole = data['role'] as String;
+        
+        print('[LOGIN] Navigating based on role: $userRole, onboardingComplete: ${data['onboardingComplete']}');
+        
         if (data['onboardingComplete'] == true) {
-          // Go to dashboard - clear all previous routes
+          final dashboardRoute = userRole == 'learner' ? '/learner-dashboard' : '/tutor-dashboard';
+          print('[LOGIN] Navigating to dashboard: $dashboardRoute');
           Navigator.pushNamedAndRemoveUntil(
             context,
-            '/tutor-dashboard',
+            dashboardRoute,
             (route) => false,
           );
         } else {
-          // Resume onboarding - clear all previous routes
           final step = data['currentStep'] ?? 'profile';
+          final onboardingRoute = userRole == 'learner' ? '/learner-onboarding' : '/tutor-onboarding';
+          print('[LOGIN] Navigating to onboarding: $onboardingRoute, step: $step');
           Navigator.pushNamedAndRemoveUntil(
             context,
-            '/tutor-onboarding',
+            onboardingRoute,
             (route) => false,
             arguments: {'resumeStep': step},
           );
@@ -248,6 +268,7 @@ class _LoginViewState extends State<_LoginView> {
       } else {
         final errorBody = jsonDecode(response.body);
         final errorMessage = errorBody['error'] ?? 'Login failed';
+        print('[LOGIN] Login failed: $errorMessage');
         setState(() {
           _loading = false;
           _error = errorMessage;
@@ -255,6 +276,7 @@ class _LoginViewState extends State<_LoginView> {
         HapticFeedback.heavyImpact();
       }
     } catch (e) {
+      print('[LOGIN] Exception: $e');
       setState(() {
         _loading = false;
         _error = 'Network error. Please try again.';
@@ -272,10 +294,47 @@ class _LoginViewState extends State<_LoginView> {
         const SizedBox(height: 24),
         _Header(
           title: 'Welcome back',
-          subtitle: widget.role != null
-              ? 'Sign in as a ${_cap(widget.role!)} to continue.'
-              : 'Sign in to your account.',
-          role: widget.role,
+          subtitle: 'Sign in to your account.',
+          role: null, // Don't show role badge, we have toggle now
+        ),
+        const SizedBox(height: 20),
+        // Role Toggle - M3 Style
+        Container(
+          padding: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(100),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: _RoleToggleButton(
+                  label: 'Tutor',
+                  icon: Icons.school_rounded,
+                  isSelected: _selectedRole == 'tutor',
+                  onTap: () {
+                    if (_selectedRole != 'tutor') {
+                      HapticFeedback.selectionClick();
+                      setState(() => _selectedRole = 'tutor');
+                    }
+                  },
+                ),
+              ),
+              Expanded(
+                child: _RoleToggleButton(
+                  label: 'Learner',
+                  icon: Icons.person_rounded,
+                  isSelected: _selectedRole == 'learner',
+                  onTap: () {
+                    if (_selectedRole != 'learner') {
+                      HapticFeedback.selectionClick();
+                      setState(() => _selectedRole = 'learner');
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 24),
         if (_error.isNotEmpty) ...[
@@ -600,3 +659,54 @@ class _AegisTag extends StatelessWidget {
 
 String _cap(String s) =>
     s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
+
+class _RoleToggleButton extends StatelessWidget {
+  const _RoleToggleButton({
+    required this.label,
+    required this.icon,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        decoration: BoxDecoration(
+          color: isSelected ? cs.secondaryContainer : Colors.transparent,
+          borderRadius: BorderRadius.circular(100),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 20,
+              color: isSelected ? cs.onSecondaryContainer : cs.onSurfaceVariant,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: tt.labelLarge?.copyWith(
+                color: isSelected ? cs.onSecondaryContainer : cs.onSurfaceVariant,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
