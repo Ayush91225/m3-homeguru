@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../../widgets/onboarding/onboarding_header.dart';
 import '../../widgets/mascot/open_sprite.dart';
+import '../../services/learner_onboarding_service.dart';
 import 'learner/step0.dart';
 import 'learner/step1.dart';
 import 'learner/step1a.dart';
@@ -55,6 +59,7 @@ class _LearnerOnboardingScreenState extends State<LearnerOnboardingScreen> {
   String _firstName = '';
   String _lastName = '';
   String _interest = '';
+  String _source = '';
   // ignore: unused_field
   String _subject = '';
   List<String> _realSubjects = [];
@@ -142,14 +147,22 @@ class _LearnerOnboardingScreenState extends State<LearnerOnboardingScreen> {
   void _goStep2() {
     _push(
       const _StepState(stepValue: 2, showHeader: true, title: 'Where did you\nhear about us?', subtitle: 'Help us understand how you found HomeGuru.'),
-      LearnerStep2Body(onNext: _goStep3),
+      LearnerStep2Body(onNext: (source) async {
+        _source = source;
+        await _saveSource(source);
+        _goStep3();
+      }),
     );
   }
 
   void _goStep3() {
     _push(
       const _StepState(stepValue: 3, showHeader: true, title: 'What are you\ninterested in?', subtitle: 'Pick the type of learning that suits you.'),
-      LearnerStep3Body(onNext: (choice) { _interest = choice; _goStep4(); }),
+      LearnerStep3Body(onNext: (choice) async {
+        _interest = choice;
+        await _saveInterest(choice);
+        _goStep4();
+      }),
     );
   }
 
@@ -161,10 +174,11 @@ class _LearnerOnboardingScreenState extends State<LearnerOnboardingScreen> {
         title: 'What do you want\nto focus on?',
         subtitle: _interest == 'academic' ? 'Pick a subject you want to learn.' : 'Pick a skill you want to develop.',
       ),
-      LearnerStep4Body(interest: _interest, onNext: (subjects) {
+      LearnerStep4Body(interest: _interest, onNext: (subjects) async {
         _subject = subjects;
         final all = subjects.split(',').map((s) => s.trim()).toList();
         _realSubjects = all.where((s) => s != 'Others').toList();
+        await _saveSubjects(_realSubjects);
         if (_realSubjects.isEmpty) {
           _onDone();
         } else {
@@ -190,9 +204,10 @@ class _LearnerOnboardingScreenState extends State<LearnerOnboardingScreen> {
         subject: subject,
         totalSubjects: _realSubjects.length,
         subjectIndex: index,
-        onNext: (subj, level) {
+        onNext: (subj, level) async {
           _proficiency[subj] = level;
           if (isLast) {
+            await _saveProficiency(_proficiency);
             _onDone();
           } else {
             _goStep5(index + 1);
@@ -200,6 +215,143 @@ class _LearnerOnboardingScreenState extends State<LearnerOnboardingScreen> {
         },
       ),
     );
+  }
+
+  Future<void> _saveSource(String source) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final learnerId = prefs.getString('learnerId') ?? prefs.getString('userId');
+      if (learnerId == null) return;
+
+      print('[ONBOARDING] Saving source: $source');
+      // TODO: Add API endpoint for saving source
+    } catch (e) {
+      print('[ONBOARDING] Error saving source: $e');
+    }
+  }
+
+  Future<void> _saveInterest(String interest) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final learnerId = prefs.getString('learnerId') ?? prefs.getString('userId');
+      if (learnerId == null) return;
+
+      print('[ONBOARDING] Saving interest: $interest');
+      // TODO: Add API endpoint for saving interest
+    } catch (e) {
+      print('[ONBOARDING] Error saving interest: $e');
+    }
+  }
+
+  Future<void> _saveSubjects(List<String> subjects) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final learnerId = prefs.getString('learnerId') ?? prefs.getString('userId');
+      if (learnerId == null) return;
+
+      final result = await LearnerOnboardingService.updateSubjects(
+        learnerId: learnerId,
+        subjects: subjects,
+        category: _interest,
+      );
+
+      if (result['success'] == true) {
+        print('[ONBOARDING] Subjects saved successfully');
+      } else {
+        print('[ONBOARDING] Subjects save failed: ${result['error']}');
+      }
+    } catch (e) {
+      print('[ONBOARDING] Error saving subjects: $e');
+    }
+  }
+
+  Future<void> _saveProficiency(Map<String, int> proficiency) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final learnerId = prefs.getString('learnerId') ?? prefs.getString('userId');
+      if (learnerId == null) return;
+
+      print('[ONBOARDING] Saving proficiency: $proficiency');
+      // TODO: Add API endpoint for saving proficiency levels
+    } catch (e) {
+      print('[ONBOARDING] Error saving proficiency: $e');
+    }
+  }
+
+  Future<void> _saveProfile(Map<String, dynamic> profile) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      // Try to get learnerId first (from registration), fallback to userId (from login)
+      final learnerId = prefs.getString('learnerId') ?? prefs.getString('userId');
+      
+      if (learnerId == null) {
+        print('[ONBOARDING] Error: learnerId/userId not found');
+        return;
+      }
+
+      final languages = (profile['languages'] as List<dynamic>?)?.cast<String>() ?? [];
+      final result = await LearnerOnboardingService.updateProfile(
+        learnerId: learnerId,
+        name: '${profile['firstName']} ${profile['lastName']}',
+        dob: profile['dob'] ?? '',
+        gender: profile['gender'] ?? '',
+        language: languages.join(','),
+        type: profile['category'] ?? '',
+        country: profile['country'] ?? '',
+        state: profile['state'] ?? '',
+        city: profile['city'] ?? '',
+      );
+
+      if (result['success'] == true) {
+        print('[ONBOARDING] Profile saved successfully');
+      } else {
+        print('[ONBOARDING] Profile save failed: ${result['error']}');
+      }
+    } catch (e) {
+      print('[ONBOARDING] Error saving profile: $e');
+    }
+  }
+
+  Future<void> _saveEducation(Map<String, dynamic> data) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      // Try to get learnerId first (from registration), fallback to userId (from login)
+      final learnerId = prefs.getString('learnerId') ?? prefs.getString('userId');
+      
+      if (learnerId == null) {
+        print('[ONBOARDING] Error: learnerId/userId not found');
+        return;
+      }
+
+      String type;
+      if (_categoryIndex == 0) {
+        type = 'school';
+      } else if (_categoryIndex == 1) {
+        type = 'aspirant';
+      } else if (_categoryIndex == 2) {
+        type = 'college';
+      } else {
+        return;
+      }
+
+      final result = await LearnerOnboardingService.updateEducation(
+        learnerId: learnerId,
+        type: type,
+        board: data['board'],
+        studentClass: data['classYear'],
+        school: data['school'],
+        field: data['field'] ?? data['course'],
+        year: data['year'],
+      );
+
+      if (result['success'] == true) {
+        print('[ONBOARDING] Education saved successfully');
+      } else {
+        print('[ONBOARDING] Education save failed: ${result['error']}');
+      }
+    } catch (e) {
+      print('[ONBOARDING] Error saving education: $e');
+    }
   }
 
   void _onDone() => _goStep6();
@@ -218,9 +370,10 @@ class _LearnerOnboardingScreenState extends State<LearnerOnboardingScreen> {
         phoneCountry: _phoneCountry,
         firstName: _firstName,
         lastName: _lastName,
-        onNext: (profile) {
+        onNext: (profile) async {
           _profile = profile;
           _categoryIndex = profile['categoryIndex'] as int? ?? -1;
+          await _saveProfile(profile);
           if (_categoryIndex <= 2) {
             _goStep8();
           } else {
@@ -245,13 +398,42 @@ class _LearnerOnboardingScreenState extends State<LearnerOnboardingScreen> {
       ),
       LearnerStep8Body(
         categoryIndex: _categoryIndex,
-        onNext: (data) => _goFinish(),
+        onNext: (data) async {
+          await _saveEducation(data);
+          _goFinish();
+        },
       ),
     );
   }
 
-  void _goFinish() {
+  void _goFinish() async {
     HapticFeedback.mediumImpact();
+    
+    // Mark onboarding as complete
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final learnerId = prefs.getString('learnerId') ?? prefs.getString('userId');
+      if (learnerId != null) {
+        // Call API to mark onboarding complete
+        final response = await http.post(
+          Uri.parse('https://app.homeguruworld.com/api/onboarding/learner/complete'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'learnerId': learnerId}),
+        );
+        
+        final result = jsonDecode(response.body);
+        if (result['success'] == true) {
+          print('[ONBOARDING] Marked as complete');
+        } else {
+          print('[ONBOARDING] Failed to mark complete: ${result['error']}');
+        }
+      }
+    } catch (e) {
+      print('[ONBOARDING] Error marking complete: $e');
+    }
+    
+    if (!mounted) return;
+    
     Navigator.of(context).push(
       PageRouteBuilder(
         opaque: false,

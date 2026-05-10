@@ -4,7 +4,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class LearnerStep2Body extends StatefulWidget {
   const LearnerStep2Body({super.key, required this.onNext});
-  final VoidCallback onNext;
+  final void Function(String source) onNext;
 
   @override
   State<LearnerStep2Body> createState() => _LearnerStep2BodyState();
@@ -88,7 +88,7 @@ class _LearnerStep2BodyState extends State<LearnerStep2Body> {
           child: FilledButton(
             onPressed: _selected == null ? null : () {
               HapticFeedback.mediumImpact();
-              widget.onNext();
+              widget.onNext(_selected!);
             },
             child: const Text('Continue'),
           ),
