@@ -56,123 +56,153 @@ class LearnerDrawer extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               itemCount: 15,
               itemBuilder: (context, index) {
-                if (index == 0) return _DrawerItem(
-                  icon: Icons.home_outlined,
-                  selectedIcon: Icons.home_rounded,
-                  label: 'Home',
-                  selected: selectedIndex == 0,
-                  onTap: () {
-                    onDestinationSelected(0);
-                    Navigator.pop(context);
-                  },
-                );
-                if (index == 1) return _DrawerItem(
-                  icon: Icons.search_outlined,
-                  selectedIcon: Icons.search_rounded,
-                  label: 'Search',
-                  selected: selectedIndex == 1,
-                  onTap: () {
-                    onDestinationSelected(1);
-                    Navigator.pop(context);
-                  },
-                );
-                if (index == 2) return _DrawerItem(
-                  icon: Icons.calendar_today_outlined,
-                  selectedIcon: Icons.calendar_today_rounded,
-                  label: 'Schedule',
-                  selected: selectedIndex == 2,
-                  onTap: () {
-                    onDestinationSelected(2);
-                    Navigator.pop(context);
-                  },
-                );
-                if (index == 3) return _DrawerItem(
-                  icon: Icons.send_outlined,
-                  selectedIcon: Icons.send_rounded,
-                  label: 'My Requests',
-                  selected: false,
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const MyRequestsScreen()));
-                  },
-                );
-                if (index == 4) return _DrawerItem(
-                  icon: Icons.auto_awesome_outlined,
-                  selectedIcon: Icons.auto_awesome_rounded,
-                  label: 'Guru AI',
-                  selected: false,
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.pushNamed(context, '/guru-ai');
-                  },
-                );
-                if (index == 5) return _DrawerItem(
-                  icon: Icons.feed_outlined,
-                  selectedIcon: Icons.feed_rounded,
-                  label: 'Feed',
-                  selected: selectedIndex == 3,
-                  onTap: () {
-                    onDestinationSelected(3);
-                    Navigator.pop(context);
-                  },
-                );
-                if (index == 6) return _DrawerItem(
-                  icon: Icons.chat_bubble_outline_rounded,
-                  selectedIcon: Icons.chat_bubble_rounded,
-                  label: 'Chat',
-                  selected: selectedIndex == 4,
-                  onTap: () {
-                    onDestinationSelected(4);
-                    Navigator.pop(context);
-                  },
-                );
-                if (index == 7) return const Divider(height: 16);
-                if (index == 8) return _DrawerItem(
-                  icon: Icons.storefront_outlined,
-                  selectedIcon: Icons.storefront_rounded,
-                  label: 'HG Store',
-                  selected: false,
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const StoreScreen()));
-                  },
-                );
-                if (index == 9) return _DrawerItem(
-                  icon: Icons.account_balance_wallet_outlined,
-                  selectedIcon: Icons.account_balance_wallet_rounded,
-                  label: 'Wallet',
-                  selected: false,
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const WalletScreen()));
-                  },
-                );
-                if (index == 10) return _DrawerItem(
-                  icon: Icons.notifications_none_rounded,
-                  selectedIcon: Icons.notifications_rounded,
-                  label: 'Notifications',
-                  selected: false,
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
-                  },
-                );
-                if (index == 11) return _DrawerItem(
-                  icon: Icons.settings_outlined,
-                  selectedIcon: Icons.settings_rounded,
-                  label: 'Settings',
-                  selected: false,
-                  onTap: () => Navigator.pop(context),
-                );
-                if (index == 12) return _DrawerItem(
-                  icon: Icons.help_outline_rounded,
-                  selectedIcon: Icons.help_rounded,
-                  label: 'Help & feedback',
-                  selected: false,
-                  onTap: () => Navigator.pop(context),
-                );
-                if (index == 13) return const Divider(height: 16);
-                if (index == 14) return const _TestCard();
+                if (index == 0) {
+                  return _DrawerItem(
+                    icon: Icons.home_outlined,
+                    selectedIcon: Icons.home_rounded,
+                    label: 'Home',
+                    selected: selectedIndex == 0,
+                    onTap: () {
+                      onDestinationSelected(0);
+                      Navigator.pop(context);
+                    },
+                  );
+                }
+                if (index == 1) {
+                  return _DrawerItem(
+                    icon: Icons.search_outlined,
+                    selectedIcon: Icons.search_rounded,
+                    label: 'Search',
+                    selected: selectedIndex == 1,
+                    onTap: () {
+                      onDestinationSelected(1);
+                      Navigator.pop(context);
+                    },
+                  );
+                }
+                if (index == 2) {
+                  return _DrawerItem(
+                    icon: Icons.calendar_today_outlined,
+                    selectedIcon: Icons.calendar_today_rounded,
+                    label: 'Schedule',
+                    selected: selectedIndex == 2,
+                    onTap: () {
+                      onDestinationSelected(2);
+                      Navigator.pop(context);
+                    },
+                  );
+                }
+                if (index == 3) {
+                  return _DrawerItem(
+                    icon: Icons.send_outlined,
+                    selectedIcon: Icons.send_rounded,
+                    label: 'My Requests',
+                    selected: false,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const MyRequestsScreen()));
+                    },
+                  );
+                }
+                if (index == 4) {
+                  return _DrawerItem(
+                    icon: Icons.auto_awesome_outlined,
+                    selectedIcon: Icons.auto_awesome_rounded,
+                    label: 'Guru AI',
+                    selected: false,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, '/guru-ai');
+                    },
+                  );
+                }
+                if (index == 5) {
+                  return _DrawerItem(
+                    icon: Icons.feed_outlined,
+                    selectedIcon: Icons.feed_rounded,
+                    label: 'Feed',
+                    selected: selectedIndex == 3,
+                    onTap: () {
+                      onDestinationSelected(3);
+                      Navigator.pop(context);
+                    },
+                  );
+                }
+                if (index == 6) {
+                  return _DrawerItem(
+                    icon: Icons.chat_bubble_outline_rounded,
+                    selectedIcon: Icons.chat_bubble_rounded,
+                    label: 'Chat',
+                    selected: selectedIndex == 4,
+                    onTap: () {
+                      onDestinationSelected(4);
+                      Navigator.pop(context);
+                    },
+                  );
+                }
+                if (index == 7) {
+                  return const Divider(height: 16);
+                }
+                if (index == 8) {
+                  return _DrawerItem(
+                    icon: Icons.storefront_outlined,
+                    selectedIcon: Icons.storefront_rounded,
+                    label: 'HG Store',
+                    selected: false,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const StoreScreen()));
+                    },
+                  );
+                }
+                if (index == 9) {
+                  return _DrawerItem(
+                    icon: Icons.account_balance_wallet_outlined,
+                    selectedIcon: Icons.account_balance_wallet_rounded,
+                    label: 'Wallet',
+                    selected: false,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const WalletScreen()));
+                    },
+                  );
+                }
+                if (index == 10) {
+                  return _DrawerItem(
+                    icon: Icons.notifications_none_rounded,
+                    selectedIcon: Icons.notifications_rounded,
+                    label: 'Notifications',
+                    selected: false,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+                    },
+                  );
+                }
+                if (index == 11) {
+                  return _DrawerItem(
+                    icon: Icons.settings_outlined,
+                    selectedIcon: Icons.settings_rounded,
+                    label: 'Settings',
+                    selected: false,
+                    onTap: () => Navigator.pop(context),
+                  );
+                }
+                if (index == 12) {
+                  return _DrawerItem(
+                    icon: Icons.help_outline_rounded,
+                    selectedIcon: Icons.help_rounded,
+                    label: 'Help & feedback',
+                    selected: false,
+                    onTap: () => Navigator.pop(context),
+                  );
+                }
+                if (index == 13) {
+                  return const Divider(height: 16);
+                }
+                if (index == 14) {
+                  return const _TestCard();
+                }
                 return const SizedBox.shrink();
               },
             ),

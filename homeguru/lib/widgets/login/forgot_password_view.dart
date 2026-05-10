@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class ForgotPasswordView extends StatefulWidget {
   const ForgotPasswordView({super.key, required this.onBack, required this.onSent});
@@ -14,6 +16,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
   final _formKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
   bool _loading = false;
+  String _error = '';
 
   static final _inputBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none);
@@ -33,10 +36,42 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
   Future<void> _send() async {
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
+    
     HapticFeedback.mediumImpact();
-    setState(() => _loading = true);
-    await Future.delayed(const Duration(seconds: 2));
-    if (mounted) widget.onSent(_emailCtrl.text.trim());
+    setState(() {
+      _loading = true;
+      _error = '';
+    });
+    
+    try {
+      final response = await http.post(
+        Uri.parse('https://app.homeguruworld.com/api/auth/forgot-password'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': _emailCtrl.text.trim()}),
+      );
+      
+      if (!mounted) return;
+      
+      if (response.statusCode == 200) {
+        widget.onSent(_emailCtrl.text.trim());
+      } else {
+        final errorBody = jsonDecode(response.body);
+        final errorMessage = errorBody['error'] ?? 'Failed to send reset link';
+        setState(() {
+          _loading = false;
+          _error = errorMessage;
+        });
+        HapticFeedback.heavyImpact();
+      }
+    } catch (e) {
+      HapticFeedback.heavyImpact();
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _error = 'Network error. Please try again.';
+        });
+      }
+    }
   }
 
   @override
@@ -108,6 +143,29 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
           ),
         ),
         const SizedBox(height: 20),
+        if (_error.isNotEmpty) ...[
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.red.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.red.shade200),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.error_outline, color: Colors.red.shade700, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _error,
+                    style: TextStyle(color: Colors.red.shade700, fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
         FilledButton(
           onPressed: _loading ? null : _send,
           style: FilledButton.styleFrom(

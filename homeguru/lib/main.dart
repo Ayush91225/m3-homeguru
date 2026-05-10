@@ -4,12 +4,15 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'theme/app_theme.dart';
 import 'screens/welcome/welcome_screen.dart';
 import 'screens/dashboard/learner/learner_dashboard.dart';
 import 'screens/dashboard/learner/search_results_screen.dart';
 import 'screens/dashboard/tutor/tutor_dashboard.dart';
 import 'screens/shared/guruai/guruai_screen.dart';
+import 'screens/onboarding/tutor_onboarding_screen.dart';
 import 'services/user_profile_store.dart';
 import 'services/call_notification_service.dart';
 
@@ -79,18 +82,58 @@ class _HomeGuruAppState extends State<HomeGuruApp> {
 
   Future<void> _checkLoginState() async {
     final prefs = await SharedPreferences.getInstance();
-    final loggedInUser = prefs.getString('logged_in_user');
+    final authToken = prefs.getString('authToken');
+    final userId = prefs.getString('userId');
+    final userRole = prefs.getString('userRole');
     
-    if (mounted) {
-      setState(() {
-        if (loggedInUser == 'learner') {
-          _initialRoute = const LearnerDashboard();
-        } else if (loggedInUser == 'tutor') {
-          _initialRoute = const TutorDashboard();
-        } else {
-          _initialRoute = const WelcomeScreen();
+    if (authToken != null && userId != null && userRole != null) {
+      // User is logged in
+      if (userRole == 'learner') {
+        if (mounted) {
+          setState(() => _initialRoute = const LearnerDashboard());
         }
-      });
+      } else if (userRole == 'tutor') {
+        // Check onboarding status for tutor
+        try {
+          final response = await http.get(
+            Uri.parse('https://app.homeguruworld.com/api/onboarding/tutor/register?tutorId=$userId'),
+          );
+          
+          if (response.statusCode == 200) {
+            final data = jsonDecode(response.body);
+            if (mounted) {
+              setState(() {
+                if (data['success'] == true && data['data']['onboardingComplete'] == true) {
+                  _initialRoute = const TutorDashboard();
+                } else {
+                  // Resume onboarding
+                  final step = data['data']['currentStep'] ?? 'profile';
+                  _initialRoute = TutorOnboardingScreen(resumeStep: step);
+                }
+              });
+            }
+          } else {
+            // API error, go to dashboard
+            if (mounted) {
+              setState(() => _initialRoute = const TutorDashboard());
+            }
+          }
+        } catch (e) {
+          // Network error, go to dashboard
+          if (mounted) {
+            setState(() => _initialRoute = const TutorDashboard());
+          }
+        }
+      } else {
+        if (mounted) {
+          setState(() => _initialRoute = const WelcomeScreen());
+        }
+      }
+    } else {
+      // Not logged in
+      if (mounted) {
+        setState(() => _initialRoute = const WelcomeScreen());
+      }
     }
   }
 
@@ -129,6 +172,13 @@ class _HomeGuruAppState extends State<HomeGuruApp> {
                 final query = settings.arguments as String?;
                 return MaterialPageRoute(
                   builder: (context) => SearchResultsScreen(initialQuery: query),
+                );
+              }
+              if (settings.name == '/tutor-onboarding') {
+                final args = settings.arguments as Map<String, dynamic>?;
+                final resumeStep = args?['resumeStep'] as String?;
+                return MaterialPageRoute(
+                  builder: (context) => TutorOnboardingScreen(resumeStep: resumeStep),
                 );
               }
               return null;

@@ -2,11 +2,11 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class RazorpayService {
   static const String keyId = 'rzp_test_SaRLWC9tRdlI8U';
-  static const String keySecret = 'W66t7QTrO4nF2fV4d276CcU6';
-  static const String baseUrl = 'https://api.razorpay.com/v1';
+  static const String baseUrl = 'https://app.homeguruworld.com/api/onboarding/tutor/payment';
 
   late Razorpay _razorpay;
 
@@ -28,33 +28,37 @@ class RazorpayService {
   }
 
   Future<Map<String, dynamic>?> createOrder({
-    required int amount, // Amount in paise (e.g., 50000 = ₹500)
+    required int amount,
     required String receipt,
     String currency = 'INR',
     Map<String, dynamic>? notes,
   }) async {
     try {
-      final auth = base64Encode(utf8.encode('$keyId:$keySecret'));
+      final prefs = await SharedPreferences.getInstance();
+      final tutorId = prefs.getString('userId');
+      
+      if (tutorId == null) {
+        debugPrint('TutorId not found in session');
+        return null;
+      }
+
       final response = await http.post(
-        Uri.parse('$baseUrl/orders'),
-        headers: {
-          'Authorization': 'Basic $auth',
-          'Content-Type': 'application/json',
-        },
+        Uri.parse('$baseUrl/create-order'),
+        headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
+          'tutorId': tutorId,
           'amount': amount,
-          'currency': currency,
-          'receipt': receipt,
-          'notes': notes ?? {},
         }),
       );
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      } else {
-        debugPrint('Order creation failed: ${response.body}');
-        return null;
+        final data = jsonDecode(response.body);
+        if (data['success'] == true) {
+          return {'id': data['orderId']};
+        }
       }
+      debugPrint('Order creation failed: ${response.body}');
+      return null;
     } catch (e) {
       debugPrint('Error creating order: $e');
       return null;

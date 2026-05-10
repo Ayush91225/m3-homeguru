@@ -18,11 +18,12 @@ import 'tutor/step8.dart';
 import 'tutor/step9.dart';
 
 class TutorOnboardingScreen extends StatefulWidget {
-  const TutorOnboardingScreen({super.key});
+  final String? resumeStep;
+  const TutorOnboardingScreen({super.key, this.resumeStep});
 
-  static void show(BuildContext context) {
+  static void show(BuildContext context, {String? resumeStep}) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const TutorOnboardingScreen()),
+      MaterialPageRoute(builder: (_) => TutorOnboardingScreen(resumeStep: resumeStep)),
     );
   }
 
@@ -53,6 +54,41 @@ class _TutorOnboardingScreenState extends State<TutorOnboardingScreen> {
   bool _testPassed = false;
   int _testScore = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    if (widget.resumeStep != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _resumeFromStep(widget.resumeStep!);
+      });
+    }
+  }
+
+  void _resumeFromStep(String step) {
+    switch (step) {
+      case 'subjects':
+        _goStep4();
+        break;
+      case 'overview':
+        _goStep3();
+        break;
+      case 'id':
+        _goStep8();
+        break;
+      case 'test':
+        _goStep5();
+        break;
+      case 'fee':
+        _goStep7();
+        break;
+      case 'bank':
+        _goStep9();
+        break;
+      default:
+        _goStep2();
+    }
+  }
+
   _StepState get _current => _history.last;
 
   void _push(_StepState state, Widget page) {
@@ -60,9 +96,22 @@ class _TutorOnboardingScreenState extends State<TutorOnboardingScreen> {
     _navKey.currentState?.push(_route(page));
   }
 
-  void _back() {
+  void _back() async {
     HapticFeedback.selectionClick();
-    if (_history.length <= 1) { Navigator.of(context).pop(); return; }
+    if (_history.length <= 1) {
+      // At first step, check if user is logged in
+      final prefs = await SharedPreferences.getInstance();
+      final authToken = prefs.getString('authToken');
+      
+      if (authToken != null && mounted) {
+        // User is logged in, close app
+        SystemNavigator.pop();
+      } else if (mounted) {
+        // Not logged in, go back to welcome
+        Navigator.of(context).pop();
+      }
+      return;
+    }
     setState(() => _history.removeLast());
     _navKey.currentState?.pop();
   }
@@ -148,7 +197,7 @@ class _TutorOnboardingScreenState extends State<TutorOnboardingScreen> {
 
   void _goStep9() => _push(
     const _StepState(stepValue: 9, showHeader: true, title: 'Bank account', subtitle: 'Where we send your earnings'),
-    TutorStep9Body(tutorName: '$_firstName $_lastName'.trim(), onNext: (_) => _goFinish()),
+    TutorStep9Body(onNext: _goFinish),
   );
 
   void _goFinish() {
@@ -196,7 +245,9 @@ class _TutorOnboardingScreenState extends State<TutorOnboardingScreen> {
 
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (didPop, _) { if (!didPop) _back(); },
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _back();
+      },
       child: Scaffold(
         backgroundColor: cs.surface,
         body: SafeArea(

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../services/razorpay_service.dart';
 import '../../../services/user_profile_store.dart';
 
@@ -32,16 +35,55 @@ class _TutorStep7BodyState extends State<TutorStep7Body> {
     super.dispose();
   }
 
-  void _handlePaymentSuccess(PaymentSuccessResponse response) {
-    setState(() => _loading = false);
-    if (mounted) {
-      widget.onNext({
-        'paymentId': response.paymentId ?? '',
-        'orderId': response.orderId ?? '',
-        'signature': response.signature ?? '',
-        'paymentDate': DateTime.now().toIso8601String(),
-        'validUntil': DateTime.now().add(const Duration(days: 365)).toIso8601String(),
-      });
+  void _handlePaymentSuccess(PaymentSuccessResponse response) async {
+    setState(() => _loading = true);
+    
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final tutorId = prefs.getString('userId');
+      
+      if (tutorId == null) {
+        throw Exception('Session expired');
+      }
+
+      final verifyResponse = await http.post(
+        Uri.parse('https://app.homeguruworld.com/api/onboarding/tutor/payment/verify-payment'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'tutorId': tutorId,
+          'razorpayOrderId': response.orderId,
+          'razorpayPaymentId': response.paymentId,
+          'razorpaySignature': response.signature,
+        }),
+      );
+
+      final verifyData = jsonDecode(verifyResponse.body);
+
+      if (verifyResponse.statusCode == 200 && verifyData['success'] == true) {
+        setState(() => _loading = false);
+        if (mounted) {
+          widget.onNext({
+            'paymentId': response.paymentId ?? '',
+            'orderId': response.orderId ?? '',
+            'signature': response.signature ?? '',
+            'paymentDate': DateTime.now().toIso8601String(),
+            'validUntil': verifyData['validUntil'] ?? DateTime.now().add(const Duration(days: 365)).toIso8601String(),
+          });
+        }
+      } else {
+        throw Exception('Payment verification failed');
+      }
+    } catch (e) {
+      setState(() => _loading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Payment verification failed: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 

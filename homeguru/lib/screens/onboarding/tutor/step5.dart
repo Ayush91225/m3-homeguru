@@ -24,6 +24,8 @@ class _TutorStep5BodyState extends State<TutorStep5Body> {
   bool _blocked = false;
   DateTime? _retryDate;
   int _daysLeft = 0;
+  bool _alreadyPassed = false;
+  int _passedScore = 0;
 
   @override
   void initState() {
@@ -48,17 +50,31 @@ class _TutorStep5BodyState extends State<TutorStep5Body> {
       );
 
       final data = jsonDecode(response.body);
-      if (data['success'] == true && data['data']['testRetryAvailableAt'] != null) {
-        final retryTime = DateTime.parse(data['data']['testRetryAvailableAt']);
-        final now = DateTime.now();
-        
-        if (now.isBefore(retryTime)) {
+      if (data['success'] == true) {
+        // Check if already passed
+        if (data['data']['testPassed'] == true) {
           if (mounted) {
             setState(() {
-              _blocked = true;
-              _retryDate = retryTime;
-              _daysLeft = retryTime.difference(now).inDays;
+              _alreadyPassed = true;
+              _passedScore = data['data']['testScore'] ?? 0;
             });
+          }
+          return;
+        }
+        
+        // Check if blocked from retry
+        if (data['data']['testRetryAvailableAt'] != null) {
+          final retryTime = DateTime.parse(data['data']['testRetryAvailableAt']);
+          final now = DateTime.now();
+          
+          if (now.isBefore(retryTime)) {
+            if (mounted) {
+              setState(() {
+                _blocked = true;
+                _retryDate = retryTime;
+                _daysLeft = retryTime.difference(now).inDays;
+              });
+            }
           }
         }
       }
@@ -233,7 +249,41 @@ class _TutorStep5BodyState extends State<TutorStep5Body> {
                 const SizedBox(height: 28),
 
                 // State-based UI
-                if (_blocked) ...[
+                if (_alreadyPassed) ...[
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: cs.tertiaryContainer,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: cs.tertiary),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(Icons.check_circle_rounded, color: cs.tertiary, size: 48),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Test Already Passed!',
+                          style: tt.titleMedium?.copyWith(
+                            color: cs.onTertiaryContainer,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'You scored $_passedScore% in your previous attempt.',
+                          style: tt.bodyMedium?.copyWith(color: cs.onTertiaryContainer),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'You can proceed to the next step of onboarding.',
+                          style: tt.bodySmall?.copyWith(color: cs.onTertiaryContainer.withValues(alpha: 0.7)),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                ] else if (_blocked) ...[
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
@@ -358,6 +408,16 @@ class _TutorStep5BodyState extends State<TutorStep5Body> {
             ),
           ),
         ),
+
+        if (_alreadyPassed)
+          Padding(
+            padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 16),
+            child: FilledButton(
+              onPressed: widget.onPass,
+              style: FilledButton.styleFrom(backgroundColor: cs.tertiary, foregroundColor: cs.onTertiary),
+              child: const Text('Continue to Next Step'),
+            ),
+          ),
 
         if (_state == _State.waiting)
           Padding(

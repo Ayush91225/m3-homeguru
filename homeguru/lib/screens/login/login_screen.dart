@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../../widgets/welcome/role_sheet.dart';
 import '../../widgets/login/forgot_password_view.dart';
 class LoginSheet {
@@ -182,6 +184,7 @@ class _LoginViewState extends State<_LoginView> {
   final _passCtrl = TextEditingController();
   bool _obscure = true;
   bool _loading = false;
+  String _error = '';
 
   @override
   void dispose() {
@@ -196,45 +199,67 @@ class _LoginViewState extends State<_LoginView> {
     
     final email = _emailCtrl.text.trim();
     final pass = _passCtrl.text;
+    final role = widget.role ?? 'tutor';
     
-    // Static credentials check
-    if (email == 'learner@hg.com' && pass == '12345678') {
-      HapticFeedback.mediumImpact();
-      setState(() => _loading = true);
-      await Future.delayed(const Duration(milliseconds: 800));
-      
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('logged_in_user', 'learner');
-      
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/learner-dashboard');
-      }
-      return;
-    }
+    HapticFeedback.mediumImpact();
+    setState(() {
+      _loading = true;
+      _error = '';
+    });
     
-    if (email == 'tutor@hg.com' && pass == '12345678') {
-      HapticFeedback.mediumImpact();
-      setState(() => _loading = true);
-      await Future.delayed(const Duration(milliseconds: 800));
-      
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('logged_in_user', 'tutor');
-      
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/tutor-dashboard');
-      }
-      return;
-    }
-    
-    // Invalid credentials
-    HapticFeedback.heavyImpact();
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Invalid email or password'),
-          behavior: SnackBarBehavior.floating,
-        ),
+    try {
+      final response = await http.post(
+        Uri.parse('https://app.homeguruworld.com/api/auth/login'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'password': pass, 'role': role}),
       );
+      
+      if (!mounted) return;
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        
+        // Store session
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('authToken', data['token']);
+        await prefs.setString('userId', data['userId']);
+        await prefs.setString('userRole', data['role']);
+        await prefs.setString('logged_in_user', data['role']); // For persistence check
+        
+        if (!mounted) return;
+        
+        if (data['onboardingComplete'] == true) {
+          // Go to dashboard - clear all previous routes
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/tutor-dashboard',
+            (route) => false,
+          );
+        } else {
+          // Resume onboarding - clear all previous routes
+          final step = data['currentStep'] ?? 'profile';
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/tutor-onboarding',
+            (route) => false,
+            arguments: {'resumeStep': step},
+          );
+        }
+      } else {
+        final errorBody = jsonDecode(response.body);
+        final errorMessage = errorBody['error'] ?? 'Login failed';
+        setState(() {
+          _loading = false;
+          _error = errorMessage;
+        });
+        HapticFeedback.heavyImpact();
+      }
+    } catch (e) {
+      setState(() {
+        _loading = false;
+        _error = 'Network error. Please try again.';
+      });
+      HapticFeedback.heavyImpact();
     }
   }
 
@@ -253,6 +278,29 @@ class _LoginViewState extends State<_LoginView> {
           role: widget.role,
         ),
         const SizedBox(height: 24),
+        if (_error.isNotEmpty) ...[
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.red.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.red.shade200),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.error_outline, color: Colors.red.shade700, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _error,
+                    style: TextStyle(color: Colors.red.shade700, fontSize: 13),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
         Form(
           key: _formKey,
           child: Column(

@@ -1,57 +1,120 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class TutorStep9Body extends StatefulWidget {
-  const TutorStep9Body({super.key, required this.tutorName, required this.onNext});
-  final String tutorName;
-  final void Function(Map<String, String> bank) onNext;
+  const TutorStep9Body({super.key, required this.onNext});
+  final VoidCallback onNext;
 
   @override
   State<TutorStep9Body> createState() => _TutorStep9BodyState();
 }
 
-class _TutorStep9BodyState extends State<TutorStep9Body> {
-  final _formKey = GlobalKey<FormState>();
-  late final _nameCtrl = TextEditingController(text: widget.tutorName);
-  final _accCtrl = TextEditingController();
-  final _accConfirmCtrl = TextEditingController();
-  final _ifscCtrl = TextEditingController();
+class _TutorStep9BodyState extends State<TutorStep9Body> with SingleTickerProviderStateMixin {
+  final _accName = TextEditingController();
+  final _accNum = TextEditingController();
+  final _confirmNum = TextEditingController();
+  final _ifsc = TextEditingController();
+  bool _tried = false;
 
-  bool _obscureAcc = true;
-  bool _obscureConfirm = true;
-  _VerifyStep _verifyStep = _VerifyStep.idle;
+  int _state = 0; // 0=input, 1=verifying, 2=verified, 3=failed
+  int _verifyStep = 0;
+  String? _errorMsg;
+  Timer? _stepTimer;
+
+  late final AnimationController _checkCtrl;
+  late final Animation<double> _checkAnim;
+
+  String? get _nameErr => _accName.text.trim().length < 2 ? 'Required' : null;
+  String? get _numErr => _accNum.text.trim().length < 8 ? 'Min 8 digits' : null;
+  String? get _confirmErr {
+    if (_confirmNum.text.isEmpty) return 'Required';
+    if (_confirmNum.text != _accNum.text) return 'Does not match';
+    return null;
+  }
+  String? get _ifscErr => _ifsc.text.trim().length != 11 ? '11 characters' : null;
+
+  bool get _canProceed => _nameErr == null && _numErr == null && _confirmErr == null && _ifscErr == null;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
+    _checkAnim = CurvedAnimation(parent: _checkCtrl, curve: Curves.elasticOut);
+  }
 
   @override
   void dispose() {
-    _nameCtrl.dispose();
-    _accCtrl.dispose();
-    _accConfirmCtrl.dispose();
-    _ifscCtrl.dispose();
+    _accName.dispose(); _accNum.dispose(); _confirmNum.dispose(); _ifsc.dispose();
+    _stepTimer?.cancel(); _checkCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
-    FocusScope.of(context).unfocus();
+  Future<void> _verify() async {
+    setState(() => _tried = true);
+    if (!_canProceed) return;
     HapticFeedback.mediumImpact();
+    setState(() { _state = 1; _verifyStep = 0; _errorMsg = null; });
 
-    setState(() => _verifyStep = _VerifyStep.validating);
-    await Future.delayed(const Duration(milliseconds: 1200));
-    if (!mounted) return;
-
-    setState(() => _verifyStep = _VerifyStep.pennyDrop);
-    await Future.delayed(const Duration(milliseconds: 1400));
-    if (!mounted) return;
-
-    setState(() => _verifyStep = _VerifyStep.confirmed);
-    await Future.delayed(const Duration(milliseconds: 800));
-    if (!mounted) return;
-
-    widget.onNext({
-      'accountHolder': _nameCtrl.text.trim(),
-      'accountNumber': _accCtrl.text.trim(),
-      'ifsc': _ifscCtrl.text.trim().toUpperCase(),
+    _stepTimer = Timer.periodic(const Duration(milliseconds: 1200), (t) {
+      if (!mounted) { t.cancel(); return; }
+      if (_verifyStep < 2) setState(() => _verifyStep++);
     });
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final tutorId = prefs.getString('userId') ?? '';
+      
+      final response = await http.post(
+        Uri.parse('https://app.homeguruworld.com/api/onboarding/tutor/verify/bank'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'tutorId': tutorId,
+          'bankAccount': _accNum.text.trim(),
+          'ifsc': _ifsc.text.trim().toUpperCase(),
+          'name': _accName.text.trim(),
+          'phone': '',
+        }),
+      );
+      
+      _stepTimer?.cancel();
+      if (!mounted) return;
+      
+      final res = jsonDecode(response.body);
+      
+      if (res['success'] == true) {
+        setState(() { _state = 2; _verifyStep = 3; });
+        _checkCtrl.forward();
+      } else {
+        setState(() { _state = 3; _errorMsg = res['error'] ?? 'Verification failed'; });
+      }
+    } catch (e) {
+      _stepTimer?.cancel();
+      if (mounted) setState(() { _state = 3; _errorMsg = 'Network error. Please try again.'; });
+    }
+  }
+
+  Widget _input(TextEditingController c, String hint, {String? err, TextInputType? kb, String? helper, bool obscure = false, bool caps = false}) {
+    final hasErr = _tried && err != null;
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      TextField(
+        controller: c, keyboardType: kb, obscureText: obscure,
+        textCapitalization: caps ? TextCapitalization.characters : TextCapitalization.none,
+        inputFormatters: caps ? [_UpperCaseFormatter()] : null,
+        onChanged: (_) => setState(() {}),
+        decoration: InputDecoration(
+          hintText: hint,
+          filled: true,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          errorText: hasErr ? err : null,
+        ),
+      ),
+      if (helper != null && !hasErr) Padding(padding: const EdgeInsets.only(top: 4, left: 4),
+        child: Text(helper, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant))),
+    ]);
   }
 
   @override
@@ -59,296 +122,153 @@ class _TutorStep9BodyState extends State<TutorStep9Body> {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final w = MediaQuery.sizeOf(context).width;
-    final hPad = w >= 600 ? w * 0.2 : 20.0;
-    final isVerifying = _verifyStep != _VerifyStep.idle;
+    final hPad = w >= 600 ? w * 0.2 : 24.0;
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Expanded(
-          child: SingleChildScrollView(
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            padding: EdgeInsets.fromLTRB(hPad, 16, hPad, 32),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Form card
-                  Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: cs.surfaceContainerLow,
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.account_balance, color: cs.tertiary, size: 20),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Bank account details',
-                              style: tt.titleMedium?.copyWith(
-                                color: cs.onSurface,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Where we send your earnings',
-                          style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                        ),
-                        const SizedBox(height: 24),
-
-                        TextFormField(
-                          controller: _nameCtrl,
-                          textCapitalization: TextCapitalization.words,
-                          textInputAction: TextInputAction.next,
-                          style: tt.bodyLarge,
-                          decoration: InputDecoration(
-                            labelText: 'Account holder name',
-                            prefixIcon: const Icon(Icons.person_outline),
-                            filled: true,
-                            fillColor: cs.surface,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
-                          validator: (v) {
-                            if (v == null || v.trim().isEmpty) return 'Required';
-                            if (v.trim().length < 2) return 'Min 2 characters';
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-
-                        TextFormField(
-                          controller: _accCtrl,
-                          obscureText: _obscureAcc,
-                          keyboardType: TextInputType.number,
-                          textInputAction: TextInputAction.next,
-                          style: tt.bodyLarge,
-                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                          decoration: InputDecoration(
-                            labelText: 'Account number',
-                            prefixIcon: const Icon(Icons.lock_outline),
-                            filled: true,
-                            fillColor: cs.surface,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: BorderSide.none,
-                            ),
-                            suffixIcon: IconButton(
-                              onPressed: () => setState(() => _obscureAcc = !_obscureAcc),
-                              icon: Icon(_obscureAcc ? Icons.visibility_outlined : Icons.visibility_off_outlined),
-                            ),
-                          ),
-                          validator: (v) {
-                            if (v == null || v.trim().isEmpty) return 'Required';
-                            if (v.trim().length < 8) return 'Min 8 digits';
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-
-                        TextFormField(
-                          controller: _accConfirmCtrl,
-                          obscureText: _obscureConfirm,
-                          keyboardType: TextInputType.number,
-                          textInputAction: TextInputAction.next,
-                          style: tt.bodyLarge,
-                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                          decoration: InputDecoration(
-                            labelText: 'Re-enter account number',
-                            prefixIcon: const Icon(Icons.lock_outline),
-                            filled: true,
-                            fillColor: cs.surface,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: BorderSide.none,
-                            ),
-                            suffixIcon: IconButton(
-                              onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
-                              icon: Icon(_obscureConfirm ? Icons.visibility_outlined : Icons.visibility_off_outlined),
-                            ),
-                          ),
-                          validator: (v) {
-                            if (v == null || v.trim().isEmpty) return 'Required';
-                            if (v.trim() != _accCtrl.text.trim()) return 'Account numbers do not match';
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-
-                        TextFormField(
-                          controller: _ifscCtrl,
-                          textCapitalization: TextCapitalization.characters,
-                          textInputAction: TextInputAction.done,
-                          style: tt.bodyLarge,
-                          onFieldSubmitted: (_) => _submit(),
-                          inputFormatters: [
-                            FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
-                            LengthLimitingTextInputFormatter(11),
-                            _UpperCaseFormatter(),
-                          ],
-                          decoration: InputDecoration(
-                            labelText: 'IFSC code',
-                            prefixIcon: const Icon(Icons.tag),
-                            hintText: 'e.g. SBIN0001234',
-                            filled: true,
-                            fillColor: cs.surface,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
-                          validator: (v) {
-                            if (v == null || v.trim().isEmpty) return 'Required';
-                            if (v.trim().length != 11) return 'IFSC must be 11 characters';
-                            return null;
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Verification progress
-                  if (isVerifying) ...[
-                    const SizedBox(height: 24),
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: cs.surfaceContainerHigh,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.5,
-                                  color: cs.tertiary,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                'Verifying account',
-                                style: tt.titleSmall?.copyWith(
-                                  color: cs.onSurface,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          _VerifyRow('Validating details', _verifyStep.index >= 1, _verifyStep.index == 1, cs, tt),
-                          _VerifyRow('Verifying with bank', _verifyStep.index >= 2, _verifyStep.index == 2, cs, tt),
-                          _VerifyRow('Account confirmed', _verifyStep.index >= 3, _verifyStep.index == 3, cs, tt),
-                        ],
-                      ),
-                    ),
-                  ],
-
-                  if (!isVerifying) ...[
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.lock_outline, size: 14, color: cs.onSurfaceVariant),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Secured with 256-bit encryption',
-                          style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
-                        ),
-                      ],
-                    ),
-                  ],
-                ],
-              ),
-            ),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(hPad, 32, hPad, 24),
+            child: _state == 0 ? _buildInput(cs, tt, hPad)
+              : _state == 1 ? _buildVerifying(cs, tt)
+              : _state == 2 ? _buildVerified(cs, tt)
+              : _buildFailed(cs, tt),
           ),
         ),
-
-        Padding(
-          padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 16),
-          child: FilledButton(
-            onPressed: isVerifying ? null : _submit,
-            style: FilledButton.styleFrom(
-              backgroundColor: cs.tertiary,
-              foregroundColor: cs.onTertiary,
-              minimumSize: const Size(double.infinity, 56),
-              shape: const StadiumBorder(),
+        if (_state == 0 || _state == 2)
+          Padding(
+            padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 16),
+            child: FilledButton(
+              onPressed: _state == 0 ? (_canProceed ? _verify : null) : widget.onNext,
+              style: FilledButton.styleFrom(backgroundColor: cs.tertiary, foregroundColor: cs.onTertiary),
+              child: Text(_state == 0 ? 'Verify Account' : 'Continue'),
             ),
-            child: isVerifying
-                ? SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      color: cs.onTertiary,
-                    ),
-                  )
-                : const Text('Verify & Continue'),
           ),
+      ],
+    );
+  }
+
+  Widget _buildInput(ColorScheme cs, TextTheme tt, double hPad) {
+    return ListView(
+      children: [
+        Icon(Icons.account_balance_rounded, size: 64, color: cs.tertiary),
+        const SizedBox(height: 24),
+        Text('Bank Account', textAlign: TextAlign.center, style: tt.headlineMedium?.copyWith(fontWeight: FontWeight.bold, color: cs.onSurface)),
+        const SizedBox(height: 12),
+        Text('For receiving session payments.', textAlign: TextAlign.center, style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
+        const SizedBox(height: 32),
+
+        _input(_accName, 'Account holder name', err: _nameErr),
+        const SizedBox(height: 16),
+        _input(_accNum, 'Account number', err: _numErr, kb: TextInputType.number, obscure: true),
+        const SizedBox(height: 16),
+        _input(_confirmNum, 'Re-enter account number', err: _confirmErr, kb: TextInputType.number),
+        const SizedBox(height: 16),
+        _input(_ifsc, 'IFSC code', err: _ifscErr, helper: 'e.g. SBIN0001234', caps: true),
+        const SizedBox(height: 24),
+
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(color: cs.tertiaryContainer.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(12), border: Border.all(color: cs.tertiary.withValues(alpha: 0.3))),
+          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Icon(Icons.info_outline_rounded, size: 18, color: cs.tertiary),
+            const SizedBox(width: 10),
+            Expanded(child: Text('Your bank account details will be verified instantly via Cashfree. Payments for sessions will be credited to this account.', style: tt.bodySmall?.copyWith(color: cs.onSurface))),
+          ]),
         ),
       ],
     );
   }
-}
 
-enum _VerifyStep { idle, validating, pennyDrop, confirmed }
+  Widget _buildVerifying(ColorScheme cs, TextTheme tt) {
+    const steps = ['Verifying account details...', 'Confirming IFSC...', 'Account verified...'];
+    return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+      Container(
+        width: 80, height: 80,
+        decoration: BoxDecoration(color: cs.tertiaryContainer, shape: BoxShape.circle),
+        child: Icon(Icons.account_balance_rounded, size: 40, color: cs.tertiary),
+      ),
+      const SizedBox(height: 32),
+      ...List.generate(3, (i) {
+        final done = i < _verifyStep;
+        final active = i == _verifyStep;
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(children: [
+            SizedBox(width: 28, height: 28, child: Center(
+              child: done
+                  ? Icon(Icons.check_circle_rounded, size: 24, color: cs.tertiary)
+                  : active
+                      ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.5, color: cs.tertiary))
+                      : Container(width: 10, height: 10, decoration: BoxDecoration(color: cs.outlineVariant, shape: BoxShape.circle)),
+            )),
+            const SizedBox(width: 14),
+            Text(steps[i], style: tt.bodyMedium?.copyWith(
+              fontWeight: active ? FontWeight.bold : FontWeight.normal,
+              color: done ? cs.tertiary : active ? cs.onSurface : cs.onSurfaceVariant,
+            )),
+          ]),
+        );
+      }),
+    ]));
+  }
 
-class _VerifyRow extends StatelessWidget {
-  const _VerifyRow(this.label, this.done, this.active, this.cs, this.tt);
-  final String label;
-  final bool done, active;
-  final ColorScheme cs;
-  final TextTheme tt;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 6),
-    child: Row(
-      children: [
-        SizedBox(
-          width: 20,
-          height: 20,
-          child: done
-              ? Icon(Icons.check_circle, color: cs.tertiary, size: 20)
-              : active
-                  ? CircularProgressIndicator(strokeWidth: 2.5, color: cs.tertiary)
-                  : Container(
-                      width: 20,
-                      height: 20,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: cs.outlineVariant, width: 2),
-                      ),
-                    ),
+  Widget _buildVerified(ColorScheme cs, TextTheme tt) {
+    return Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+      ScaleTransition(
+        scale: _checkAnim,
+        child: Container(
+          width: 80, height: 80,
+          decoration: BoxDecoration(color: cs.tertiaryContainer, shape: BoxShape.circle),
+          child: Icon(Icons.check_circle_rounded, size: 48, color: cs.tertiary),
         ),
-        const SizedBox(width: 12),
-        Text(
-          label,
-          style: tt.bodyMedium?.copyWith(
-            color: done ? cs.tertiary : active ? cs.onSurface : cs.onSurfaceVariant,
-            fontWeight: done || active ? FontWeight.w500 : FontWeight.w400,
-          ),
+      ),
+      const SizedBox(height: 24),
+      Text('Account Verified!', style: tt.headlineMedium?.copyWith(fontWeight: FontWeight.bold, color: cs.onSurface)),
+      const SizedBox(height: 12),
+      Text('${_accName.text.trim()}\'s bank account has been verified successfully.', textAlign: TextAlign.center,
+        style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
+      const SizedBox(height: 32),
+      ...['Account number verified', 'IFSC confirmed', 'Ready for payouts'].map((t) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          decoration: BoxDecoration(color: cs.surfaceContainerLow, borderRadius: BorderRadius.circular(12)),
+          child: Row(children: [
+            Icon(Icons.check_circle_rounded, size: 18, color: cs.tertiary),
+            const SizedBox(width: 12),
+            Text(t, style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.w600, color: cs.onSurface)),
+          ]),
         ),
-      ],
-    ),
-  );
+      )),
+    ]);
+  }
+
+  Widget _buildFailed(ColorScheme cs, TextTheme tt) {
+    return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+      Container(
+        width: 80, height: 80,
+        decoration: BoxDecoration(color: cs.errorContainer, shape: BoxShape.circle),
+        child: Icon(Icons.cancel_rounded, size: 48, color: cs.error),
+      ),
+      const SizedBox(height: 24),
+      Text('Verification Failed', style: tt.headlineMedium?.copyWith(fontWeight: FontWeight.bold, color: cs.onSurface)),
+      const SizedBox(height: 12),
+      Text(_errorMsg ?? 'Could not verify your bank account. Please check the details and try again.', textAlign: TextAlign.center,
+        style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
+      const SizedBox(height: 32),
+      FilledButton(
+        onPressed: () => setState(() { _state = 0; _tried = false; _errorMsg = null; }),
+        child: const Text('Try Again'),
+      ),
+    ]));
+  }
 }
 
 class _UpperCaseFormatter extends TextInputFormatter {
   @override
-  TextEditingValue formatEditUpdate(TextEditingValue old, TextEditingValue next) =>
-      next.copyWith(text: next.text.toUpperCase(), selection: next.selection);
+  TextEditingValue formatEditUpdate(TextEditingValue old, TextEditingValue val) {
+    return val.copyWith(text: val.text.toUpperCase());
+  }
 }
