@@ -62,16 +62,31 @@ class _BookingPageState extends State<BookingPage> {
   List<int> get _availableDays {
     if (widget.tutorAvailability.isEmpty) return [1, 2, 3, 4, 5, 6, 7];
     final days = <int>[];
-    for (var slot in widget.tutorAvailability) {
-      if (slot is Map) {
-        final day = slot['day'];
-        if (day is String) {
-          final dayMap = {'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6, 'Sunday': 7};
-          final dayNum = dayMap[day];
-          if (dayNum != null && !days.contains(dayNum)) days.add(dayNum);
+    
+    // Availability is wrapped in array: [{monday: [...], tuesday: [...], ...}]
+    if (widget.tutorAvailability.isNotEmpty) {
+      final availMap = widget.tutorAvailability[0];
+      if (availMap is Map) {
+        final dayMap = {
+          'monday': 1,
+          'tuesday': 2,
+          'wednesday': 3,
+          'thursday': 4,
+          'friday': 5,
+          'saturday': 6,
+          'sunday': 7
+        };
+        
+        for (var entry in dayMap.entries) {
+          final slots = availMap[entry.key];
+          if (slots is List && slots.isNotEmpty) {
+            days.add(entry.value);
+          }
         }
       }
     }
+    
+    // If no days found, allow all days (fallback)
     return days.isEmpty ? [1, 2, 3, 4, 5, 6, 7] : days;
   }
 
@@ -103,6 +118,9 @@ class _BookingPageState extends State<BookingPage> {
   void initState() {
     super.initState();
     _demoMode = widget.canBookDemo;
+    // Debug: Print availability
+    print('Tutor Availability: ${widget.tutorAvailability}');
+    print('Available Days: $_availableDays');
   }
 
   @override
