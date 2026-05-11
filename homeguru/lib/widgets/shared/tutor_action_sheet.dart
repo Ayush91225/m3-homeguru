@@ -14,6 +14,8 @@ class TutorActionSheet extends StatelessWidget {
   final int tutorStudents;
   final String tutorLocation;
   final Map<String, int> tutorPricing;
+  final List<dynamic> tutorRates;
+  final List<dynamic> tutorLanguages;
 
   const TutorActionSheet({
     super.key,
@@ -26,6 +28,8 @@ class TutorActionSheet extends StatelessWidget {
     this.tutorStudents = 0,
     this.tutorLocation = '',
     this.tutorPricing = const {},
+    this.tutorRates = const [],
+    this.tutorLanguages = const [],
   });
 
   /// Show the action sheet
@@ -40,6 +44,8 @@ class TutorActionSheet extends StatelessWidget {
     int tutorStudents = 0,
     String tutorLocation = '',
     Map<String, int> tutorPricing = const {},
+    List<dynamic> tutorRates = const [],
+    List<dynamic> tutorLanguages = const [],
   }) {
     HapticFeedback.lightImpact();
     showModalBottomSheet(
@@ -55,6 +61,8 @@ class TutorActionSheet extends StatelessWidget {
         tutorStudents: tutorStudents,
         tutorLocation: tutorLocation,
         tutorPricing: tutorPricing,
+        tutorRates: tutorRates,
+        tutorLanguages: tutorLanguages,
       ),
     );
   }
@@ -134,6 +142,8 @@ class TutorActionSheet extends StatelessWidget {
                     tutorStudents: tutorStudents,
                     tutorLocation: tutorLocation,
                     tutorPricing: tutorPricing,
+                    tutorRates: tutorRates,
+                    tutorLanguages: tutorLanguages,
                   ),
                 ),
               );

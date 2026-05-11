@@ -11,7 +11,10 @@ class SuggestedTutors extends StatefulWidget {
   State<SuggestedTutors> createState() => _SuggestedTutorsState();
 }
 
-class _SuggestedTutorsState extends State<SuggestedTutors> {
+class _SuggestedTutorsState extends State<SuggestedTutors> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   List<Map<String, dynamic>> _tutors = [];
   bool _isLoading = true;
   bool _hasLoaded = false;
@@ -52,6 +55,7 @@ class _SuggestedTutorsState extends State<SuggestedTutors> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
@@ -79,9 +83,13 @@ class _SuggestedTutorsState extends State<SuggestedTutors> {
             height: 200,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.zero,
               itemCount: 3,
-              separatorBuilder: (_, _) => const SizedBox(width: 12),
-              itemBuilder: (_, i) => _ShimmerTutorCard(cs: cs),
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              itemBuilder: (_, i) => SizedBox(
+                width: 280,
+                child: _ShimmerTutorCard(cs: cs),
+              ),
             ),
           ),
         ],
@@ -175,6 +183,8 @@ class _SuggestedTutorsState extends State<SuggestedTutors> {
                       (subject as Map<String, dynamic>)['name'] as String:
                           subject['hourlyRate'] as int
                   },
+                  tutorRates: tutor['rates'] as List? ?? [],
+                  tutorLanguages: tutor['languages'] as List? ?? [],
                 );
               }
             },
@@ -234,6 +244,17 @@ class _TutorCard extends StatelessWidget {
   });
 
   String _getSubjects() {
+    final rates = tutor['rates'] as List<dynamic>?;
+    if (rates != null && rates.isNotEmpty) {
+      final rate = rates[0] as Map<String, dynamic>;
+      final subject = rate['subject']?.toString() ?? '';
+      final board = rate['board']?.toString() ?? '';
+      final grade = rate['grade']?.toString() ?? '';
+      if (board.isNotEmpty) {
+        return '$subject • $board • $grade';
+      }
+      return subject;
+    }
     final subjects = tutor['subjects'] as List<dynamic>?;
     if (subjects == null || subjects.isEmpty) return '';
     if (subjects.length == 1) {
@@ -488,20 +509,36 @@ class _TutorCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 4),
-          Row(
-            children: [
-              Icon(Icons.work_outline_rounded, size: 12, color: cs.onSurfaceVariant),
-              const SizedBox(width: 4),
-              Expanded(
-                child: Text(
-                  tutor['experience']?.toString() ?? 'New tutor',
-                  style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+          if ((tutor['languages'] as List?)?.isNotEmpty == true)
+            Row(
+              children: [
+                Icon(Icons.language_rounded, size: 12, color: cs.onSurfaceVariant),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    (tutor['languages'] as List).map((l) => l is Map ? l['name'] ?? '' : l.toString()).take(2).join(', '),
+                    style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            )
+          else
+            Row(
+              children: [
+                Icon(Icons.work_outline_rounded, size: 12, color: cs.onSurfaceVariant),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    tutor['experience']?.toString() ?? 'New tutor',
+                    style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -545,12 +582,43 @@ class _TutorCard extends StatelessWidget {
   }
 }
 
-class _ShimmerTutorCard extends StatelessWidget {
+class _ShimmerTutorCard extends StatefulWidget {
   final ColorScheme cs;
   const _ShimmerTutorCard({required this.cs});
 
   @override
+  State<_ShimmerTutorCard> createState() => _ShimmerTutorCardState();
+}
+
+class _ShimmerTutorCardState extends State<_ShimmerTutorCard> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    )..repeat();
+    _animation = Tween<double>(begin: -2, end: 2).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final cs = widget.cs;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final baseColor = isDark ? cs.surfaceContainerHigh : cs.surfaceContainer;
+    final highlightColor = isDark ? cs.surfaceContainerHighest : cs.surfaceContainerHigh;
+
     return Container(
       width: 280,
       decoration: BoxDecoration(
@@ -564,12 +632,24 @@ class _ShimmerTutorCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: cs.surfaceContainerHighest,
-                  shape: BoxShape.circle,
+              AnimatedBuilder(
+                animation: _animation,
+                builder: (_, _) => Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      stops: [
+                        (_animation.value - 0.5).clamp(0.0, 1.0),
+                        _animation.value.clamp(0.0, 1.0),
+                        (_animation.value + 0.5).clamp(0.0, 1.0),
+                      ],
+                      colors: [baseColor, highlightColor, baseColor],
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -577,21 +657,45 @@ class _ShimmerTutorCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: double.infinity,
-                      height: 14,
-                      decoration: BoxDecoration(
-                        color: cs.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(4),
+                    AnimatedBuilder(
+                      animation: _animation,
+                      builder: (_, _) => Container(
+                        width: double.infinity,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                            stops: [
+                              (_animation.value - 0.5).clamp(0.0, 1.0),
+                              _animation.value.clamp(0.0, 1.0),
+                              (_animation.value + 0.5).clamp(0.0, 1.0),
+                            ],
+                            colors: [baseColor, highlightColor, baseColor],
+                          ),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 6),
-                    Container(
-                      width: 60,
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: cs.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(4),
+                    AnimatedBuilder(
+                      animation: _animation,
+                      builder: (_, _) => Container(
+                        width: 60,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                            stops: [
+                              (_animation.value - 0.5).clamp(0.0, 1.0),
+                              _animation.value.clamp(0.0, 1.0),
+                              (_animation.value + 0.5).clamp(0.0, 1.0),
+                            ],
+                            colors: [baseColor, highlightColor, baseColor],
+                          ),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
                       ),
                     ),
                   ],
@@ -600,39 +704,87 @@ class _ShimmerTutorCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Container(
-            width: 100,
-            height: 20,
-            decoration: BoxDecoration(
-              color: cs.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(999),
+          AnimatedBuilder(
+            animation: _animation,
+            builder: (_, _) => Container(
+              width: 100,
+              height: 20,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  stops: [
+                    (_animation.value - 0.5).clamp(0.0, 1.0),
+                    _animation.value.clamp(0.0, 1.0),
+                    (_animation.value + 0.5).clamp(0.0, 1.0),
+                  ],
+                  colors: [baseColor, highlightColor, baseColor],
+                ),
+                borderRadius: BorderRadius.circular(999),
+              ),
             ),
           ),
           const SizedBox(height: 8),
-          Container(
-            width: double.infinity,
-            height: 10,
-            decoration: BoxDecoration(
-              color: cs.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(4),
+          AnimatedBuilder(
+            animation: _animation,
+            builder: (_, _) => Container(
+              width: double.infinity,
+              height: 10,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  stops: [
+                    (_animation.value - 0.5).clamp(0.0, 1.0),
+                    _animation.value.clamp(0.0, 1.0),
+                    (_animation.value + 0.5).clamp(0.0, 1.0),
+                  ],
+                  colors: [baseColor, highlightColor, baseColor],
+                ),
+                borderRadius: BorderRadius.circular(4),
+              ),
             ),
           ),
           const SizedBox(height: 4),
-          Container(
-            width: 120,
-            height: 10,
-            decoration: BoxDecoration(
-              color: cs.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(4),
+          AnimatedBuilder(
+            animation: _animation,
+            builder: (_, _) => Container(
+              width: 120,
+              height: 10,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  stops: [
+                    (_animation.value - 0.5).clamp(0.0, 1.0),
+                    _animation.value.clamp(0.0, 1.0),
+                    (_animation.value + 0.5).clamp(0.0, 1.0),
+                  ],
+                  colors: [baseColor, highlightColor, baseColor],
+                ),
+                borderRadius: BorderRadius.circular(4),
+              ),
             ),
           ),
           const Spacer(),
-          Container(
-            width: double.infinity,
-            height: 36,
-            decoration: BoxDecoration(
-              color: cs.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(999),
+          AnimatedBuilder(
+            animation: _animation,
+            builder: (_, _) => Container(
+              width: double.infinity,
+              height: 36,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  stops: [
+                    (_animation.value - 0.5).clamp(0.0, 1.0),
+                    _animation.value.clamp(0.0, 1.0),
+                    (_animation.value + 0.5).clamp(0.0, 1.0),
+                  ],
+                  colors: [baseColor, highlightColor, baseColor],
+                ),
+                borderRadius: BorderRadius.circular(999),
+              ),
             ),
           ),
         ],

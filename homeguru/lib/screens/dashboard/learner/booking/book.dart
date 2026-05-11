@@ -11,6 +11,8 @@ class BookingPage extends StatefulWidget {
   final String tutorBio;
   final String tutorLocation;
   final Map<String, int> tutorPricing;
+  final List<dynamic> tutorRates;
+  final List<dynamic> tutorLanguages;
   final bool canBookDemo;
   final bool canBookPaid;
   final bool isPaidDemo;
@@ -26,6 +28,8 @@ class BookingPage extends StatefulWidget {
     this.tutorBio = '',
     this.tutorLocation = '',
     this.tutorPricing = const {},
+    this.tutorRates = const [],
+    this.tutorLanguages = const [],
     this.canBookDemo = true,
     this.canBookPaid = true,
     this.isPaidDemo = false,
@@ -54,10 +58,15 @@ class _BookingPageState extends State<BookingPage> {
   List<String> get _subjects => widget.tutorPricing.keys.toList();
 
   int get _currentPrice {
-    if (_selectedSubjectIdx == null || _selectedSubjectIdx! >= _subjects.length) {
-      return 500;
+    if (_selectedSubjectIdx == null) return 500;
+    if (widget.tutorRates.isNotEmpty && _selectedSubjectIdx! < widget.tutorRates.length) {
+      final rate = widget.tutorRates[_selectedSubjectIdx!] as Map<String, dynamic>;
+      return rate['inr'] as int? ?? 500;
     }
-    return widget.tutorPricing[_subjects[_selectedSubjectIdx!]] ?? 500;
+    if (_selectedSubjectIdx! < _subjects.length) {
+      return widget.tutorPricing[_subjects[_selectedSubjectIdx!]] ?? 500;
+    }
+    return 500;
   }
 
   int get _totalSessions => _classesPerWeek * _months * 4;
@@ -363,14 +372,30 @@ class _BookingPageState extends State<BookingPage> {
                 ),
                 if (_selectedSubjectIdx != null) ...[
                   const SizedBox(height: 4),
-                  Text(
-                    _subjects[_selectedSubjectIdx!],
-                    style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                  ),
+                  if (widget.tutorRates.isNotEmpty && _selectedSubjectIdx! < widget.tutorRates.length)
+                    Builder(
+                      builder: (context) {
+                        final rate = widget.tutorRates[_selectedSubjectIdx!] as Map<String, dynamic>;
+                        final subject = rate['subject']?.toString() ?? '';
+                        final board = rate['board']?.toString() ?? '';
+                        final grade = rate['grade']?.toString() ?? '';
+                        final meta = board.isNotEmpty ? ' • $board • $grade' : '';
+                        return Text(
+                          '$subject$meta',
+                          style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                        );
+                      },
+                    )
+                  else
+                    Text(
+                      _subjects[_selectedSubjectIdx!],
+                      style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                    ),
                 ],
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 12,
+                  runSpacing: 6,
                   children: [
                     if (widget.tutorRating > 0)
                       Row(
@@ -405,6 +430,20 @@ class _BookingPageState extends State<BookingPage> {
                           Text(
                             widget.tutorLocation,
                             style: tt.labelSmall?.copyWith(fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                    if (widget.tutorLanguages.isNotEmpty)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.language_rounded, size: 14, color: cs.onSurfaceVariant),
+                          const SizedBox(width: 4),
+                          Text(
+                            widget.tutorLanguages.map((l) => l is Map ? l['name'] ?? '' : l.toString()).take(2).join(', '),
+                            style: tt.labelSmall?.copyWith(fontWeight: FontWeight.w600),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
@@ -472,34 +511,89 @@ class _BookingPageState extends State<BookingPage> {
           style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: List.generate(_subjects.length, (i) {
-            final selected = _selectedSubjectIdx == i;
-            return GestureDetector(
-              onTap: () {
-                HapticFeedback.selectionClick();
-                setState(() => _selectedSubjectIdx = i);
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                decoration: BoxDecoration(
-                  color: selected ? cs.primary : cs.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Text(
-                  _subjects[i],
-                  style: tt.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: selected ? cs.onPrimary : cs.onSurface,
+        if (widget.tutorRates.isNotEmpty)
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: List.generate(widget.tutorRates.length, (i) {
+              final rate = widget.tutorRates[i] as Map<String, dynamic>;
+              final selected = _selectedSubjectIdx == i;
+              final subject = rate['subject']?.toString() ?? '';
+              final board = rate['board']?.toString() ?? '';
+              final grade = rate['grade']?.toString() ?? '';
+              final meta = board.isNotEmpty ? '$board • $grade' : '';
+              
+              return GestureDetector(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  setState(() => _selectedSubjectIdx = i);
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: selected ? cs.primary : cs.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: selected ? cs.primary : cs.outlineVariant.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        subject,
+                        style: tt.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: selected ? cs.onPrimary : cs.onSurface,
+                        ),
+                      ),
+                      if (meta.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          meta,
+                          style: tt.labelSmall?.copyWith(
+                            fontSize: 10,
+                            color: selected ? cs.onPrimary.withValues(alpha: 0.8) : cs.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-              ),
-            );
-          }),
-        ),
+              );
+            }),
+          )
+        else
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: List.generate(_subjects.length, (i) {
+              final selected = _selectedSubjectIdx == i;
+              return GestureDetector(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  setState(() => _selectedSubjectIdx = i);
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: selected ? cs.primary : cs.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    _subjects[i],
+                    style: tt.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: selected ? cs.onPrimary : cs.onSurface,
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
       ],
     );
   }

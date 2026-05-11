@@ -170,22 +170,67 @@ class TutorCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 2),
-                          Text(
-                            primarySubject['name'] ?? '',
-                            style: tt.bodySmall?.copyWith(color: cs.primary, fontWeight: FontWeight.w500),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          if (subjects.length > 1)
+                          if ((tutor['rates'] as List?)?.isNotEmpty == true)
+                            Builder(
+                              builder: (context) {
+                                final rate = (tutor['rates'] as List)[0] as Map<String, dynamic>;
+                                final subject = rate['subject']?.toString() ?? '';
+                                final board = rate['board']?.toString() ?? '';
+                                final grade = rate['grade']?.toString() ?? '';
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      subject,
+                                      style: tt.bodySmall?.copyWith(color: cs.primary, fontWeight: FontWeight.w500),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    if (board.isNotEmpty)
+                                      Text(
+                                        '$board • $grade',
+                                        style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant, fontSize: 9),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                  ],
+                                );
+                              },
+                            )
+                          else
                             Text(
-                              '+${subjects.length - 1} more',
+                              primarySubject['name'] ?? '',
+                              style: tt.bodySmall?.copyWith(color: cs.primary, fontWeight: FontWeight.w500),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          if (((tutor['rates'] as List?)?.length ?? 0) > 1)
+                            Text(
+                              '+${(tutor['rates'] as List).length - 1} more',
                               style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant, fontSize: 10),
                             ),
                         ],
                       ),
-                      Text(
-                        '${tutor['experience']}y exp',
-                        style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant, fontWeight: FontWeight.w500),
+                      Row(
+                        children: [
+                          if ((tutor['languages'] as List?)?.isNotEmpty == true) ...[
+                            Icon(Icons.language_rounded, size: 10, color: cs.onSurfaceVariant),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                (tutor['languages'] as List).map((l) => l is Map ? l['name'] ?? '' : l.toString()).take(2).join(', '),
+                                style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant, fontWeight: FontWeight.w500, fontSize: 9),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ] else ...[
+                            Text(
+                              '${tutor['experience']}y exp',
+                              style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant, fontWeight: FontWeight.w500),
+                            ),
+                          ],
+                        ],
                       ),
                     ],
                   ),
@@ -284,6 +329,8 @@ class _TutorActionSheet extends StatelessWidget {
                       for (var subject in subjects)
                         subject['name'] as String: subject['hourlyRate'] as int
                     },
+                    tutorRates: tutor['rates'] as List? ?? [],
+                    tutorLanguages: tutor['languages'] as List? ?? [],
                   ),
                 ),
               );

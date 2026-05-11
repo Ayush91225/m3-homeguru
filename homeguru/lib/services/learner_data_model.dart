@@ -44,6 +44,8 @@ class LearnerDataModel {
   /// Map API tutor to widget format
   static Map<String, dynamic> mapTutorForWidget(Map<String, dynamic> apiTutor) {
     final subjects = apiTutor['subjects'] as List?;
+    final rates = apiTutor['rates'] as List?;
+    final languages = apiTutor['languages'] as List?;
     final location = apiTutor['location'];
     final locationStr = location is String ? location : (location is Map ? location['city'] ?? location['state'] ?? '' : '');
     
@@ -62,6 +64,8 @@ class LearnerDataModel {
         'name': s.toString(),
         'hourlyRate': apiTutor['hourlyRate'] ?? 0,
       }).toList(),
+      'rates': rates ?? [],
+      'languages': languages ?? [],
     };
   }
 }
