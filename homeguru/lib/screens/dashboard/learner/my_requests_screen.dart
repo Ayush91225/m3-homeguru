@@ -50,10 +50,10 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
             preferredSlot: r['preferredSlot']?.toString(),
             schedule: r['preferredDays'] != null ? r['preferredDays'].toString() : null,
             sessionsBooked: r['totalSessions'] as int?,
-            perHourPrice: r['perHourRate'] as int?,
+            perHourPrice: (r['perHourRate'] as num?)?.toDouble(),
             classesPerWeek: r['classesPerWeek'] as int?,
             durationMonths: r['months'] as int?,
-            isConfirmed: false,
+            isPaid: false,
             bookingAcceptedAt: r['respondedAt'] != null ? DateTime.tryParse(r['respondedAt'].toString()) : null,
             rejectionReason: r['status']?.toString() == 'declined' ? 'Request declined by tutor' : null,
           )).toList();
