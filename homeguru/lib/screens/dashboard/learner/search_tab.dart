@@ -13,10 +13,7 @@ class SearchTab extends StatefulWidget {
   State<SearchTab> createState() => _SearchTabState();
 }
 
-class _SearchTabState extends State<SearchTab> with AutomaticKeepAliveClientMixin {
-  @override
-  bool get wantKeepAlive => true;
-
+class _SearchTabState extends State<SearchTab> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   
@@ -30,7 +27,6 @@ class _SearchTabState extends State<SearchTab> with AutomaticKeepAliveClientMixi
   List<Map<String, dynamic>> _displayedTutors = [];
   List<Map<String, dynamic>> _filteredTutors = [];
   bool _isLoading = false;
-  bool _hasLoaded = false;
   bool _hasMore = true;
   String? _lastKey;
   int _currentPage = 0;
@@ -44,14 +40,22 @@ class _SearchTabState extends State<SearchTab> with AutomaticKeepAliveClientMixi
     _loadTutors();
   }
 
-  Future<void> _loadTutors() async {
-    if (_hasLoaded) return;
+  Future<void> _loadTutors({bool refresh = false}) async {
+    if (refresh) {
+      setState(() {
+        _allTutors = [];
+        _displayedTutors = [];
+        _filteredTutors = [];
+        _currentPage = 0;
+        _lastKey = null;
+        _hasMore = true;
+      });
+    }
     setState(() => _isLoading = true);
     final result = await LearnerDataModel.fetchTutors(limit: 20);
     final apiTutors = result['tutors'] as List<Map<String, dynamic>>;
     if (!mounted) return;
     setState(() {
-      _hasLoaded = true;
       _hasMore = result['hasMore'] as bool;
       _lastKey = result['lastKey'] as String?;
       _allTutors = apiTutors.map((t) => LearnerDataModel.mapTutorForWidget(t)).toList();
@@ -149,13 +153,14 @@ class _SearchTabState extends State<SearchTab> with AutomaticKeepAliveClientMixi
 
   @override
   Widget build(BuildContext context) {
-    super.build(context); // Required for AutomaticKeepAliveClientMixin
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
-    return CustomScrollView(
-      controller: _scrollController,
-      slivers: [
+    return RefreshIndicator(
+      onRefresh: () => _loadTutors(refresh: true),
+      child: CustomScrollView(
+        controller: _scrollController,
+        slivers: [
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
@@ -286,7 +291,8 @@ class _SearchTabState extends State<SearchTab> with AutomaticKeepAliveClientMixi
                   ),
                 ),
               ),
-      ],
+        ],
+      ),
     );
   }
 }

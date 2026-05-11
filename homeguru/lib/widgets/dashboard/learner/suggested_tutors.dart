@@ -11,13 +11,9 @@ class SuggestedTutors extends StatefulWidget {
   State<SuggestedTutors> createState() => _SuggestedTutorsState();
 }
 
-class _SuggestedTutorsState extends State<SuggestedTutors> with AutomaticKeepAliveClientMixin {
-  @override
-  bool get wantKeepAlive => true;
-
+class _SuggestedTutorsState extends State<SuggestedTutors> {
   List<Map<String, dynamic>> _tutors = [];
   bool _isLoading = true;
-  bool _hasLoaded = false;
 
   @override
   void initState() {
@@ -26,12 +22,10 @@ class _SuggestedTutorsState extends State<SuggestedTutors> with AutomaticKeepAli
   }
 
   Future<void> _loadTutors() async {
-    if (_hasLoaded) return;
     final result = await LearnerDataModel.fetchTutors(limit: 6);
     final apiTutors = result['tutors'] as List<Map<String, dynamic>>;
     if (!mounted) return;
     setState(() {
-      _hasLoaded = true;
       if (apiTutors.isEmpty) {
         _tutors = [];
       } else {
@@ -55,7 +49,6 @@ class _SuggestedTutorsState extends State<SuggestedTutors> with AutomaticKeepAli
 
   @override
   Widget build(BuildContext context) {
-    super.build(context); // Required for AutomaticKeepAliveClientMixin
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
