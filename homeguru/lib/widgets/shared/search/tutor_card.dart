@@ -331,6 +331,7 @@ class _TutorActionSheet extends StatelessWidget {
                     },
                     tutorRates: tutor['rates'] as List? ?? [],
                     tutorLanguages: tutor['languages'] as List? ?? [],
+                    tutorAvailability: tutor['availability'] as List? ?? [],
                   ),
                 ),
               );

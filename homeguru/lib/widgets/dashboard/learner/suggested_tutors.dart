@@ -185,6 +185,7 @@ class _SuggestedTutorsState extends State<SuggestedTutors> with AutomaticKeepAli
                   },
                   tutorRates: tutor['rates'] as List? ?? [],
                   tutorLanguages: tutor['languages'] as List? ?? [],
+                  tutorAvailability: tutor['availability'] as List? ?? [],
                 );
               }
             },

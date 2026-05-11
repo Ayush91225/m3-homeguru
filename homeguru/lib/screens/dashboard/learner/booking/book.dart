@@ -13,6 +13,7 @@ class BookingPage extends StatefulWidget {
   final Map<String, int> tutorPricing;
   final List<dynamic> tutorRates;
   final List<dynamic> tutorLanguages;
+  final List<dynamic> tutorAvailability;
   final bool canBookDemo;
   final bool canBookPaid;
   final bool isPaidDemo;
@@ -30,6 +31,7 @@ class BookingPage extends StatefulWidget {
     this.tutorPricing = const {},
     this.tutorRates = const [],
     this.tutorLanguages = const [],
+    this.tutorAvailability = const [],
     this.canBookDemo = true,
     this.canBookPaid = true,
     this.isPaidDemo = false,
@@ -56,6 +58,22 @@ class _BookingPageState extends State<BookingPage> {
   final _messageController = TextEditingController();
 
   List<String> get _subjects => widget.tutorPricing.keys.toList();
+
+  List<int> get _availableDays {
+    if (widget.tutorAvailability.isEmpty) return [1, 2, 3, 4, 5, 6, 7];
+    final days = <int>[];
+    for (var slot in widget.tutorAvailability) {
+      if (slot is Map) {
+        final day = slot['day'];
+        if (day is String) {
+          final dayMap = {'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6, 'Sunday': 7};
+          final dayNum = dayMap[day];
+          if (dayNum != null && !days.contains(dayNum)) days.add(dayNum);
+        }
+      }
+    }
+    return days.isEmpty ? [1, 2, 3, 4, 5, 6, 7] : days;
+  }
 
   int get _currentPrice {
     if (_selectedSubjectIdx == null) return 500;
@@ -100,8 +118,9 @@ class _BookingPageState extends State<BookingPage> {
       _selectedSlotKey = null;
       _selectedSlotDate = null;
       if (!isDemoMode) {
-        _selectedDays = [1, 3, 5];
-        _classesPerWeek = 3;
+        final available = _availableDays;
+        _selectedDays = available.length >= 3 ? [available[0], available[available.length ~/ 2], available[available.length - 1]] : available.take(1).toList();
+        _classesPerWeek = _selectedDays.length;
         _preferredTime = const TimeOfDay(hour: 17, minute: 0);
       } else {
         _selectedDays = [];
@@ -673,6 +692,7 @@ class _BookingPageState extends State<BookingPage> {
   }
 
   Widget _buildScheduleSelector(ColorScheme cs, TextTheme tt) {
+    final availableDays = _availableDays;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -693,10 +713,11 @@ class _BookingPageState extends State<BookingPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: List.generate(7, (i) {
                   final day = i + 1;
+                  final isAvailable = availableDays.contains(day);
                   final selected = _selectedDays.contains(day);
                   final labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
                   return GestureDetector(
-                    onTap: () {
+                    onTap: isAvailable ? () {
                       HapticFeedback.selectionClick();
                       setState(() {
                         if (selected) {
@@ -709,13 +730,13 @@ class _BookingPageState extends State<BookingPage> {
                           _classesPerWeek = _selectedDays.isNotEmpty ? _selectedDays.length : 1;
                         }
                       });
-                    },
+                    } : null,
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: selected ? cs.primary : cs.surfaceContainerHighest,
+                        color: selected ? cs.primary : (isAvailable ? cs.surfaceContainerHighest : cs.surfaceContainerHigh.withValues(alpha: 0.3)),
                         shape: BoxShape.circle,
                       ),
                       child: Center(
@@ -723,7 +744,7 @@ class _BookingPageState extends State<BookingPage> {
                           labels[i],
                           style: tt.labelLarge?.copyWith(
                             fontWeight: FontWeight.w700,
-                            color: selected ? cs.onPrimary : cs.onSurface,
+                            color: selected ? cs.onPrimary : (isAvailable ? cs.onSurface : cs.onSurfaceVariant.withValues(alpha: 0.3)),
                           ),
                         ),
                       ),

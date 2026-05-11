@@ -46,6 +46,7 @@ class LearnerDataModel {
     final subjects = apiTutor['subjects'] as List?;
     final rates = apiTutor['rates'] as List?;
     final languages = apiTutor['languages'] as List?;
+    final availability = apiTutor['availability'] as List?;
     final location = apiTutor['location'];
     final locationStr = location is String ? location : (location is Map ? location['city'] ?? location['state'] ?? '' : '');
     
@@ -66,6 +67,7 @@ class LearnerDataModel {
       }).toList(),
       'rates': rates ?? [],
       'languages': languages ?? [],
+      'availability': availability ?? [],
     };
   }
 }
