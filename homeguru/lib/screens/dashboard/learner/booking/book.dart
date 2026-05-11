@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../services/request_service.dart';
 
 class BookingPage extends StatefulWidget {
   final String tutorId;
@@ -154,14 +156,68 @@ class _BookingPageState extends State<BookingPage> {
     HapticFeedback.mediumImpact();
     setState(() => _sending = true);
 
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final learnerId = prefs.getString('userId') ?? '';
+      final studentName = prefs.getString('profile_name') ?? 'Student';
+      final studentImage = prefs.getString('profile_avatar_url') ?? '';
 
-    if (mounted) {
-      setState(() {
-        _sending = false;
-        _sent = true;
-      });
+      String requestType = 'demo';
+      if (!_demoMode) {
+        requestType = 'paid';
+      } else if (widget.isPaidDemo) {
+        requestType = 'paid-demo';
+      }
+
+      String? board;
+      String? grade;
+      if (widget.tutorRates.isNotEmpty && _selectedSubjectIdx != null && _selectedSubjectIdx! < widget.tutorRates.length) {
+        final rate = widget.tutorRates[_selectedSubjectIdx!] as Map<String, dynamic>;
+        board = rate['board']?.toString();
+        grade = rate['grade']?.toString();
+      }
+
+      await RequestService.createRequest(
+        learnerId: learnerId,
+        tutorId: widget.tutorId,
+        type: requestType,
+        subject: widget.tutorRates.isNotEmpty && _selectedSubjectIdx != null
+            ? (widget.tutorRates[_selectedSubjectIdx!] as Map<String, dynamic>)['subject']?.toString() ?? _subjects[_selectedSubjectIdx!]
+            : _subjects[_selectedSubjectIdx!],
+        board: board,
+        grade: grade,
+        level: _levelController.text.isNotEmpty ? _levelController.text : null,
+        preferredSlot: _demoMode ? _selectedSlotKey : null,
+        preferredDays: !_demoMode ? _selectedDays : null,
+        preferredTime: !_demoMode && _preferredTime != null
+            ? '${_preferredTime!.hour.toString().padLeft(2, '0')}:${_preferredTime!.minute.toString().padLeft(2, '0')}'
+            : null,
+        classesPerWeek: _classesPerWeek,
+        months: _months,
+        totalSessions: _totalSessions,
+        perHourRate: _currentPrice,
+        totalPrice: !_demoMode ? _totalPrice : null,
+        message: _messageController.text.isNotEmpty ? _messageController.text : null,
+        studentName: studentName,
+        studentImage: studentImage,
+      );
+
+      if (mounted) {
+        setState(() {
+          _sending = false;
+          _sent = true;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _sending = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to send request: $e'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 

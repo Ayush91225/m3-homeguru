@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../widgets/requests/tutor_request_model.dart';
 import '../../../widgets/requests/tutor_request_tile.dart';
-import '../../../services/tutor_data_model.dart';
+import '../../../services/request_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class TutorRequestsTab extends StatefulWidget {
   const TutorRequestsTab({super.key});
@@ -16,11 +17,58 @@ class _TutorRequestsTabState extends State<TutorRequestsTab> with SingleTickerPr
   String? _filterStudent;
   DateTime? _filterFromDate;
   DateTime? _filterToDate;
+  List<TutorBookingRequest> _allRequests = [];
+  bool _loading = true;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _loadRequests();
+  }
+
+  Future<void> _loadRequests() async {
+    setState(() => _loading = true);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final tutorId = prefs.getString('userId');
+      if (tutorId != null) {
+        final requests = await RequestService.fetchRequests(tutorId: tutorId);
+        setState(() {
+          _allRequests = requests.map((r) => TutorBookingRequest(
+            id: r['requestId']?.toString() ?? '',
+            studentName: r['studentName']?.toString() ?? '',
+            studentImage: r['studentImage']?.toString() ?? '',
+            subject: r['subject']?.toString() ?? '',
+            level: r['level']?.toString() ?? '',
+            type: r['type']?.toString() == 'paid' ? TutorRequestType.paid : TutorRequestType.demo,
+            status: switch (r['status']?.toString()) {
+              'accepted' => TutorRequestStatus.accepted,
+              'declined' => TutorRequestStatus.declined,
+              _ => TutorRequestStatus.pending
+            },
+            requestedAt: DateTime.tryParse(r['createdAt']?.toString() ?? '') ?? DateTime.now(),
+            respondedAt: r['respondedAt'] != null ? DateTime.tryParse(r['respondedAt'].toString()) : null,
+            preferredSlot: r['preferredSlot']?.toString(),
+            schedule: r['preferredDays'] != null ? r['preferredDays'].toString() : null,
+            totalSessions: r['totalSessions'] as int?,
+            perHourRate: (r['perHourRate'] as num?)?.toDouble(),
+            classesPerWeek: r['classesPerWeek'] as int?,
+            totalPrice: (r['totalPrice'] as num?)?.toDouble(),
+            inHandAmount: r['totalPrice'] != null ? (r['totalPrice'] as num).toDouble() * 0.85 : null,
+            note: r['message']?.toString(),
+            originalDate: null,
+            originalTime: null,
+            newDate: null,
+            newTime: null,
+          )).toList();
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading requests: $e');
+      setState(() => _loading = false);
+    }
   }
 
   @override
@@ -30,51 +78,67 @@ class _TutorRequestsTabState extends State<TutorRequestsTab> with SingleTickerPr
   }
 
   List<TutorBookingRequest> _buildRequests() {
-    final raw = TutorData.of(context).pendingRequests;
-    if (raw.isEmpty) return [];
-    return raw.map((r) => TutorBookingRequest(
-      id: r['id']?.toString() ?? '',
-      studentName: r['studentName']?.toString() ?? '',
-      studentImage: r['studentImage']?.toString() ?? '',
-      subject: r['subject']?.toString() ?? '',
-      level: r['level']?.toString() ?? '',
-      type: switch (r['type']?.toString()) { 'demo' => TutorRequestType.demo, 'reschedule' => TutorRequestType.reschedule, _ => TutorRequestType.paid },
-      status: switch (r['status']?.toString()) { 'accepted' => TutorRequestStatus.accepted, 'declined' => TutorRequestStatus.declined, _ => TutorRequestStatus.pending },
-      requestedAt: DateTime.tryParse(r['requestedAt']?.toString() ?? '') ?? DateTime.now(),
-      respondedAt: r['respondedAt'] != null ? DateTime.tryParse(r['respondedAt'].toString()) : null,
-      preferredSlot: r['preferredSlot']?.toString(),
-      schedule: r['schedule']?.toString(),
-      totalSessions: r['totalSessions'] as int?,
-      perHourRate: (r['perHourRate'] as num?)?.toDouble(),
-      classesPerWeek: r['classesPerWeek'] as int?,
-      totalPrice: (r['totalPrice'] as num?)?.toDouble(),
-      inHandAmount: (r['inHandAmount'] as num?)?.toDouble(),
-      note: r['note']?.toString(),
-      originalDate: r['originalDate'] != null ? DateTime.tryParse(r['originalDate'].toString()) : null,
-      originalTime: r['originalTime']?.toString(),
-      newDate: r['newDate'] != null ? DateTime.tryParse(r['newDate'].toString()) : null,
-      newTime: r['newTime']?.toString(),
-    )).toList();
+    return _allRequests;
   }
 
-  void _handleAccept(String id) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Request accepted'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-    setState(() {});
+  void _handleAccept(String id) async {
+    try {
+      final request = _allRequests.firstWhere((r) => r.id == id);
+      final type = request.type == TutorRequestType.paid ? 'paid' : 'demo';
+      await RequestService.updateRequestStatus(
+        requestId: id,
+        type: type,
+        action: 'accept',
+      );
+      await _loadRequests();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Request accepted'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to accept: $e'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
-  void _handleDecline(String id) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Request declined'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-    setState(() {});
+  void _handleDecline(String id) async {
+    try {
+      final request = _allRequests.firstWhere((r) => r.id == id);
+      final type = request.type == TutorRequestType.paid ? 'paid' : 'demo';
+      await RequestService.updateRequestStatus(
+        requestId: id,
+        type: type,
+        action: 'decline',
+      );
+      await _loadRequests();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Request declined'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to decline: $e'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   List<TutorBookingRequest> _applyFilters(List<TutorBookingRequest> requests) {
@@ -113,6 +177,10 @@ class _TutorRequestsTabState extends State<TutorRequestsTab> with SingleTickerPr
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
     final allRequests = _buildRequests();
     final paidRequests = _applyFilters(allRequests.where((r) => r.type == TutorRequestType.paid).toList());
