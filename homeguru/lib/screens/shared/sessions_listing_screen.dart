@@ -91,13 +91,16 @@ class _SessionsListingScreenState extends State<SessionsListingScreen> {
         final duration = s['duration'] as int? ?? 60;
         final status = s['status']?.toString() ?? 'upcoming';
         final type = s['type']?.toString() ?? 'demo';
+        final tutorImage = widget.isTutor 
+            ? (s['learnerImage']?.toString() ?? '') 
+            : (s['tutorImage']?.toString() ?? '');
 
         return SessionData(
           id: s['sessionId']?.toString() ?? '',
           title: s['subject']?.toString() ?? 'Session',
           subject: s['subject']?.toString() ?? '',
           tutor: widget.isTutor ? (s['learnerName']?.toString() ?? 'Student') : (s['tutorName']?.toString() ?? 'Tutor'),
-          tutorImage: widget.isTutor ? (s['learnerImage']?.toString() ?? '') : (s['tutorImage']?.toString() ?? ''),
+          tutorImage: tutorImage.isNotEmpty ? tutorImage : 'https://via.placeholder.com/150',
           scheduledAt: scheduledAt,
           duration: '${duration}m',
           type: type == 'paid' ? SessionType.paid : type == 'paid-demo' ? SessionType.paidDemo : SessionType.demo,

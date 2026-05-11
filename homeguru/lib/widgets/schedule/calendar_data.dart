@@ -44,6 +44,10 @@ Future<List<CalendarEvent>> createInitialEvents(tz.TZDateTime anchorDate, {bool 
               ? SessionStatus.ongoing
               : SessionStatus.pending;
 
+      final teacherImage = isTutor 
+          ? (s['learnerImage']?.toString() ?? '') 
+          : (s['tutorImage']?.toString() ?? '');
+
       return CalendarEvent(
         id: s['sessionId']?.toString() ?? '',
         title: s['subject']?.toString() ?? 'Session',
@@ -56,7 +60,7 @@ Future<List<CalendarEvent>> createInitialEvents(tz.TZDateTime anchorDate, {bool 
         type: s['type']?.toString() ?? 'demo',
         subject: subject,
         teacher: isTutor ? s['learnerName']?.toString() : s['tutorName']?.toString(),
-        teacherImage: isTutor ? s['learnerImage']?.toString() : s['tutorImage']?.toString(),
+        teacherImage: teacherImage.isNotEmpty ? teacherImage : null,
         price: s['price'] as int?,
         isTrial: s['type'] == 'demo',
         status: sessionStatus,
