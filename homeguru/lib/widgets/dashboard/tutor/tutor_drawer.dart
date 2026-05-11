@@ -127,7 +127,7 @@ class TutorDrawer extends StatelessWidget {
                   selected: false,
                   onTap: () {
                     Navigator.pop(context);
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen(isTutor: true)));
                   },
                 );
                 if (index == 9) return _DrawerItem(

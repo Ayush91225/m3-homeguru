@@ -24,6 +24,19 @@ final _mock = [
   _Notif(type: _NType.message,  title: 'New message',                  body: 'Arjun Mehta: "Here is the homework for next week."',          time: '4 days ago', read: true),
 ];
 
+final _mockTutor = [
+  _Notif(type: _NType.session,  title: 'New session request',          body: 'Rahul Kumar requested a session for Physics - Class 12.',     time: '5 min ago'),
+  _Notif(type: _NType.message,  title: 'New message',                  body: 'Priya Sharma: "Can we extend today\'s session by 15 mins?"',  time: '22 min ago'),
+  _Notif(type: _NType.payment,  title: 'Payment received',             body: '₹850 credited for Chemistry session with Ananya Reddy.',      time: '1 hr ago'),
+  _Notif(type: _NType.session,  title: 'Session starting soon',        body: 'Your session with Vikram Singh starts in 30 minutes.',        time: '2 hr ago',   read: true),
+  _Notif(type: _NType.message,  title: 'New message',                  body: 'Meera Patel: "Thank you for the detailed explanation!"',      time: '4 hr ago',   read: true),
+  _Notif(type: _NType.system,   title: 'Profile views increased',      body: 'Your profile was viewed 24 times this week.',                 time: 'Yesterday',  read: true),
+  _Notif(type: _NType.payment,  title: 'Payout processed',             body: '₹12,450 transferred to your bank account.',                   time: 'Yesterday',  read: true),
+  _Notif(type: _NType.session,  title: 'Session completed',            body: 'Session with Rajesh Kumar ended. Awaiting student review.',   time: '2 days ago', read: true),
+  _Notif(type: _NType.system,   title: 'New review received',          body: 'Arjun Mehta rated you 5 stars: "Excellent teaching!"',        time: '3 days ago', read: true),
+  _Notif(type: _NType.message,  title: 'New message',                  body: 'Sanya Gupta: "Could you share the practice problems?"',       time: '4 days ago', read: true),
+];
+
 IconData _iconFor(_NType t) => switch (t) {
   _NType.session => Icons.video_call_outlined,
   _NType.message => Icons.chat_bubble_outline_rounded,
@@ -32,14 +45,15 @@ IconData _iconFor(_NType t) => switch (t) {
 };
 
 class NotificationsScreen extends StatefulWidget {
-  const NotificationsScreen({super.key});
+  const NotificationsScreen({super.key, this.isTutor = false});
+  final bool isTutor;
 
   @override
   State<NotificationsScreen> createState() => _NotificationsScreenState();
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
-  late final List<_Notif> _notifs = List.of(_mock);
+  late final List<_Notif> _notifs = List.of(widget.isTutor ? _mockTutor : _mock);
 
   int get _unread => _notifs.where((n) => !n.read).length;
 
@@ -61,8 +75,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                decoration: BoxDecoration(color: cs.primary, borderRadius: BorderRadius.circular(10)),
-                child: Text('$_unread', style: tt.labelSmall?.copyWith(color: cs.onPrimary, fontWeight: FontWeight.w700)),
+                decoration: BoxDecoration(color: widget.isTutor ? cs.tertiary : cs.primary, borderRadius: BorderRadius.circular(10)),
+                child: Text('$_unread', style: tt.labelSmall?.copyWith(color: widget.isTutor ? cs.onTertiary : cs.onPrimary, fontWeight: FontWeight.w700)),
               ),
             ],
           ],
@@ -71,7 +85,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           if (_unread > 0)
             TextButton(
               onPressed: _markAllRead,
-              child: Text('Mark all read', style: tt.labelMedium?.copyWith(color: cs.primary)),
+              child: Text('Mark all read', style: tt.labelMedium?.copyWith(color: widget.isTutor ? cs.tertiary : cs.primary)),
             ),
         ],
       ),
@@ -90,6 +104,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               itemCount: _notifs.length,
               itemBuilder: (_, i) => _NotifTile(
                 notif: _notifs[i],
+                isTutor: widget.isTutor,
                 onTap: () => setState(() => _notifs[i].read = true),
                 onDismiss: () => setState(() => _notifs.removeAt(i)),
               ),
@@ -100,10 +115,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
 class _NotifTile extends StatelessWidget {
   final _Notif notif;
+  final bool isTutor;
   final VoidCallback onTap;
   final VoidCallback onDismiss;
 
-  const _NotifTile({required this.notif, required this.onTap, required this.onDismiss});
+  const _NotifTile({required this.notif, this.isTutor = false, required this.onTap, required this.onDismiss});
 
   @override
   Widget build(BuildContext context) {
@@ -124,7 +140,7 @@ class _NotifTile extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Container(
-          color: unread ? cs.primaryContainer.withValues(alpha: 0.18) : Colors.transparent,
+          color: unread ? (isTutor ? cs.tertiaryContainer.withValues(alpha: 0.18) : cs.primaryContainer.withValues(alpha: 0.18)) : Colors.transparent,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -155,7 +171,7 @@ class _NotifTile extends StatelessWidget {
                         Text(
                           notif.time,
                           style: tt.labelSmall?.copyWith(
-                            color: unread ? cs.primary : cs.onSurfaceVariant,
+                            color: unread ? (isTutor ? cs.tertiary : cs.primary) : cs.onSurfaceVariant,
                             fontWeight: unread ? FontWeight.w700 : FontWeight.w400,
                           ),
                         ),
@@ -163,7 +179,7 @@ class _NotifTile extends StatelessWidget {
                           const SizedBox(width: 6),
                           Container(
                             width: 8, height: 8,
-                            decoration: BoxDecoration(color: cs.primary, shape: BoxShape.circle),
+                            decoration: BoxDecoration(color: isTutor ? cs.tertiary : cs.primary, shape: BoxShape.circle),
                           ),
                         ],
                       ],
