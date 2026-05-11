@@ -4,6 +4,42 @@ import 'package:http/http.dart' as http;
 class LearnerDataModel {
   static const _baseUrl = 'https://app.homeguruworld.com/api';
 
+  /// Fetch learner stats
+  static Future<Map<String, dynamic>> fetchLearnerStats(String learnerId) async {
+    try {
+      final uri = Uri.parse('$_baseUrl/learner/stats?learnerId=$learnerId');
+      final response = await http.get(
+        uri,
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        },
+      ).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final result = jsonDecode(response.body);
+        if (result['success'] == true) {
+          return result['stats'] ?? {};
+        }
+      }
+      return _getDefaultStats();
+    } catch (e) {
+      print('Error fetching learner stats: $e');
+      return _getDefaultStats();
+    }
+  }
+
+  static Map<String, dynamic> _getDefaultStats() {
+    return {
+      'xp': 0,
+      'streak': 0,
+      'sessions': 0,
+      'hours': 0.0,
+      'tutors': 0,
+      'streakData': [],
+    };
+  }
+
   /// Fetch active & verified tutors with pagination
   static Future<Map<String, dynamic>> fetchTutors({
     int limit = 20,

@@ -4,6 +4,8 @@ import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+import '../../../services/learner_data_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class StreakCalendar extends StatefulWidget {
   const StreakCalendar({super.key});
@@ -14,14 +16,70 @@ class StreakCalendar extends StatefulWidget {
 
 class _StreakCalendarState extends State<StreakCalendar> {
   final ScreenshotController _screenshotController = ScreenshotController();
-
-  late final List<List<int>> _yearData = _generateYearData();
   final _scrollController = ScrollController();
+  
+  List<List<int>> _yearData = [];
+  int _streak = 0;
+  int _totalDays = 0;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStreakData();
+  }
 
   @override
   void dispose() {
     _scrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadStreakData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final learnerId = prefs.getString('userId');
+      if (learnerId != null) {
+        final stats = await LearnerDataModel.fetchLearnerStats(learnerId);
+        if (mounted) {
+          setState(() {
+            _streak = stats['streak'] ?? 0;
+            _totalDays = stats['totalDays'] ?? 0;
+            final streakData = stats['streakData'] as List?;
+            _yearData = streakData != null ? _parseStreakData(streakData) : _generateYearData();
+            _loading = false;
+          });
+        }
+      }
+    } catch (e) {
+      print('Error loading streak data: $e');
+      if (mounted) {
+        setState(() {
+          _yearData = _generateYearData();
+          _loading = false;
+        });
+      }
+    }
+  }
+
+  List<List<int>> _parseStreakData(List streakData) {
+    // Convert API streak data to 53 weeks x 7 days format
+    // Expected format: [{date: '2024-01-01', level: 2}, ...]
+    final weeks = List.generate(53, (_) => List.filled(7, 0));
+    for (var entry in streakData) {
+      if (entry is Map) {
+        final date = DateTime.tryParse(entry['date']?.toString() ?? '');
+        final level = entry['level'] as int? ?? 0;
+        if (date != null) {
+          final weekIndex = date.difference(DateTime.now().subtract(const Duration(days: 365))).inDays ~/ 7;
+          final dayIndex = date.weekday - 1;
+          if (weekIndex >= 0 && weekIndex < 53 && dayIndex >= 0 && dayIndex < 7) {
+            weeks[weekIndex][dayIndex] = level;
+          }
+        }
+      }
+    }
+    return weeks;
   }
 
   List<List<int>> _generateYearData() {
@@ -53,8 +111,8 @@ class _StreakCalendarState extends State<StreakCalendar> {
     }
   }
 
-  int _calculateStreak() => 12;
-  int _calculateTotalDays() => 89;
+  int _calculateStreak() => _streak;
+  int _calculateTotalDays() => _totalDays;
 
   Future<void> _shareStreak() async {
     try {
@@ -83,6 +141,20 @@ class _StreakCalendarState extends State<StreakCalendar> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+
+    if (_loading) {
+      return Container(
+        decoration: BoxDecoration(
+          color: cs.surface,
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
+        ),
+        padding: const EdgeInsets.all(16),
+        height: 200,
+        child: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
     final yearData = _yearData;
     final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 

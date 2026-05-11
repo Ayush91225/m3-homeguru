@@ -1,21 +1,93 @@
 import 'package:flutter/material.dart';
 import 'stat_card.dart';
+import '../../../services/learner_data_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class StatsCarousel extends StatelessWidget {
+class StatsCarousel extends StatefulWidget {
   const StatsCarousel({super.key});
 
-  static const _stats = [
-    (value: '1240', label: 'XP', icon: Icons.stars_rounded),
-    (value: '7d', label: 'Streak', icon: Icons.local_fire_department_rounded),
-    (value: '156', label: 'Sessions', icon: Icons.event_available_rounded),
-    (value: '89.5h', label: 'Hours', icon: Icons.schedule_rounded),
-    (value: '3', label: 'Tutors', icon: Icons.people_rounded),
+  @override
+  State<StatsCarousel> createState() => _StatsCarouselState();
+}
+
+class _StatsCarouselState extends State<StatsCarousel> {
+  Map<String, dynamic> _stats = {};
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStats();
+  }
+
+  Future<void> _loadStats() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final learnerId = prefs.getString('userId');
+      if (learnerId != null) {
+        final stats = await LearnerDataModel.fetchLearnerStats(learnerId);
+        if (mounted) {
+          setState(() {
+            _stats = stats;
+            _loading = false;
+          });
+        }
+      }
+    } catch (e) {
+      print('Error loading stats: $e');
+      if (mounted) {
+        setState(() => _loading = false);
+      }
+    }
+  }
+
+  List<({String value, String label, IconData icon})> get _statsData => [
+    (value: _stats['xp']?.toString() ?? '0', label: 'XP', icon: Icons.stars_rounded),
+    (value: '${_stats['streak'] ?? 0}d', label: 'Streak', icon: Icons.local_fire_department_rounded),
+    (value: _stats['sessions']?.toString() ?? '0', label: 'Sessions', icon: Icons.event_available_rounded),
+    (value: '${(_stats['hours'] ?? 0).toStringAsFixed(1)}h', label: 'Hours', icon: Icons.schedule_rounded),
+    (value: _stats['tutors']?.toString() ?? '0', label: 'Tutors', icon: Icons.people_rounded),
   ];
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+
+    if (_loading) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 16),
+            child: Row(
+              children: [
+                Icon(Icons.analytics_rounded, size: 18, color: cs.onSurfaceVariant),
+                const SizedBox(width: 8),
+                Text(
+                  'Your Stats',
+                  style: tt.bodyMedium?.copyWith(
+                    color: cs.onSurface,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            height: 120,
+            decoration: BoxDecoration(
+              color: cs.surface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
+            ),
+            child: const Center(child: CircularProgressIndicator()),
+          ),
+        ],
+      );
+    }
+
+    final stats = _statsData;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -46,8 +118,8 @@ class StatsCarousel extends StatelessWidget {
               borderRadius: BorderRadius.all(Radius.circular(20)),
             ),
             children: [
-              ...List.generate(_stats.length, (i) {
-                final stat = _stats[i];
+              ...List.generate(stats.length, (i) {
+                final stat = stats[i];
 
                 return LayoutBuilder(
                   builder: (context, constraints) {
@@ -73,82 +145,6 @@ class StatsCarousel extends StatelessWidget {
                   },
                 );
               }),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final w = constraints.maxWidth;
-                  final isSmall = w < 72;
-                  final isMedium = w < 120;
-
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: cs.surface,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
-                      ),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(20),
-                          onTap: () {},
-                          child: Stack(
-                            children: [
-                              if (!isSmall)
-                                Positioned(
-                                  right: -8,
-                                  bottom: -8,
-                                  child: Icon(
-                                    Icons.arrow_forward_rounded,
-                                    size: 80,
-                                    color: cs.onSurfaceVariant.withValues(alpha: 0.1),
-                                  ),
-                                ),
-                              Center(
-                                child: isSmall
-                                    ? Icon(
-                                        Icons.grid_view_rounded,
-                                        size: 22,
-                                        color: cs.onSurfaceVariant,
-                                      )
-                                    : Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.grid_view_rounded,
-                                            size: isMedium ? 26 : 40,
-                                            color: cs.onSurfaceVariant,
-                                          ),
-                                          if (!isMedium) ...[
-                                            const SizedBox(height: 8),
-                                            Text(
-                                              'View All',
-                                              style: TextStyle(
-                                                color: cs.onSurface,
-                                                fontWeight: FontWeight.w700,
-                                                fontSize: 16,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              'Stats',
-                                              style: TextStyle(
-                                                color: cs.onSurfaceVariant,
-                                                fontSize: 12,
-                                              ),
-                                            ),
-                                          ],
-                                        ],
-                                      ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
             ],
           ),
         ),
