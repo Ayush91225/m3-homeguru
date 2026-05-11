@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import '../../../services/learner_data_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LearningHoursChart extends StatefulWidget {
   const LearningHoursChart({super.key});
@@ -10,69 +12,74 @@ class LearningHoursChart extends StatefulWidget {
 
 class _LearningHoursChartState extends State<LearningHoursChart> {
   String _selectedPeriod = '7d';
+  Map<String, List<FlSpot>> _chartData = {};
+  bool _loading = true;
 
-  final Map<String, List<FlSpot>> _chartData = {
-    '7d': [
-      const FlSpot(0, 2.5),
-      const FlSpot(1, 3.2),
-      const FlSpot(2, 1.8),
-      const FlSpot(3, 4.5),
-      const FlSpot(4, 3.8),
-      const FlSpot(5, 5.2),
-      const FlSpot(6, 4.1),
-    ],
-    '30d': [
-      const FlSpot(0, 3.2),
-      const FlSpot(1, 2.8),
-      const FlSpot(2, 4.5),
-      const FlSpot(3, 3.8),
-      const FlSpot(4, 5.2),
-      const FlSpot(5, 4.1),
-      const FlSpot(6, 3.5),
-      const FlSpot(7, 4.8),
-      const FlSpot(8, 3.2),
-      const FlSpot(9, 5.5),
-      const FlSpot(10, 4.2),
-      const FlSpot(11, 3.8),
-      const FlSpot(12, 5.0),
-      const FlSpot(13, 4.5),
-      const FlSpot(14, 3.9),
-    ],
-    '90d': [
-      const FlSpot(0, 2.8),
-      const FlSpot(1, 3.5),
-      const FlSpot(2, 4.2),
-      const FlSpot(3, 3.8),
-      const FlSpot(4, 4.8),
-      const FlSpot(5, 3.2),
-      const FlSpot(6, 5.2),
-      const FlSpot(7, 4.5),
-      const FlSpot(8, 3.8),
-      const FlSpot(9, 4.9),
-      const FlSpot(10, 3.5),
-      const FlSpot(11, 5.5),
-      const FlSpot(12, 4.2),
-      const FlSpot(13, 3.9),
-      const FlSpot(14, 5.0),
-      const FlSpot(15, 4.3),
-      const FlSpot(16, 3.7),
-      const FlSpot(17, 4.8),
-      const FlSpot(18, 5.2),
-      const FlSpot(19, 4.1),
-      const FlSpot(20, 3.6),
-      const FlSpot(21, 4.7),
-      const FlSpot(22, 5.3),
-      const FlSpot(23, 4.4),
-      const FlSpot(24, 3.8),
-      const FlSpot(25, 5.1),
-      const FlSpot(26, 4.6),
-      const FlSpot(27, 3.9),
-      const FlSpot(28, 4.5),
-      const FlSpot(29, 5.0),
-    ],
-  };
+  @override
+  void initState() {
+    super.initState();
+    _loadChartData();
+  }
+
+  Future<void> _loadChartData() async {
+    setState(() => _loading = true);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final learnerId = prefs.getString('userId');
+      if (learnerId != null) {
+        final stats = await LearnerDataModel.fetchLearnerStats(learnerId);
+        final hoursData = stats['hoursData'] as Map<String, dynamic>?;
+        if (mounted) {
+          setState(() {
+            if (hoursData != null) {
+              _chartData = {
+                '7d': _parseChartData(hoursData['7d'] as List?),
+                '30d': _parseChartData(hoursData['30d'] as List?),
+                '90d': _parseChartData(hoursData['90d'] as List?),
+              };
+            } else {
+              _chartData = _getDefaultData();
+            }
+            _loading = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _chartData = _getDefaultData();
+            _loading = false;
+          });
+        }
+      }
+    } catch (e) {
+      print('Error loading chart data: $e');
+      if (mounted) {
+        setState(() {
+          _chartData = _getDefaultData();
+          _loading = false;
+        });
+      }
+    }
+  }
+
+  List<FlSpot> _parseChartData(List? data) {
+    if (data == null || data.isEmpty) return [];
+    return List.generate(data.length, (i) {
+      final value = data[i] is num ? (data[i] as num).toDouble() : 0.0;
+      return FlSpot(i.toDouble(), value);
+    });
+  }
+
+  Map<String, List<FlSpot>> _getDefaultData() {
+    return {
+      '7d': List.generate(7, (i) => FlSpot(i.toDouble(), 0)),
+      '30d': List.generate(15, (i) => FlSpot(i.toDouble(), 0)),
+      '90d': List.generate(30, (i) => FlSpot(i.toDouble(), 0)),
+    };
+  }
 
   List<String> _getDateLabels() {
+    if (_chartData.isEmpty || _chartData[_selectedPeriod] == null) return [];
     final now = DateTime.now();
     final dataPoints = _chartData[_selectedPeriod]!.length;
     
@@ -95,6 +102,7 @@ class _LearningHoursChartState extends State<LearningHoursChart> {
   }
 
   double _getMaxX() {
+    if (_chartData.isEmpty || _chartData[_selectedPeriod] == null) return 0;
     return (_chartData[_selectedPeriod]!.length - 1).toDouble();
   }
 
@@ -108,6 +116,18 @@ class _LearningHoursChartState extends State<LearningHoursChart> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+
+    if (_loading || _chartData.isEmpty) {
+      return Container(
+        height: 400,
+        decoration: BoxDecoration(
+          color: cs.surface,
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
+        ),
+        child: const Center(child: CircularProgressIndicator()),
+      );
+    }
 
     return Container(
       decoration: BoxDecoration(

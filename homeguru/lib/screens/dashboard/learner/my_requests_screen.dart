@@ -18,6 +18,7 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
   String? _filterTutor;
   List<BookingRequest> _allRequests = [];
   bool _loading = true;
+  final _refreshKey = GlobalKey<RefreshIndicatorState>();
 
   @override
   void initState() {
@@ -25,8 +26,8 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
     _loadRequests();
   }
 
-  Future<void> _loadRequests() async {
-    setState(() => _loading = true);
+  Future<void> _loadRequests({bool showLoading = true}) async {
+    if (showLoading) setState(() => _loading = true);
     try {
       final prefs = await SharedPreferences.getInstance();
       final learnerId = prefs.getString('userId');
@@ -62,8 +63,14 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
       }
     } catch (e) {
       print('Error loading requests: $e');
-      setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+      }
     }
+  }
+
+  Future<void> _onRefresh() async {
+    await _loadRequests(showLoading: false);
   }
 
   List<BookingRequest> get _filtered {
@@ -108,40 +115,44 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
             ),
         ],
       ),
-      body: Column(
-        children: [
-          RequestFilterBar(
-            filterType: _filterType,
-            filterStatus: _filterStatus,
-            filterTutor: _filterTutor,
-            tutors: _tutors,
-            onTypeChanged: (v) => setState(() => _filterType = v),
-            onStatusChanged: (v) => setState(() => _filterStatus = v),
-            onTutorChanged: (v) => setState(() => _filterTutor = v),
-          ),
-          Expanded(
-            child: _loading
-                ? const Center(child: CircularProgressIndicator())
-                : requests.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.inbox_outlined, size: 64, color: cs.onSurfaceVariant.withValues(alpha: 0.5)),
-                            const SizedBox(height: 16),
-                            Text('No requests', style: tt.titleLarge?.copyWith(color: cs.onSurface)),
-                            const SizedBox(height: 8),
-                            Text('Your booking requests will appear here', style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
-                          ],
+      body: RefreshIndicator(
+        key: _refreshKey,
+        onRefresh: _onRefresh,
+        child: Column(
+          children: [
+            RequestFilterBar(
+              filterType: _filterType,
+              filterStatus: _filterStatus,
+              filterTutor: _filterTutor,
+              tutors: _tutors,
+              onTypeChanged: (v) => setState(() => _filterType = v),
+              onStatusChanged: (v) => setState(() => _filterStatus = v),
+              onTutorChanged: (v) => setState(() => _filterTutor = v),
+            ),
+            Expanded(
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : requests.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.inbox_outlined, size: 64, color: cs.onSurfaceVariant.withValues(alpha: 0.5)),
+                              const SizedBox(height: 16),
+                              Text('No requests', style: tt.titleLarge?.copyWith(color: cs.onSurface)),
+                              const SizedBox(height: 8),
+                              Text('Your booking requests will appear here', style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.only(bottom: 32),
+                          itemCount: requests.length,
+                          itemBuilder: (context, i) => RequestTile(request: requests[i]),
                         ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.only(bottom: 32),
-                        itemCount: requests.length,
-                        itemBuilder: (context, i) => RequestTile(request: requests[i]),
-                      ),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }

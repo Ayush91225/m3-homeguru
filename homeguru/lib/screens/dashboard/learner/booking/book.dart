@@ -207,6 +207,11 @@ class _BookingPageState extends State<BookingPage> {
           _sending = false;
           _sent = true;
         });
+        
+        // Notify app to refresh requests
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context, true);
+        }
       }
     } catch (e) {
       if (mounted) {
