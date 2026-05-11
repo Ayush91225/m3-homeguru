@@ -11,32 +11,6 @@ class _Notif {
   _Notif({required this.type, required this.title, required this.body, required this.time, this.read = false});
 }
 
-final _mock = [
-  _Notif(type: _NType.session,  title: 'Session starting soon',        body: 'Your session with Priya Sharma starts in 15 minutes.',        time: '2 min ago'),
-  _Notif(type: _NType.message,  title: 'New message',                  body: 'Vikram Singh: "I have shared the notes for today\'s class."',  time: '18 min ago'),
-  _Notif(type: _NType.payment,  title: 'Payment successful',           body: '₹499 paid for Physics — JEE Mains session.',                  time: '1 hr ago'),
-  _Notif(type: _NType.session,  title: 'Session completed',            body: 'Your session with Ananya Reddy has ended. Leave a review!',   time: '3 hr ago',   read: true),
-  _Notif(type: _NType.message,  title: 'New message',                  body: 'Meera Patel: "Can we reschedule tomorrow\'s session?"',        time: '5 hr ago',   read: true),
-  _Notif(type: _NType.system,   title: 'Profile incomplete',           body: 'Add your learning goals to get better tutor suggestions.',    time: 'Yesterday',  read: true),
-  _Notif(type: _NType.payment,  title: 'Refund processed',             body: '₹299 refunded for cancelled Chemistry session.',              time: 'Yesterday',  read: true),
-  _Notif(type: _NType.session,  title: 'Upcoming session reminder',    body: 'Session with Rajesh Kumar tomorrow at 10:00 AM.',             time: '2 days ago', read: true),
-  _Notif(type: _NType.system,   title: 'New feature: Streak Calendar', body: 'Track your daily learning streak in the Home tab.',           time: '3 days ago', read: true),
-  _Notif(type: _NType.message,  title: 'New message',                  body: 'Arjun Mehta: "Here is the homework for next week."',          time: '4 days ago', read: true),
-];
-
-final _mockTutor = [
-  _Notif(type: _NType.session,  title: 'New session request',          body: 'Rahul Kumar requested a session for Physics - Class 12.',     time: '5 min ago'),
-  _Notif(type: _NType.message,  title: 'New message',                  body: 'Priya Sharma: "Can we extend today\'s session by 15 mins?"',  time: '22 min ago'),
-  _Notif(type: _NType.payment,  title: 'Payment received',             body: '₹850 credited for Chemistry session with Ananya Reddy.',      time: '1 hr ago'),
-  _Notif(type: _NType.session,  title: 'Session starting soon',        body: 'Your session with Vikram Singh starts in 30 minutes.',        time: '2 hr ago',   read: true),
-  _Notif(type: _NType.message,  title: 'New message',                  body: 'Meera Patel: "Thank you for the detailed explanation!"',      time: '4 hr ago',   read: true),
-  _Notif(type: _NType.system,   title: 'Profile views increased',      body: 'Your profile was viewed 24 times this week.',                 time: 'Yesterday',  read: true),
-  _Notif(type: _NType.payment,  title: 'Payout processed',             body: '₹12,450 transferred to your bank account.',                   time: 'Yesterday',  read: true),
-  _Notif(type: _NType.session,  title: 'Session completed',            body: 'Session with Rajesh Kumar ended. Awaiting student review.',   time: '2 days ago', read: true),
-  _Notif(type: _NType.system,   title: 'New review received',          body: 'Arjun Mehta rated you 5 stars: "Excellent teaching!"',        time: '3 days ago', read: true),
-  _Notif(type: _NType.message,  title: 'New message',                  body: 'Sanya Gupta: "Could you share the practice problems?"',       time: '4 days ago', read: true),
-];
-
 IconData _iconFor(_NType t) => switch (t) {
   _NType.session => Icons.video_call_outlined,
   _NType.message => Icons.chat_bubble_outline_rounded,
@@ -53,7 +27,24 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
-  late final List<_Notif> _notifs = List.of(widget.isTutor ? _mockTutor : _mock);
+  List<_Notif> _notifs = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNotifications();
+  }
+
+  Future<void> _loadNotifications() async {
+    setState(() => _loading = true);
+    // TODO: Fetch from API - for now show empty
+    await Future.delayed(const Duration(milliseconds: 500));
+    setState(() {
+      _notifs = []; // Will be populated from API
+      _loading = false;
+    });
+  }
 
   int get _unread => _notifs.where((n) => !n.read).length;
 
@@ -89,7 +80,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             ),
         ],
       ),
-      body: _notifs.isEmpty
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : _notifs.isEmpty
           ? Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
