@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../screens/dashboard/learner/booking/book.dart';
+import '../../services/demo_eligibility_service.dart';
 
 /// Reusable action sheet for tutor interactions
 /// Shows options: Book Class, View Profile
@@ -133,25 +135,39 @@ class TutorActionSheet extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           FilledButton.icon(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => BookingPage(
-                    tutorId: tutorId,
-                    tutorName: tutorName,
-                    tutorImage: tutorImage,
-                    tutorRating: tutorRating,
-                    tutorStudents: tutorStudents,
-                    tutorLocation: tutorLocation,
-                    tutorPricing: tutorPricing,
-                    tutorRates: tutorRates,
-                    tutorLanguages: tutorLanguages,
-                    tutorAvailability: tutorAvailability,
-                  ),
-                ),
+              
+              // Check demo eligibility
+              final prefs = await SharedPreferences.getInstance();
+              final learnerId = prefs.getString('userId') ?? '';
+              
+              final eligibility = await DemoEligibilityService.checkEligibility(
+                learnerId: learnerId,
+                tutorId: tutorId,
               );
+              
+              if (context.mounted) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => BookingPage(
+                      tutorId: tutorId,
+                      tutorName: tutorName,
+                      tutorImage: tutorImage,
+                      tutorRating: tutorRating,
+                      tutorStudents: tutorStudents,
+                      tutorLocation: tutorLocation,
+                      tutorPricing: tutorPricing,
+                      tutorRates: tutorRates,
+                      tutorLanguages: tutorLanguages,
+                      tutorAvailability: tutorAvailability,
+                      isPaidDemo: eligibility['isPaidDemo'] ?? false,
+                      demoPrice: eligibility['demoPrice'] ?? 99,
+                    ),
+                  ),
+                );
+              }
             },
             style: FilledButton.styleFrom(
               backgroundColor: cs.primary,

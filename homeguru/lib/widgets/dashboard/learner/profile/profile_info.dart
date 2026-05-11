@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../services/learner_profile_service.dart';
 import '../../../../services/learner_data_model.dart';
-import '../../../profile_edit_screen.dart';
+import '../../../dashboard/learner/profile_edit_screen.dart';
 
 class ProfileInfo extends StatefulWidget {
   const ProfileInfo({super.key});

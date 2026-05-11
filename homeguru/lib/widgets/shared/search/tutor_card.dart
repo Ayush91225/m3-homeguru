@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../screens/dashboard/learner/booking/book.dart';
+import '../../../services/demo_eligibility_service.dart';
 
 class TutorCard extends StatelessWidget {
   final Map<String, dynamic> tutor;
@@ -313,28 +315,42 @@ class _TutorActionSheet extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           FilledButton.icon(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => BookingPage(
-                    tutorId: tutor['id'] ?? '',
-                    tutorName: tutor['name'] ?? '',
-                    tutorImage: tutor['image'] ?? '',
-                    tutorRating: (tutor['rating'] as num?)?.toDouble() ?? 0,
-                    tutorStudents: tutor['students'] as int? ?? 0,
-                    tutorLocation: tutor['location'] ?? '',
-                    tutorPricing: {
-                      for (var subject in subjects)
-                        subject['name'] as String: subject['hourlyRate'] as int
-                    },
-                    tutorRates: tutor['rates'] as List? ?? [],
-                    tutorLanguages: tutor['languages'] as List? ?? [],
-                    tutorAvailability: tutor['availability'] as List? ?? [],
-                  ),
-                ),
+              
+              // Check demo eligibility
+              final prefs = await SharedPreferences.getInstance();
+              final learnerId = prefs.getString('userId') ?? '';
+              
+              final eligibility = await DemoEligibilityService.checkEligibility(
+                learnerId: learnerId,
+                tutorId: tutor['id'] ?? '',
               );
+              
+              if (context.mounted) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => BookingPage(
+                      tutorId: tutor['id'] ?? '',
+                      tutorName: tutor['name'] ?? '',
+                      tutorImage: tutor['image'] ?? '',
+                      tutorRating: (tutor['rating'] as num?)?.toDouble() ?? 0,
+                      tutorStudents: tutor['students'] as int? ?? 0,
+                      tutorLocation: tutor['location'] ?? '',
+                      tutorPricing: {
+                        for (var subject in subjects)
+                          subject['name'] as String: subject['hourlyRate'] as int
+                      },
+                      tutorRates: tutor['rates'] as List? ?? [],
+                      tutorLanguages: tutor['languages'] as List? ?? [],
+                      tutorAvailability: tutor['availability'] as List? ?? [],
+                      isPaidDemo: eligibility['isPaidDemo'] ?? false,
+                      demoPrice: eligibility['demoPrice'] ?? 99,
+                    ),
+                  ),
+                );
+              }
             },
             style: FilledButton.styleFrom(
               backgroundColor: cs.primary,
