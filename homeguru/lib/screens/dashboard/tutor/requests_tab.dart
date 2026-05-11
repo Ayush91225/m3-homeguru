@@ -41,7 +41,7 @@ class _TutorRequestsTabState extends State<TutorRequestsTab> with SingleTickerPr
             studentImage: r['studentImage']?.toString() ?? '',
             subject: r['subject']?.toString() ?? '',
             level: r['level']?.toString() ?? '',
-            type: r['type']?.toString() == 'paid' ? TutorRequestType.paid : TutorRequestType.demo,
+            type: r['type']?.toString() == 'paid' ? TutorRequestType.paid : TutorRequestType.demo, // paid-demo is treated as demo
             status: switch (r['status']?.toString()) {
               'accepted' => TutorRequestStatus.accepted,
               'declined' => TutorRequestStatus.declined,

@@ -136,18 +136,28 @@ class TutorActionSheet extends StatelessWidget {
           const SizedBox(height: 24),
           FilledButton.icon(
             onPressed: () async {
-              Navigator.pop(context);
-              
               // Check demo eligibility
-              final prefs = await SharedPreferences.getInstance();
-              final learnerId = prefs.getString('userId') ?? '';
+              bool isPaidDemo = false;
+              int demoPrice = 99;
               
-              final eligibility = await DemoEligibilityService.checkEligibility(
-                learnerId: learnerId,
-                tutorId: tutorId,
-              );
+              try {
+                final prefs = await SharedPreferences.getInstance();
+                final learnerId = prefs.getString('userId') ?? '';
+                
+                if (learnerId.isNotEmpty) {
+                  final eligibility = await DemoEligibilityService.checkEligibility(
+                    learnerId: learnerId,
+                    tutorId: tutorId,
+                  );
+                  isPaidDemo = eligibility['isPaidDemo'] ?? false;
+                  demoPrice = eligibility['demoPrice'] ?? 99;
+                }
+              } catch (e) {
+                print('Error checking eligibility: $e');
+              }
               
               if (context.mounted) {
+                Navigator.pop(context);
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -162,8 +172,8 @@ class TutorActionSheet extends StatelessWidget {
                       tutorRates: tutorRates,
                       tutorLanguages: tutorLanguages,
                       tutorAvailability: tutorAvailability,
-                      isPaidDemo: eligibility['isPaidDemo'] ?? false,
-                      demoPrice: eligibility['demoPrice'] ?? 99,
+                      isPaidDemo: isPaidDemo,
+                      demoPrice: demoPrice,
                     ),
                   ),
                 );

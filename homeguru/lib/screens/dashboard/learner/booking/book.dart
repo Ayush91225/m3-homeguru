@@ -3,6 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../services/request_service.dart';
+import '../../../../services/razorpay_service.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class BookingPage extends StatefulWidget {
   final String tutorId;
@@ -55,6 +59,9 @@ class _BookingPageState extends State<BookingPage> {
   TimeOfDay? _preferredTime;
   bool _sending = false;
   bool _sent = false;
+  late RazorpayService _razorpayService;
+  String? _pendingRequestId;
+  String? _pendingOrderId;
 
   final _levelController = TextEditingController();
   final _messageController = TextEditingController();
@@ -120,7 +127,12 @@ class _BookingPageState extends State<BookingPage> {
   void initState() {
     super.initState();
     _demoMode = widget.canBookDemo;
-    // Debug: Print availability
+    _razorpayService = RazorpayService();
+    _razorpayService.initialize(
+      onSuccess: _handlePaymentSuccess,
+      onFailure: _handlePaymentFailure,
+      onExternalWallet: _handleExternalWallet,
+    );
     print('Tutor Availability: ${widget.tutorAvailability}');
     print('Available Days: $_availableDays');
   }
@@ -129,6 +141,7 @@ class _BookingPageState extends State<BookingPage> {
   void dispose() {
     _levelController.dispose();
     _messageController.dispose();
+    _razorpayService.dispose();
     super.dispose();
   }
 
@@ -148,6 +161,69 @@ class _BookingPageState extends State<BookingPage> {
         _preferredTime = null;
       }
     });
+  }
+
+  void _handlePaymentSuccess(PaymentSuccessResponse response) async {
+    if (_pendingRequestId == null || _pendingOrderId == null) return;
+    
+    try {
+      // Verify payment on backend
+      final verifyResponse = await http.patch(
+        Uri.parse('https://app.homeguruworld.com/api/demo-payment'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'requestId': _pendingRequestId,
+          'paymentId': response.paymentId,
+          'orderId': _pendingOrderId,
+          'signature': response.signature,
+        }),
+      );
+
+      if (verifyResponse.statusCode == 200 && mounted) {
+        setState(() {
+          _sending = false;
+          _sent = true;
+        });
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context, true);
+        }
+      } else {
+        throw Exception('Payment verification failed');
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _sending = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Payment verification failed: $e'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  void _handlePaymentFailure(PaymentFailureResponse response) {
+    if (mounted) {
+      setState(() => _sending = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Payment failed: ${response.message}'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  void _handleExternalWallet(ExternalWalletResponse response) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('External wallet: ${response.walletName}'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   Future<void> _sendRequest() async {
@@ -176,6 +252,67 @@ class _BookingPageState extends State<BookingPage> {
         board = rate['board']?.toString();
         grade = rate['grade']?.toString();
       }
+
+      // If paid demo, create payment order first
+      if (widget.isPaidDemo) {
+        final prefs = await SharedPreferences.getInstance();
+        final userName = prefs.getString('profile_name') ?? 'Student';
+        final userEmail = prefs.getString('profile_email') ?? '';
+        final userPhone = prefs.getString('profile_phone') ?? '';
+
+        // Create request and Razorpay order
+        final orderResponse = await http.post(
+          Uri.parse('https://app.homeguruworld.com/api/demo-payment'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'learnerId': learnerId,
+            'tutorId': widget.tutorId,
+            'amount': widget.demoPrice,
+            'subject': widget.tutorRates.isNotEmpty && _selectedSubjectIdx != null
+                ? (widget.tutorRates[_selectedSubjectIdx!] as Map<String, dynamic>)['subject']?.toString() ?? _subjects[_selectedSubjectIdx!]
+                : _subjects[_selectedSubjectIdx!],
+            'board': board,
+            'grade': grade,
+            'level': _levelController.text.isNotEmpty ? _levelController.text : null,
+            'preferredSlot': _selectedSlotKey,
+            'classesPerWeek': _classesPerWeek,
+            'months': _months,
+            'totalSessions': _totalSessions,
+            'perHourRate': _currentPrice,
+            'message': _messageController.text.isNotEmpty ? _messageController.text : null,
+          }),
+        );
+
+        if (orderResponse.statusCode != 200) {
+          throw Exception('Failed to create payment order');
+        }
+
+        final orderData = jsonDecode(orderResponse.body);
+        final orderId = orderData['orderId'];
+        final requestId = orderData['requestId'];
+
+        // Store for payment callback
+        _pendingRequestId = requestId;
+        _pendingOrderId = orderId;
+
+        // Open Razorpay
+        _razorpayService.openCheckout(
+          orderId: orderId,
+          amount: widget.demoPrice * 100, // Convert to paise
+          name: userName,
+          email: userEmail,
+          contact: userPhone,
+          description: 'Paid Demo with ${widget.tutorName}',
+          notes: {
+            'requestId': requestId,
+            'tutorId': widget.tutorId,
+            'learnerId': learnerId,
+          },
+        );
+        return; // Payment flow will continue in callback
+      }
+
+      // For free demo and paid requests, create request directly
 
       await RequestService.createRequest(
         learnerId: learnerId,
