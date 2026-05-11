@@ -1,10 +1,12 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 
 class TutorProfileService {
   static const String _baseUrl = 'https://app.homeguruworld.com/api/tutor/profile';
+  static const String _uploadUrl = 'https://app.homeguruworld.com/api/upload';
 
-  /// Fetch tutor profile data for edit screen
+  /// Fetch full tutor data
   static Future<Map<String, dynamic>> getTutorProfile(String tutorId) async {
     try {
       final response = await http.get(
@@ -22,7 +24,6 @@ class TutorProfileService {
   }
 
   /// Update tutor profile fields (partial update)
-  /// [fields] can contain: profilePhoto, experience, rates, youtubeVideoLink, availability
   static Future<Map<String, dynamic>> updateProfile(String tutorId, Map<String, dynamic> fields) async {
     try {
       final response = await http.put(
@@ -41,6 +42,28 @@ class TutorProfileService {
       return {'success': false, 'error': result['error'] ?? 'Update failed'};
     } catch (e) {
       return {'success': false, 'error': 'Network error: $e'};
+    }
+  }
+
+  /// Upload a file to S3 and return the URL
+  static Future<String?> uploadFile(File file, String folder) async {
+    try {
+      final request = http.MultipartRequest('POST', Uri.parse(_uploadUrl));
+      request.fields['folder'] = folder;
+      request.files.add(await http.MultipartFile.fromPath(
+        'file',
+        file.path,
+        filename: file.path.split(Platform.pathSeparator).last,
+      ));
+      final response = await request.send();
+      final body = await response.stream.bytesToString();
+      final result = jsonDecode(body);
+      if (response.statusCode == 200 && result['success'] == true) {
+        return result['url'];
+      }
+      return null;
+    } catch (e) {
+      return null;
     }
   }
 }

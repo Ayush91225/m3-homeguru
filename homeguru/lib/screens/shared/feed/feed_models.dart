@@ -32,6 +32,8 @@ class HgBlog {
   final String authorAvatar;
   final List<String> tags;
   final String publishedAt;
+  final String tutorId;
+  final String readTime;
 
   const HgBlog({
     required this.id,
@@ -42,68 +44,35 @@ class HgBlog {
     required this.authorAvatar,
     required this.tags,
     required this.publishedAt,
+    this.tutorId = '',
+    this.readTime = '',
   });
+
+  factory HgBlog.fromJson(Map<String, dynamic> json) {
+    return HgBlog(
+      id: json['blogId'] ?? json['id'] ?? '',
+      title: json['title'] ?? '',
+      body: json['body'] ?? '',
+      imageUrl: json['coverImageUrl'] ?? json['imageUrl'] ?? '',
+      authorName: json['authorName'] ?? 'Tutor',
+      authorAvatar: json['authorAvatar'] ?? '',
+      tags: [json['tag'] ?? 'Education'],
+      publishedAt: _formatDate(json['createdAt'] ?? ''),
+      tutorId: json['tutorId'] ?? '',
+      readTime: json['readTime'] ?? '',
+    );
+  }
+
+  static String _formatDate(String iso) {
+    try {
+      final dt = DateTime.parse(iso).toLocal();
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return '${months[dt.month - 1]} ${dt.day}, ${dt.year}';
+    } catch (_) {
+      return iso;
+    }
+  }
 }
-
-// ─── Mock HG blogs ────────────────────────────────────────────────────────────
-
-final List<HgBlog> mockHgBlogs = [
-  HgBlog(
-    id: '1',
-    title: 'How to Find the Perfect Tutor for Your Child',
-    body:
-        'Finding the right tutor can transform your child\'s academic journey. Here are the key things to look for: subject expertise, teaching style compatibility, and consistent availability.\n\nStart by identifying your child\'s specific weak areas. A tutor who specialises in those topics will be far more effective than a generalist. Ask for a trial session before committing — most good tutors are happy to offer one.\n\nCommunication is equally important. A tutor who keeps parents informed about progress builds trust and ensures everyone is aligned on goals. Look for someone who sets measurable milestones and celebrates small wins.\n\nFinally, consistency matters more than intensity. Two focused sessions a week over three months will outperform cramming every day for two weeks. Build a sustainable schedule and stick to it.',
-    imageUrl: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800',
-    authorName: 'HomeGuru Team',
-    authorAvatar: 'https://i.pravatar.cc/150?img=12',
-    tags: ['Parenting', 'Education', 'Tips'],
-    publishedAt: '12 Jul 2025',
-  ),
-  HgBlog(
-    id: '2',
-    title: '5 Study Techniques Backed by Science',
-    body:
-        'Not all study methods are created equal. Research consistently shows that certain techniques lead to far better retention and understanding.\n\n1. Spaced Repetition — Review material at increasing intervals. Apps like Anki make this easy.\n2. Active Recall — Test yourself instead of re-reading. Close the book and write down everything you remember.\n3. The Feynman Technique — Explain the concept in simple language as if teaching a child. Gaps in your explanation reveal gaps in your knowledge.\n4. Interleaving — Mix different subjects or problem types in a single session rather than blocking one topic.\n5. Elaborative Interrogation — Ask "why" and "how" questions as you study to build deeper connections.\n\nCombining two or three of these in each session will dramatically improve your results.',
-    imageUrl: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=800',
-    authorName: 'Priya Sharma',
-    authorAvatar: 'https://i.pravatar.cc/150?img=47',
-    tags: ['Study Tips', 'Science', 'Productivity'],
-    publishedAt: '10 Jul 2025',
-  ),
-  HgBlog(
-    id: '3',
-    title: 'Online vs Offline Tutoring: What Works Best?',
-    body:
-        'The debate between online and offline tutoring has intensified since 2020. Both have genuine strengths depending on the learner\'s needs.\n\nOnline tutoring offers flexibility, access to a global pool of tutors, and the ability to record sessions for review. It works especially well for older students who are self-motivated and comfortable with technology.\n\nOffline tutoring, on the other hand, provides a distraction-free environment and stronger personal rapport. Younger children often benefit from the physical presence of a tutor who can observe body language and adjust in real time.\n\nThe best approach? A hybrid model. Use online sessions for concept delivery and offline sessions for practice and doubt-clearing. HomeGuru supports both formats seamlessly.',
-    imageUrl: 'https://images.unsplash.com/photo-1588072432836-e10032774350?w=800',
-    authorName: 'Rahul Verma',
-    authorAvatar: 'https://i.pravatar.cc/150?img=33',
-    tags: ['Online Learning', 'Comparison'],
-    publishedAt: '8 Jul 2025',
-  ),
-  HgBlog(
-    id: '4',
-    title: 'Building a Growth Mindset in Students',
-    body:
-        'Carol Dweck\'s research on growth mindset has changed how educators think about potential. The core idea: intelligence is not fixed — it grows with effort and the right strategies.\n\nAs a parent or tutor, the language you use matters enormously. Replace "you\'re so smart" with "you worked really hard on that." Praise the process, not the outcome.\n\nEncourage students to embrace mistakes as data, not failure. When a student gets something wrong, ask: "What can we learn from this?" rather than moving on quickly.\n\nSet stretch goals — targets that are just beyond current ability. This keeps students in the productive zone of challenge without overwhelming them.',
-    imageUrl: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800',
-    authorName: 'Ananya Iyer',
-    authorAvatar: 'https://i.pravatar.cc/150?img=25',
-    tags: ['Mindset', 'Psychology', 'Education'],
-    publishedAt: '5 Jul 2025',
-  ),
-  HgBlog(
-    id: '5',
-    title: 'How HomeGuru Matches You with the Right Tutor',
-    body:
-        'At HomeGuru, we believe the tutor-student match is everything. Our matching algorithm considers subject expertise, teaching style, availability, location preference, and budget — but we go further.\n\nWe analyse past session feedback to understand how a tutor communicates and adapts. We look at student learning profiles to identify whether they need a structured, step-by-step approach or a more exploratory, discussion-based style.\n\nEvery match starts with a free trial session. If it\'s not the right fit, we rematch at no cost. Our goal is a long-term relationship, not a one-off booking.\n\nOver 85% of HomeGuru students who complete a trial session go on to book regular sessions. That\'s the power of a thoughtful match.',
-    imageUrl: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=800',
-    authorName: 'HomeGuru Team',
-    authorAvatar: 'https://i.pravatar.cc/150?img=12',
-    tags: ['HomeGuru', 'Matching', 'Platform'],
-    publishedAt: '2 Jul 2025',
-  ),
-];
 
 // ─── Service ──────────────────────────────────────────────────────────────────
 
@@ -157,6 +126,36 @@ class FeedService {
 
   // Cache the full HN id list so pagination works without re-fetching
   static List<int>? hnIds;
+
+  /// Fetch today's HG blogs (for stories ring)
+  static Future<List<HgBlog>> fetchTodayBlogs() async {
+    try {
+      final res = await http.get(
+        Uri.parse('https://app.homeguruworld.com/api/blogs?today=true'),
+        headers: {'Content-Type': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+      if (res.statusCode != 200) return [];
+      final data = json.decode(res.body);
+      if (data['success'] != true) return [];
+      final items = data['data'] as List? ?? [];
+      return items.map((e) => HgBlog.fromJson(e as Map<String, dynamic>)).toList();
+    } catch (_) { return []; }
+  }
+
+  /// Fetch all HG blogs
+  static Future<List<HgBlog>> fetchAllBlogs({int limit = 20}) async {
+    try {
+      final res = await http.get(
+        Uri.parse('https://app.homeguruworld.com/api/blogs?limit=$limit'),
+        headers: {'Content-Type': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+      if (res.statusCode != 200) return [];
+      final data = json.decode(res.body);
+      if (data['success'] != true) return [];
+      final items = data['data'] as List? ?? [];
+      return items.map((e) => HgBlog.fromJson(e as Map<String, dynamic>)).toList();
+    } catch (_) { return []; }
+  }
 
   static Future<List<FeedArticle>> fetchNews(int page) async {
     try {

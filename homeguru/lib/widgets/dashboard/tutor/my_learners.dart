@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:flutter/services.dart';
 import '../../../screens/shared/chat/chat_models.dart';
 import '../../../screens/shared/chat/conversation_screen.dart';
 import '../../../screens/shared/sessions_listing_screen.dart';
+import '../../../services/tutor_data_model.dart';
 
 class MyLearners extends StatefulWidget {
   const MyLearners({super.key, this.showAll = false});
@@ -20,21 +19,22 @@ class _MyLearnersState extends State<MyLearners> {
   bool _isLoading = true;
 
   @override
-  void initState() {
-    super.initState();
-    _loadLearners();
-  }
-
-  Future<void> _loadLearners() async {
+  void didChangeDependencies() {
+    super.didChangeDependencies();
     try {
-      final String response = await rootBundle.loadString('assets/mock_learners.json');
-      final List<dynamic> data = json.decode(response);
-      setState(() {
-        _learners = data.map((e) => e as Map<String, dynamic>).toList();
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
+      final data = TutorData.of(context);
+      final l = data.learners;
+      if (l != _learners) {
+        setState(() {
+          _learners = l;
+          _isLoading = false;
+        });
+      } else if (_isLoading) {
+        setState(() => _isLoading = false);
+      }
+    } catch (_) {
+      // TutorData not in widget tree (e.g. profile screen)
+      if (_isLoading) setState(() => _isLoading = false);
     }
   }
 
@@ -109,11 +109,26 @@ class _MyLearnersState extends State<MyLearners> {
         ),
         AnimatedContainer(
           duration: const Duration(milliseconds: 300),
-          child: widget.showAll
-              ? _buildAllView(cs, tt)
-              : _isExpanded
-                  ? _buildExpandedView(cs, tt)
-                  : _buildCollapsedView(cs, tt),
+          child: _filteredLearners.isEmpty
+              ? Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(32),
+                  decoration: BoxDecoration(
+                    color: cs.surface,
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
+                  ),
+                  child: Column(children: [
+                    Icon(Icons.people_outline_rounded, size: 36, color: cs.onSurfaceVariant.withValues(alpha: 0.4)),
+                    const SizedBox(height: 8),
+                    Text('No learners yet', style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+                  ]),
+                )
+              : widget.showAll
+                  ? _buildAllView(cs, tt)
+                  : _isExpanded
+                      ? _buildExpandedView(cs, tt)
+                      : _buildCollapsedView(cs, tt),
         ),
       ],
     );

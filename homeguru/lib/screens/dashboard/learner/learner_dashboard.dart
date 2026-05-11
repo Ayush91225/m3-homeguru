@@ -45,18 +45,10 @@ class LearnerDashboardState extends State<LearnerDashboard> {
   Future<void> _checkAuthAndOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
     final loggedInUser = prefs.getString('logged_in_user');
-    final onboardingComplete = prefs.getBool('onboarding_complete') ?? false;
 
     if (!mounted) return;
 
     if (loggedInUser == null || loggedInUser.isEmpty) {
-      // Not logged in - redirect to welcome page
-      Navigator.of(context).pushReplacementNamed('/welcome');
-      return;
-    }
-
-    if (!onboardingComplete) {
-      // Onboarding not complete - redirect to welcome page
       Navigator.of(context).pushReplacementNamed('/welcome');
       return;
     }

@@ -5,8 +5,9 @@ import 'report_filters.dart';
 class StudentsReport extends StatefulWidget {
   final ColorScheme cs;
   final TextTheme tt;
+  final Map<String, dynamic> data;
 
-  const StudentsReport({super.key, required this.cs, required this.tt});
+  const StudentsReport({super.key, required this.cs, required this.tt, required this.data});
 
   @override
   State<StudentsReport> createState() => _StudentsReportState();
@@ -55,7 +56,7 @@ class _StudentsReportState extends State<StudentsReport> {
             Expanded(
               child: ReportStatBox(
                 label: 'Active Students',
-                value: '28',
+                value: '${widget.data['active'] ?? 0}',
                 icon: Icons.people_rounded,
                 cs: widget.cs,
                 tt: widget.tt,
@@ -66,7 +67,7 @@ class _StudentsReportState extends State<StudentsReport> {
             Expanded(
               child: ReportStatBox(
                 label: 'New This Month',
-                value: '7',
+                value: '${widget.data['newThisMonth'] ?? 0}',
                 icon: Icons.person_add_rounded,
                 cs: widget.cs,
                 tt: widget.tt,
@@ -80,7 +81,7 @@ class _StudentsReportState extends State<StudentsReport> {
             Expanded(
               child: ReportStatBox(
                 label: 'Retention Rate',
-                value: '89%',
+                value: '${widget.data['retentionRate'] ?? 0}%',
                 icon: Icons.trending_up_rounded,
                 cs: widget.cs,
                 tt: widget.tt,
@@ -90,7 +91,7 @@ class _StudentsReportState extends State<StudentsReport> {
             Expanded(
               child: ReportStatBox(
                 label: 'Avg Sessions',
-                value: '4.4/student',
+                value: '${widget.data['avgSessions'] ?? 0}/student',
                 icon: Icons.bar_chart_rounded,
                 cs: widget.cs,
                 tt: widget.tt,

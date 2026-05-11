@@ -5,8 +5,9 @@ import 'report_filters.dart';
 class SubjectsReport extends StatefulWidget {
   final ColorScheme cs;
   final TextTheme tt;
+  final Map<String, dynamic> data;
 
-  const SubjectsReport({super.key, required this.cs, required this.tt});
+  const SubjectsReport({super.key, required this.cs, required this.tt, required this.data});
 
   @override
   State<SubjectsReport> createState() => _SubjectsReportState();
@@ -15,12 +16,11 @@ class SubjectsReport extends StatefulWidget {
 class _SubjectsReportState extends State<SubjectsReport> {
   DateTimeRange? _dateRange;
 
-  final List<Map<String, dynamic>> _subjects = [
-    {'name': 'JEE Maths', 'sessions': 48, 'earnings': 18240},
-    {'name': 'Physics', 'sessions': 32, 'earnings': 12160},
-    {'name': 'Chemistry', 'sessions': 28, 'earnings': 10640},
-    {'name': 'Biology', 'sessions': 16, 'earnings': 6080},
-  ];
+  List<Map<String, dynamic>> get _subjects {
+    final raw = widget.data['subjects'];
+    if (raw is List && raw.isNotEmpty) return raw.map((s) => Map<String, dynamic>.from(s)).toList();
+    return [];
+  }
 
   @override
   Widget build(BuildContext context) {

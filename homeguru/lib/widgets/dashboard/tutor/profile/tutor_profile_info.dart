@@ -26,8 +26,7 @@ class _TutorProfileInfoState extends State<TutorProfileInfo> {
   String _email = '';
   bool _isVerified = false;
   bool _isActive = false;
-  List<String> _subjects = [];
-  String _createdAt = '';
+  List<Map<String, String>> _subjectTags = [];
 
   @override
   void initState() {
@@ -51,30 +50,39 @@ class _TutorProfileInfoState extends State<TutorProfileInfo> {
         _isVerified = data['isVerified'] == true;
         _isActive = data['isActive'] == true;
 
-        // Extract subject names from rates
+        // Extract subjects with board context
         if (data['rates'] != null) {
-          _subjects = (data['rates'] as List).map((r) => r['subject'].toString()).toList();
+          _subjectTags = (data['rates'] as List).map((r) {
+            final board = r['board']?.toString() ?? '';
+            final grade = r['grade']?.toString() ?? '';
+            final subject = r['subject']?.toString() ?? '';
+            return {'label': board.isNotEmpty ? '$subject • $board • $grade' : subject};
+          }).toList().cast<Map<String, String>>();
         } else if (data['subjects'] != null) {
-          _subjects = _extractSubjectNames(data['subjects'] as Map<String, dynamic>);
+          _subjectTags = _extractSubjectTags(data['subjects'] as Map<String, dynamic>);
         }
       });
     }
   }
 
-  List<String> _extractSubjectNames(Map<String, dynamic> subjectsData) {
-    final names = <String>{};
+  List<Map<String, String>> _extractSubjectTags(Map<String, dynamic> subjectsData) {
+    final tags = <Map<String, String>>[];
     final schooling = subjectsData['schooling'];
     if (schooling != null && schooling['subjectsByBoardAndGrade'] != null) {
       final byBoard = schooling['subjectsByBoardAndGrade'] as Map<String, dynamic>;
-      for (final board in byBoard.values) {
-        if (board is Map) {
-          for (final subjects in board.values) {
-            if (subjects is List) names.addAll(subjects.cast<String>());
+      for (final boardEntry in byBoard.entries) {
+        if (boardEntry.value is Map) {
+          for (final gradeEntry in (boardEntry.value as Map).entries) {
+            if (gradeEntry.value is List) {
+              for (final subject in gradeEntry.value) {
+                tags.add({'label': '$subject • ${boardEntry.key} • ${gradeEntry.key}'});
+              }
+            }
           }
         }
       }
     }
-    return names.toList();
+    return tags;
   }
 
   void _showBoostSheet() {
@@ -177,14 +185,6 @@ class _TutorProfileInfoState extends State<TutorProfileInfo> {
             Text(_bio, style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant), maxLines: 2, overflow: TextOverflow.ellipsis),
           ],
           const SizedBox(height: 10),
-          if (_subjects.isNotEmpty)
-            Wrap(
-              spacing: 14,
-              runSpacing: 4,
-              children: [
-                _Meta(icon: Icons.school_outlined, label: _subjects.take(3).join(', '), cs: cs, tt: tt),
-              ],
-            ),
           if (!_isActive && !widget.viewMode) ...[
             const SizedBox(height: 10),
             Container(
@@ -266,22 +266,4 @@ class _TutorProfileInfoState extends State<TutorProfileInfo> {
   }
 }
 
-class _Meta extends StatelessWidget {
-  const _Meta({required this.icon, required this.label, required this.cs, required this.tt});
-  final IconData icon;
-  final String label;
-  final ColorScheme cs;
-  final TextTheme tt;
 
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 11, color: cs.onSurfaceVariant),
-        const SizedBox(width: 4),
-        Text(label, style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant)),
-      ],
-    );
-  }
-}

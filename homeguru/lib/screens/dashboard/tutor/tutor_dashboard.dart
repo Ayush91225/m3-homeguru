@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../widgets/mascot/hoot_sprite.dart';
 import '../../../widgets/dashboard/common_app_bar.dart';
 import '../../../widgets/dashboard/tutor/tutor_drawer.dart';
+import '../../../services/tutor_data_model.dart';
 import 'home_tab.dart';
 import 'requests_tab.dart';
 import 'schedule_tab.dart';
@@ -21,6 +22,7 @@ class TutorDashboardState extends State<TutorDashboard> {
   int _selectedIndex = 0;
   bool _fabExtended = true;
   bool _isLoading = true;
+  TutorDataModel? _tutorData;
 
   static const _tabs = [
     TutorHomeTab(),
@@ -44,21 +46,15 @@ class TutorDashboardState extends State<TutorDashboard> {
   Future<void> _checkAuthAndOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
     final loggedInUser = prefs.getString('logged_in_user');
-    final onboardingComplete = prefs.getBool('onboarding_complete') ?? false;
 
     if (!mounted) return;
 
     if (loggedInUser == null || loggedInUser.isEmpty) {
-      // Not logged in - redirect to welcome page
       Navigator.of(context).pushReplacementNamed('/welcome');
       return;
     }
 
-    if (!onboardingComplete) {
-      // Onboarding not complete - redirect to welcome page
-      Navigator.of(context).pushReplacementNamed('/welcome');
-      return;
-    }
+    _tutorData = await TutorDataModel.load();
 
     setState(() => _isLoading = false);
   }
@@ -86,7 +82,9 @@ class TutorDashboardState extends State<TutorDashboard> {
 
     final cs = Theme.of(context).colorScheme;
 
-    return Scaffold(
+    return TutorData(
+      model: _tutorData!,
+      child: Scaffold(
       appBar: const DashboardAppBar(),
       drawer: TutorDrawer(
         selectedIndex: _selectedIndex,
@@ -196,6 +194,7 @@ class TutorDashboardState extends State<TutorDashboard> {
           ],
         ),
       ),
+    ),
     );
   }
 }

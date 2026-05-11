@@ -5,6 +5,7 @@ import '../../schedule/calendar_types.dart';
 import '../../../screens/shared/meet/prejoin_screen.dart';
 import '../../../screens/shared/chat/chat_models.dart';
 import '../../../services/user_profile_store.dart';
+import '../../../services/tutor_data_model.dart';
 
 class TutorTodaySchedule extends StatefulWidget {
   const TutorTodaySchedule({super.key, this.onScheduleTap});
@@ -22,73 +23,18 @@ class _TutorTodayScheduleState extends State<TutorTodaySchedule> {
   @override
   void initState() {
     super.initState();
-    _sessions = [..._generateSessions(), {'isViewAll': true}];
+    _sessions = [{'isViewAll': true}];
   }
-  
-  List<Map<String, dynamic>> _generateSessions() {
-    final now = DateTime.now();
-    return [
-      {
-        'learner': 'Aarav Kumar',
-        'image': 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=400&h=400&fit=crop',
-        'subject': 'Mathematics',
-        'specialization': 'JEE Mains',
-        'location': 'Mumbai',
-        'dateTime': now,
-        'isActive': true,
-        'isPaid': true,
-      },
-      {
-        'learner': 'Diya Patel',
-        'image': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop',
-        'subject': 'Physics',
-        'specialization': 'NEET',
-        'location': 'Ahmedabad',
-        'dateTime': now.add(const Duration(hours: 2)),
-        'isActive': false,
-        'isPaid': false,
-      },
-      {
-        'learner': 'Rohan Sharma',
-        'image': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop',
-        'subject': 'Chemistry',
-        'specialization': 'JEE Advanced',
-        'location': 'Delhi',
-        'dateTime': now.add(const Duration(hours: 4)),
-        'isActive': false,
-        'isPaid': true,
-      },
-      {
-        'learner': 'Ananya Singh',
-        'image': 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop',
-        'subject': 'English',
-        'specialization': 'IELTS',
-        'location': 'Bangalore',
-        'dateTime': now.add(const Duration(hours: 6)),
-        'isActive': false,
-        'isPaid': false,
-      },
-      {
-        'learner': 'Kabir Mehta',
-        'image': 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=400&fit=crop',
-        'subject': 'Biology',
-        'specialization': 'CBSE Grade 11-12',
-        'location': 'Pune',
-        'dateTime': now.add(const Duration(hours: 8)),
-        'isActive': false,
-        'isPaid': true,
-      },
-      {
-        'learner': 'Ishita Verma',
-        'image': 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop',
-        'subject': 'Mathematics',
-        'specialization': 'CBSE Grade 9-10',
-        'location': 'Hyderabad',
-        'dateTime': now.add(const Duration(hours: 10)),
-        'isActive': false,
-        'isPaid': false,
-      },
-    ];
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final schedule = TutorData.of(context).todaySchedule;
+    if (schedule.isNotEmpty) {
+      setState(() {
+        _sessions = [...schedule, {'isViewAll': true}];
+      });
+    }
   }
 
   String _formatTime(DateTime dateTime) {

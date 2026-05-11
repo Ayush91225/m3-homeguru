@@ -6,8 +6,9 @@ import 'report_filters.dart';
 class EarningsReport extends StatefulWidget {
   final ColorScheme cs;
   final TextTheme tt;
+  final Map<String, dynamic> data;
 
-  const EarningsReport({super.key, required this.cs, required this.tt});
+  const EarningsReport({super.key, required this.cs, required this.tt, required this.data});
 
   @override
   State<EarningsReport> createState() => _EarningsReportState();
@@ -17,7 +18,7 @@ class _EarningsReportState extends State<EarningsReport> {
   String? _selectedStudent;
   DateTimeRange? _dateRange;
 
-  final List<String> _students = ['Aarav Kumar', 'Diya Sharma', 'Arjun Patel', 'Ananya Singh', 'Rohan Mehta'];
+  final List<String> _students = [];
 
   @override
   Widget build(BuildContext context) {
@@ -101,7 +102,7 @@ class _EarningsReportState extends State<EarningsReport> {
             Expanded(
               child: ReportStatBox(
                 label: 'This Month',
-                value: '₹45,280',
+                value: '₹${widget.data['thisMonth'] ?? 0}',
                 icon: Icons.calendar_month_rounded,
                 cs: widget.cs,
                 tt: widget.tt,
@@ -111,7 +112,7 @@ class _EarningsReportState extends State<EarningsReport> {
             Expanded(
               child: ReportStatBox(
                 label: 'Last Month',
-                value: '₹38,950',
+                value: '₹${widget.data['lastMonth'] ?? 0}',
                 icon: Icons.history_rounded,
                 cs: widget.cs,
                 tt: widget.tt,
@@ -125,7 +126,7 @@ class _EarningsReportState extends State<EarningsReport> {
             Expanded(
               child: ReportStatBox(
                 label: 'Platform Fee',
-                value: '₹11,320',
+                value: '₹${widget.data['platformFee'] ?? 0}',
                 subtitle: '25% deducted',
                 icon: Icons.account_balance_rounded,
                 cs: widget.cs,
@@ -136,7 +137,7 @@ class _EarningsReportState extends State<EarningsReport> {
             Expanded(
               child: ReportStatBox(
                 label: 'In-Hand',
-                value: '₹33,960',
+                value: '₹${widget.data['inHand'] ?? 0}',
                 subtitle: '75% received',
                 icon: Icons.account_balance_wallet_rounded,
                 cs: widget.cs,
@@ -208,14 +209,7 @@ class _EarningsReportState extends State<EarningsReport> {
               borderData: FlBorderData(show: false),
               lineBarsData: [
                 LineChartBarData(
-                  spots: [
-                    const FlSpot(0, 32000),
-                    const FlSpot(1, 35000),
-                    const FlSpot(2, 38000),
-                    const FlSpot(3, 36500),
-                    const FlSpot(4, 38950),
-                    const FlSpot(5, 45280),
-                  ],
+                  spots: _buildChartSpots(),
                   isCurved: true,
                   color: widget.cs.tertiary,
                   barWidth: 3,
@@ -265,5 +259,14 @@ class _EarningsReportState extends State<EarningsReport> {
         ),
       ],
     );
+  }
+
+  List<FlSpot> _buildChartSpots() {
+    final trend = widget.data['monthlyTrend'];
+    if (trend is List && trend.isNotEmpty) {
+      return List.generate(trend.length, (i) => FlSpot(i.toDouble(), (trend[i] as num).toDouble()));
+    }
+    // No data — flat line at 0
+    return List.generate(6, (i) => FlSpot(i.toDouble(), 0));
   }
 }

@@ -1,143 +1,84 @@
 import 'package:flutter/material.dart';
-import 'report_filters.dart';
+import '../../../../services/tutor_data_model.dart';
 
-class TimeSlotsReport extends StatefulWidget {
+class TimeSlotsReport extends StatelessWidget {
   final ColorScheme cs;
   final TextTheme tt;
+  final Map<String, dynamic> data;
 
-  const TimeSlotsReport({super.key, required this.cs, required this.tt});
+  const TimeSlotsReport({super.key, required this.cs, required this.tt, required this.data});
 
-  @override
-  State<TimeSlotsReport> createState() => _TimeSlotsReportState();
-}
-
-class _TimeSlotsReportState extends State<TimeSlotsReport> {
-  DateTimeRange? _dateRange;
+  static const _dayOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+  static const _dayLabels = {'monday': 'Mon', 'tuesday': 'Tue', 'wednesday': 'Wed', 'thursday': 'Thu', 'friday': 'Fri', 'saturday': 'Sat', 'sunday': 'Sun'};
 
   @override
   Widget build(BuildContext context) {
+    final availability = TutorData.of(context).availability;
+    final totalSlots = _dayOrder.fold<int>(0, (s, d) => s + availability[d]!.length);
+
+    if (totalSlots == 0) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: cs.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
+        ),
+        child: Column(children: [
+          Icon(Icons.schedule_outlined, size: 36, color: cs.onSurfaceVariant.withValues(alpha: 0.4)),
+          const SizedBox(height: 8),
+          Text('No availability set', style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+        ]),
+      );
+    }
+
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ReportFilters(
-          cs: widget.cs,
-          tt: widget.tt,
-          dateRange: _dateRange,
-          showStudentFilter: false,
-          onStudentFilterTap: () {},
-          onDateFilterTap: () async {
-            final picked = await showDateRangePicker(
-              context: context,
-              firstDate: DateTime(2024, 1, 1),
-              lastDate: DateTime.now(),
-              builder: (context, child) {
-                return Theme(
-                  data: Theme.of(context).copyWith(
-                    colorScheme: widget.cs.copyWith(
-                      primary: widget.cs.tertiary,
-                      onPrimary: widget.cs.onTertiaryContainer,
-                    ),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Text('$totalSlots slots across ${_dayOrder.where((d) => availability[d]!.isNotEmpty).length} days',
+            style: tt.labelMedium?.copyWith(color: cs.onSurfaceVariant)),
+        ),
+        ..._dayOrder.where((d) => availability[d]!.isNotEmpty).map((day) {
+          final slots = availability[day]!;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: cs.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(_dayLabels[day]!, style: tt.labelLarge?.copyWith(fontWeight: FontWeight.w600, color: cs.tertiary)),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: slots.map((slot) {
+                      final start = slot['start'] ?? '';
+                      final end = slot['end'] ?? '';
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: cs.tertiaryContainer.withValues(alpha: 0.4),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text('$start – $end', style: tt.labelSmall?.copyWith(color: cs.onTertiaryContainer, fontWeight: FontWeight.w500)),
+                      );
+                    }).toList(),
                   ),
-                  child: child!,
-                );
-              },
-            );
-            if (picked != null) {
-              setState(() => _dateRange = picked);
-            }
-          },
-          onClearFilters: () {
-            setState(() => _dateRange = null);
-          },
-        ),
-        _TimeSlotRow(
-          timeSlot: 'Morning (6-12 PM)',
-          bookings: 32,
-          percentage: 25.8,
-          cs: widget.cs,
-          tt: widget.tt,
-        ),
-        const SizedBox(height: 8),
-        _TimeSlotRow(
-          timeSlot: 'Afternoon (12-5 PM)',
-          bookings: 28,
-          percentage: 22.6,
-          cs: widget.cs,
-          tt: widget.tt,
-        ),
-        const SizedBox(height: 8),
-        _TimeSlotRow(
-          timeSlot: 'Evening (5-9 PM)',
-          bookings: 48,
-          percentage: 38.7,
-          highlight: true,
-          cs: widget.cs,
-          tt: widget.tt,
-        ),
-        const SizedBox(height: 8),
-        _TimeSlotRow(
-          timeSlot: 'Night (9-12 AM)',
-          bookings: 16,
-          percentage: 12.9,
-          cs: widget.cs,
-          tt: widget.tt,
-        ),
-      ],
-    );
-  }
-}
-
-class _TimeSlotRow extends StatelessWidget {
-  final String timeSlot;
-  final int bookings;
-  final double percentage;
-  final bool highlight;
-  final ColorScheme cs;
-  final TextTheme tt;
-
-  const _TimeSlotRow({
-    required this.timeSlot,
-    required this.bookings,
-    required this.percentage,
-    this.highlight = false,
-    required this.cs,
-    required this.tt,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cs.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: highlight ? cs.tertiary.withValues(alpha: 0.5) : cs.outlineVariant.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: Text(
-              timeSlot,
-              style: tt.bodyMedium?.copyWith(
-                fontWeight: highlight ? FontWeight.w600 : FontWeight.w500,
-                color: highlight ? cs.tertiary : cs.onSurface,
+                ],
               ),
             ),
-          ),
-          Text(
-            '$bookings bookings',
-            style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            '${percentage.toStringAsFixed(1)}%',
-            style: tt.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: highlight ? cs.tertiary : cs.onSurface,
-            ),
-          ),
-        ],
-      ),
+          );
+        }),
+      ],
     );
   }
 }

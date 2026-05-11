@@ -4,8 +4,9 @@ import 'report_filters.dart';
 class PayoutReport extends StatefulWidget {
   final ColorScheme cs;
   final TextTheme tt;
+  final Map<String, dynamic> data;
 
-  const PayoutReport({super.key, required this.cs, required this.tt});
+  const PayoutReport({super.key, required this.cs, required this.tt, required this.data});
 
   @override
   State<PayoutReport> createState() => _PayoutReportState();
@@ -15,49 +16,13 @@ class _PayoutReportState extends State<PayoutReport> {
   String? _selectedStudent;
   DateTimeRange? _dateRange;
 
-  final List<String> _students = ['Aarav Kumar', 'Diya Sharma', 'Arjun Patel'];
+  final List<String> _students = [];
 
-  final List<Map<String, dynamic>> _bookings = [
-    {
-      'student': 'Aarav Kumar',
-      'subject': 'JEE Maths',
-      'totalSessions': 20,
-      'completed': 18,
-      'missedByTutor': 1,
-      'missedByLearner': 1,
-      'ratePerHour': 400,
-      'totalBooking': 8000,
-      'inHandBooking': 6000,
-      'credited': 5400,
-      'pending': 600,
-    },
-    {
-      'student': 'Diya Sharma',
-      'subject': 'Chemistry',
-      'totalSessions': 15,
-      'completed': 14,
-      'missedByTutor': 0,
-      'missedByLearner': 1,
-      'ratePerHour': 380,
-      'totalBooking': 5700,
-      'inHandBooking': 4275,
-      'credited': 3990,
-      'pending': 285,
-    },
-    {
-      'student': 'Arjun Patel',
-      'subject': 'Physics',
-      'totalSessions': 12,
-      'completed': 10,
-      'missedByTutor': 1,
-      'missedByLearner': 1,
-      'ratePerHour': 420,
-      'totalBooking': 5040,
-      'inHandBooking': 3780,
-      'credited': 3150,
-      'pending': 630,
-    },
-  ];
+  List<Map<String, dynamic>> get _bookings {
+    final raw = widget.data['bookings'];
+    if (raw is List && raw.isNotEmpty) return raw.map((b) => Map<String, dynamic>.from(b)).toList();
+    return [];
+  }
 
   int get _totalBooked => _bookings.fold(0, (sum, b) => sum + (b['totalSessions'] as int));
   int get _totalCompleted => _bookings.fold(0, (sum, b) => sum + (b['completed'] as int));

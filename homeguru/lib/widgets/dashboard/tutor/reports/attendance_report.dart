@@ -5,8 +5,9 @@ import 'report_filters.dart';
 class AttendanceReport extends StatefulWidget {
   final ColorScheme cs;
   final TextTheme tt;
+  final Map<String, dynamic> data;
 
-  const AttendanceReport({super.key, required this.cs, required this.tt});
+  const AttendanceReport({super.key, required this.cs, required this.tt, required this.data});
 
   @override
   State<AttendanceReport> createState() => _AttendanceReportState();
@@ -16,7 +17,7 @@ class _AttendanceReportState extends State<AttendanceReport> {
   String? _selectedStudent;
   DateTimeRange? _dateRange;
 
-  final List<String> _students = ['Aarav Kumar', 'Diya Sharma', 'Arjun Patel', 'Ananya Singh', 'Rohan Mehta'];
+  final List<String> _students = [];
 
   @override
   Widget build(BuildContext context) {
@@ -100,7 +101,7 @@ class _AttendanceReportState extends State<AttendanceReport> {
             Expanded(
               child: ReportStatBox(
                 label: 'Attendance Rate',
-                value: '96.8%',
+                value: '${widget.data['rate'] ?? 0}%',
                 icon: Icons.check_circle_rounded,
                 cs: widget.cs,
                 tt: widget.tt,
@@ -111,8 +112,8 @@ class _AttendanceReportState extends State<AttendanceReport> {
             Expanded(
               child: ReportStatBox(
                 label: 'No-Shows',
-                value: '4',
-                subtitle: '3.2%',
+                value: '${widget.data['noShows'] ?? 0}',
+                subtitle: '${widget.data['noShowPercent'] ?? 0}%',
                 icon: Icons.event_busy_rounded,
                 cs: widget.cs,
                 tt: widget.tt,
@@ -126,8 +127,8 @@ class _AttendanceReportState extends State<AttendanceReport> {
             Expanded(
               child: ReportStatBox(
                 label: 'On-Time',
-                value: '112',
-                subtitle: '90.3%',
+                value: '${widget.data['onTime'] ?? 0}',
+                subtitle: '${widget.data['onTimePercent'] ?? 0}%',
                 icon: Icons.schedule_rounded,
                 cs: widget.cs,
                 tt: widget.tt,
@@ -137,8 +138,8 @@ class _AttendanceReportState extends State<AttendanceReport> {
             Expanded(
               child: ReportStatBox(
                 label: 'Late Joins',
-                value: '12',
-                subtitle: '9.7%',
+                value: '${widget.data['lateJoins'] ?? 0}',
+                subtitle: '${widget.data['latePercent'] ?? 0}%',
                 icon: Icons.access_time_rounded,
                 cs: widget.cs,
                 tt: widget.tt,

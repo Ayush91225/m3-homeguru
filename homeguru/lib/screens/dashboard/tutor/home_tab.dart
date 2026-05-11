@@ -5,6 +5,7 @@ import 'package:homeguru/widgets/dashboard/tutor/tutor_pending_requests.dart';
 import 'package:homeguru/widgets/dashboard/tutor/my_learners.dart';
 import 'package:homeguru/widgets/dashboard/tutor/tutor_enrollment_chart.dart';
 import 'package:homeguru/widgets/dashboard/tutor/tutor_reports.dart';
+import '../../../services/tutor_data_model.dart';
 import 'tutor_dashboard.dart';
 
 class TutorHomeTab extends StatelessWidget {
@@ -19,7 +20,7 @@ class TutorHomeTab extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       children: [
         Text(
-          'Welcome back, Tutor!',
+          'Welcome back, ${TutorData.of(context).shortName}!',
           style: tt.headlineMedium?.copyWith(
             color: cs.onSurface,
             fontWeight: FontWeight.w700,

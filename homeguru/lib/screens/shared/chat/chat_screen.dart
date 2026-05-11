@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'chat_models.dart';
 import 'chat_widgets.dart';
 import 'conversation_screen.dart';
+import '../../../services/tutor_data_model.dart';
 
 export 'chat_models.dart' show ChatTutor, ChatMessage, seedLearnerInbox, seedLearnerPast, seedLearnerArchived;
 
@@ -27,8 +28,8 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    // Use learner data for tutors, tutor data for learners
     if (widget.isTutor) {
+      // Will be populated in didChangeDependencies from TutorData
       _inbox = List.of(seedLearnerInbox);
       _past = List.of(seedLearnerPast);
       _archived = List.of(seedLearnerArchived);
@@ -37,6 +38,47 @@ class _ChatScreenState extends State<ChatScreen> {
       _past = List.of(seedPast);
       _archived = List.of(seedArchived);
     }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!widget.isTutor) return;
+    try {
+      final data = TutorData.of(context);
+      final learners = data.learners;
+      if (learners.isNotEmpty) {
+        final built = learners.map((l) => ChatTutor(
+          id: l['id']?.toString() ?? l['name']?.toString() ?? '',
+          name: l['name']?.toString() ?? '',
+          subject: _firstSubject(l),
+          avatarUrl: l['image']?.toString() ?? '',
+          lastMessage: '',
+          time: '',
+          isOnline: false,
+          isVerified: false,
+        )).toList();
+        // Only replace if we haven't already
+        if (_inbox.length != built.length || (_inbox.isNotEmpty && _inbox.first.id != built.first.id)) {
+          setState(() {
+            _inbox = built;
+            _past = [];
+            _archived = [];
+          });
+        }
+      }
+    } catch (_) {
+      // TutorData not in tree (learner side)
+    }
+  }
+
+  String _firstSubject(Map<String, dynamic> l) {
+    final subjects = l['subjects'] as List<dynamic>?;
+    if (subjects != null && subjects.isNotEmpty) {
+      final s = subjects.first;
+      if (s is Map<String, dynamic>) return s['name']?.toString() ?? '';
+    }
+    return '';
   }
 
   final Map<String, List<ChatMessage>> _messages = {};
@@ -105,37 +147,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   List<ChatMessage> _seedIfEmpty(String tutorId, String subject) {
-    final list = _msgsFor(tutorId);
-    if (list.isEmpty) {
-      list.addAll([
-        ChatMessage(
-          text: 'Hello! I saw your profile and I think I can really help you with $subject.',
-          isMe: false,
-          time: DateTime.now().subtract(const Duration(days: 1, hours: 2)),
-        ),
-        ChatMessage(
-          text: 'Hi! That sounds great. I have been struggling with a few topics.',
-          isMe: true,
-          time: DateTime.now().subtract(const Duration(days: 1, hours: 1, minutes: 55)),
-        ),
-        ChatMessage(
-          text: 'No worries at all! Which topics are giving you trouble?',
-          isMe: false,
-          time: DateTime.now().subtract(const Duration(days: 1, hours: 1, minutes: 50)),
-        ),
-        ChatMessage(
-          text: 'Mainly integration by parts and differential equations.',
-          isMe: true,
-          time: DateTime.now().subtract(const Duration(days: 1, hours: 1, minutes: 40)),
-        ),
-        ChatMessage(
-          text: 'Sure! I can help you with integration by parts. Let us schedule a session.',
-          isMe: false,
-          time: DateTime.now().subtract(const Duration(minutes: 30)),
-        ),
-      ]);
-    }
-    return list;
+    return _msgsFor(tutorId);
   }
 
   void _onQuickSend(ChatTutor tutor, String text) {

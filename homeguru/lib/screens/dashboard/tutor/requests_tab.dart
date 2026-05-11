@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../widgets/requests/tutor_request_model.dart';
-import '../../../widgets/requests/mock_tutor_requests.dart';
 import '../../../widgets/requests/tutor_request_tile.dart';
+import '../../../services/tutor_data_model.dart';
 
 class TutorRequestsTab extends StatefulWidget {
   const TutorRequestsTab({super.key});
@@ -27,6 +27,34 @@ class _TutorRequestsTabState extends State<TutorRequestsTab> with SingleTickerPr
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  List<TutorBookingRequest> _buildRequests() {
+    final raw = TutorData.of(context).pendingRequests;
+    if (raw.isEmpty) return [];
+    return raw.map((r) => TutorBookingRequest(
+      id: r['id']?.toString() ?? '',
+      studentName: r['studentName']?.toString() ?? '',
+      studentImage: r['studentImage']?.toString() ?? '',
+      subject: r['subject']?.toString() ?? '',
+      level: r['level']?.toString() ?? '',
+      type: switch (r['type']?.toString()) { 'demo' => TutorRequestType.demo, 'reschedule' => TutorRequestType.reschedule, _ => TutorRequestType.paid },
+      status: switch (r['status']?.toString()) { 'accepted' => TutorRequestStatus.accepted, 'declined' => TutorRequestStatus.declined, _ => TutorRequestStatus.pending },
+      requestedAt: DateTime.tryParse(r['requestedAt']?.toString() ?? '') ?? DateTime.now(),
+      respondedAt: r['respondedAt'] != null ? DateTime.tryParse(r['respondedAt'].toString()) : null,
+      preferredSlot: r['preferredSlot']?.toString(),
+      schedule: r['schedule']?.toString(),
+      totalSessions: r['totalSessions'] as int?,
+      perHourRate: (r['perHourRate'] as num?)?.toDouble(),
+      classesPerWeek: r['classesPerWeek'] as int?,
+      totalPrice: (r['totalPrice'] as num?)?.toDouble(),
+      inHandAmount: (r['inHandAmount'] as num?)?.toDouble(),
+      note: r['note']?.toString(),
+      originalDate: r['originalDate'] != null ? DateTime.tryParse(r['originalDate'].toString()) : null,
+      originalTime: r['originalTime']?.toString(),
+      newDate: r['newDate'] != null ? DateTime.tryParse(r['newDate'].toString()) : null,
+      newTime: r['newTime']?.toString(),
+    )).toList();
   }
 
   void _handleAccept(String id) {
@@ -86,11 +114,12 @@ class _TutorRequestsTabState extends State<TutorRequestsTab> with SingleTickerPr
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
-    final paidRequests = _applyFilters(mockTutorRequests.where((r) => r.type == TutorRequestType.paid).toList());
-    final demoRequests = _applyFilters(mockTutorRequests.where((r) => r.type == TutorRequestType.demo).toList());
-    final rescheduleRequests = _applyFilters(mockRescheduleRequests);
+    final allRequests = _buildRequests();
+    final paidRequests = _applyFilters(allRequests.where((r) => r.type == TutorRequestType.paid).toList());
+    final demoRequests = _applyFilters(allRequests.where((r) => r.type == TutorRequestType.demo).toList());
+    final rescheduleRequests = _applyFilters(allRequests.where((r) => r.type == TutorRequestType.reschedule).toList());
 
-    final allStudents = [...mockTutorRequests, ...mockRescheduleRequests]
+    final allStudents = allRequests
         .map((r) => r.studentName)
         .toSet()
         .toList()

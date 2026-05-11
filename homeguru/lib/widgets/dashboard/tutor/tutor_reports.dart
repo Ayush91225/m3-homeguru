@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../services/tutor_data_model.dart';
 import 'reports/payout_report.dart';
 import 'reports/earnings_report.dart';
 import 'reports/sessions_report.dart';
@@ -118,25 +119,28 @@ class _TutorReportsState extends State<TutorReports> {
   }
 
   Widget _buildReportContent(ColorScheme cs, TextTheme tt) {
+    final data = TutorData.of(context);
+    final reports = data.raw['reports'] as Map<String, dynamic>? ?? {};
+
     switch (_selectedReport) {
       case ReportType.payout:
-        return PayoutReport(cs: cs, tt: tt);
+        return PayoutReport(cs: cs, tt: tt, data: reports['payout'] as Map<String, dynamic>? ?? {});
       case ReportType.earnings:
-        return EarningsReport(cs: cs, tt: tt);
+        return EarningsReport(cs: cs, tt: tt, data: reports['earnings'] as Map<String, dynamic>? ?? {});
       case ReportType.sessions:
-        return SessionsReport(cs: cs, tt: tt);
+        return SessionsReport(cs: cs, tt: tt, data: reports['sessions'] as Map<String, dynamic>? ?? {});
       case ReportType.students:
-        return StudentsReport(cs: cs, tt: tt);
+        return StudentsReport(cs: cs, tt: tt, data: reports['students'] as Map<String, dynamic>? ?? {});
       case ReportType.attendance:
-        return AttendanceReport(cs: cs, tt: tt);
+        return AttendanceReport(cs: cs, tt: tt, data: reports['attendance'] as Map<String, dynamic>? ?? {});
       case ReportType.ratings:
-        return RatingsReport(cs: cs, tt: tt);
+        return RatingsReport(cs: cs, tt: tt, data: reports['ratings'] as Map<String, dynamic>? ?? {});
       case ReportType.subjects:
-        return SubjectsReport(cs: cs, tt: tt);
+        return SubjectsReport(cs: cs, tt: tt, data: reports['subjects'] as Map<String, dynamic>? ?? {});
       case ReportType.timeSlots:
-        return TimeSlotsReport(cs: cs, tt: tt);
+        return TimeSlotsReport(cs: cs, tt: tt, data: reports['timeSlots'] as Map<String, dynamic>? ?? {});
       case ReportType.conversion:
-        return ConversionReport(cs: cs, tt: tt);
+        return ConversionReport(cs: cs, tt: tt, data: reports['conversion'] as Map<String, dynamic>? ?? {});
     }
   }
 }

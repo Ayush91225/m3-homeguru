@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../main.dart';
 import '../../../screens/welcome/welcome_screen.dart';
 import '../../../screens/shared/notifications_screen.dart';
-import '../../../screens/shared/wallet/wallet_screen.dart';
+import '../../../screens/dashboard/tutor/wallet/tutor_wallet_screen.dart';
 
 class TutorDrawer extends StatelessWidget {
   const TutorDrawer({
@@ -117,7 +117,7 @@ class TutorDrawer extends StatelessWidget {
                   selected: false,
                   onTap: () {
                     Navigator.pop(context);
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const WalletScreen()));
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const TutorWalletScreen()));
                   },
                 );
                 if (index == 8) return _DrawerItem(

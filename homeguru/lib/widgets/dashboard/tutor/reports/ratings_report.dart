@@ -5,8 +5,9 @@ import 'report_filters.dart';
 class RatingsReport extends StatefulWidget {
   final ColorScheme cs;
   final TextTheme tt;
+  final Map<String, dynamic> data;
 
-  const RatingsReport({super.key, required this.cs, required this.tt});
+  const RatingsReport({super.key, required this.cs, required this.tt, required this.data});
 
   @override
   State<RatingsReport> createState() => _RatingsReportState();
@@ -16,7 +17,7 @@ class _RatingsReportState extends State<RatingsReport> {
   String? _selectedStudent;
   DateTimeRange? _dateRange;
 
-  final List<String> _students = ['Aarav Kumar', 'Diya Sharma', 'Arjun Patel', 'Ananya Singh', 'Rohan Mehta'];
+  final List<String> _students = [];
 
   @override
   Widget build(BuildContext context) {
@@ -100,7 +101,7 @@ class _RatingsReportState extends State<RatingsReport> {
             Expanded(
               child: ReportStatBox(
                 label: 'Average Rating',
-                value: '4.8',
+                value: '${widget.data['average'] ?? 0}',
                 icon: Icons.star_rounded,
                 cs: widget.cs,
                 tt: widget.tt,
@@ -111,7 +112,7 @@ class _RatingsReportState extends State<RatingsReport> {
             Expanded(
               child: ReportStatBox(
                 label: 'Total Reviews',
-                value: '156',
+                value: '${widget.data['totalReviews'] ?? 0}',
                 icon: Icons.rate_review_rounded,
                 cs: widget.cs,
                 tt: widget.tt,
@@ -125,8 +126,8 @@ class _RatingsReportState extends State<RatingsReport> {
             Expanded(
               child: ReportStatBox(
                 label: '5 Star',
-                value: '128',
-                subtitle: '82.1%',
+                value: '${widget.data['fiveStar'] ?? 0}',
+                subtitle: '',
                 icon: Icons.star_rounded,
                 cs: widget.cs,
                 tt: widget.tt,
@@ -136,8 +137,8 @@ class _RatingsReportState extends State<RatingsReport> {
             Expanded(
               child: ReportStatBox(
                 label: '4 Star',
-                value: '24',
-                subtitle: '15.4%',
+                value: '${widget.data['fourStar'] ?? 0}',
+                subtitle: '',
                 icon: Icons.star_half_rounded,
                 cs: widget.cs,
                 tt: widget.tt,

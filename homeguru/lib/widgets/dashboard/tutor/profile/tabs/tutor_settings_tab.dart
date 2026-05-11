@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../../services/tutor_profile_service.dart';
 
 class TutorSettingsTab extends StatefulWidget {
   const TutorSettingsTab({super.key});
@@ -13,8 +15,29 @@ class _TutorSettingsTabState extends State<TutorSettingsTab> {
   bool _emails = false;
   bool _autoAccept = false;
 
-  static const _email = 'priya.sharma@example.com';
-  String _phone = '+91 98765 12345';
+  String _email = '';
+  String _phone = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final tutorId = prefs.getString('userId');
+    if (tutorId == null) return;
+
+    final result = await TutorProfileService.getTutorProfile(tutorId);
+    if (result['success'] == true && mounted) {
+      final data = result['data'] as Map<String, dynamic>;
+      setState(() {
+        _email = data['email'] ?? '';
+        _phone = data['phone'] ?? '';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

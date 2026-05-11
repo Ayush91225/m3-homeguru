@@ -6,8 +6,9 @@ import 'report_filters.dart';
 class SessionsReport extends StatefulWidget {
   final ColorScheme cs;
   final TextTheme tt;
+  final Map<String, dynamic> data;
 
-  const SessionsReport({super.key, required this.cs, required this.tt});
+  const SessionsReport({super.key, required this.cs, required this.tt, required this.data});
 
   @override
   State<SessionsReport> createState() => _SessionsReportState();
@@ -17,7 +18,7 @@ class _SessionsReportState extends State<SessionsReport> {
   String? _selectedStudent;
   DateTimeRange? _dateRange;
 
-  final List<String> _students = ['Aarav Kumar', 'Diya Sharma', 'Arjun Patel', 'Ananya Singh', 'Rohan Mehta'];
+  final List<String> _students = [];
 
   @override
   Widget build(BuildContext context) {
@@ -101,7 +102,7 @@ class _SessionsReportState extends State<SessionsReport> {
             Expanded(
               child: ReportStatBox(
                 label: 'Total Sessions',
-                value: '124',
+                value: '${widget.data['total'] ?? 0}',
                 icon: Icons.event_rounded,
                 cs: widget.cs,
                 tt: widget.tt,
@@ -111,8 +112,10 @@ class _SessionsReportState extends State<SessionsReport> {
             Expanded(
               child: ReportStatBox(
                 label: 'Completed',
-                value: '118',
-                subtitle: '95.2%',
+                value: '${widget.data['completed'] ?? 0}',
+                subtitle: widget.data['total'] != null && widget.data['total'] > 0
+                    ? '${((widget.data['completed'] ?? 0) / widget.data['total'] * 100).toStringAsFixed(1)}%'
+                    : '0%',
                 icon: Icons.check_circle_rounded,
                 cs: widget.cs,
                 tt: widget.tt,
@@ -127,8 +130,10 @@ class _SessionsReportState extends State<SessionsReport> {
             Expanded(
               child: ReportStatBox(
                 label: 'Cancelled',
-                value: '6',
-                subtitle: '4.8%',
+                value: '${widget.data['cancelled'] ?? 0}',
+                subtitle: widget.data['total'] != null && widget.data['total'] > 0
+                    ? '${((widget.data['cancelled'] ?? 0) / widget.data['total'] * 100).toStringAsFixed(1)}%'
+                    : '0%',
                 icon: Icons.cancel_rounded,
                 cs: widget.cs,
                 tt: widget.tt,
@@ -138,7 +143,7 @@ class _SessionsReportState extends State<SessionsReport> {
             Expanded(
               child: ReportStatBox(
                 label: 'Avg Duration',
-                value: '58 min',
+                value: '${widget.data['avgDuration'] ?? 0} min',
                 icon: Icons.timer_rounded,
                 cs: widget.cs,
                 tt: widget.tt,
@@ -161,8 +166,10 @@ class _SessionsReportState extends State<SessionsReport> {
               centerSpaceRadius: 50,
               sections: [
                 PieChartSectionData(
-                  value: 118,
-                  title: '95.2%',
+                  value: (widget.data['completed'] ?? 0).toDouble().clamp(0.01, double.infinity),
+                  title: widget.data['total'] != null && widget.data['total'] > 0
+                      ? '${((widget.data['completed'] ?? 0) / widget.data['total'] * 100).toStringAsFixed(0)}%'
+                      : '0%',
                   color: widget.cs.tertiary,
                   radius: 50,
                   titleStyle: widget.tt.labelMedium?.copyWith(
@@ -171,8 +178,10 @@ class _SessionsReportState extends State<SessionsReport> {
                   ),
                 ),
                 PieChartSectionData(
-                  value: 6,
-                  title: '4.8%',
+                  value: (widget.data['cancelled'] ?? 0).toDouble().clamp(0.01, double.infinity),
+                  title: widget.data['total'] != null && widget.data['total'] > 0
+                      ? '${((widget.data['cancelled'] ?? 0) / widget.data['total'] * 100).toStringAsFixed(0)}%'
+                      : '0%',
                   color: widget.cs.errorContainer,
                   radius: 50,
                   titleStyle: widget.tt.labelMedium?.copyWith(

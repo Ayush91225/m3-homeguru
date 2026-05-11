@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'tutor_profile_service.dart';
 
 class SubProfile {
   final String name;
@@ -78,6 +79,17 @@ class UserProfileStore extends ChangeNotifier {
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_kAvatar, file.path);
+
+    // Upload to S3 and update DB
+    final url = await TutorProfileService.uploadFile(file, 'profile-photos');
+    print('[ProfileStore] Avatar upload result: $url');
+    if (url != null) {
+      final tutorId = prefs.getString('userId');
+      if (tutorId != null) {
+        final result = await TutorProfileService.updateProfile(tutorId, {'profilePhoto': url});
+        print('[ProfileStore] Avatar DB update result: $result');
+      }
+    }
   }
 
   Future<void> setCover(File file) async {
@@ -85,6 +97,17 @@ class UserProfileStore extends ChangeNotifier {
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_kCover, file.path);
+
+    // Upload to S3 and update DB
+    final url = await TutorProfileService.uploadFile(file, 'covers');
+    print('[ProfileStore] Cover upload result: $url');
+    if (url != null) {
+      final tutorId = prefs.getString('userId');
+      if (tutorId != null) {
+        final result = await TutorProfileService.updateProfile(tutorId, {'coverPhoto': url});
+        print('[ProfileStore] Cover DB update result: $result');
+      }
+    }
   }
 
   Future<void> addSubProfile(SubProfile profile) async {

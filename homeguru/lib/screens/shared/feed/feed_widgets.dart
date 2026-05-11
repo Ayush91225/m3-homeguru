@@ -45,6 +45,29 @@ class StoryRing extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (blogs.isEmpty) {
+      final cs = Theme.of(context).colorScheme;
+      final tt = Theme.of(context).textTheme;
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          decoration: BoxDecoration(
+            color: cs.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
+          ),
+          child: Column(
+            children: [
+              Icon(Icons.auto_stories_outlined, size: 28, color: cs.onSurfaceVariant.withValues(alpha: 0.4)),
+              const SizedBox(height: 6),
+              Text('No stories yet', style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+            ],
+          ),
+        ),
+      );
+    }
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final accentColor = isTutor ? cs.tertiary : cs.primary;
@@ -561,49 +584,77 @@ class NewsCard extends StatelessWidget {
     final tt = Theme.of(context).textTheme;
     final accentContainer = isTutor ? cs.tertiaryContainer : cs.primaryContainer;
     final onAccentContainer = isTutor ? cs.onTertiaryContainer : cs.onPrimaryContainer;
+    final seed = article.title.hashCode.abs() % 1000;
+    final imgUrl = article.imageUrl.isNotEmpty
+        ? article.imageUrl
+        : 'https://picsum.photos/seed/$seed/400/200';
 
     return InkWell(
       onTap: () => Navigator.push(context,
           MaterialPageRoute(builder: (_) => WebViewScreen(url: article.url, title: article.source))),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: cs.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        clipBehavior: Clip.antiAlias,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(article.title,
-                style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis),
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: accentContainer,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(article.source,
-                      style: tt.labelSmall?.copyWith(
-                          color: onAccentContainer,
-                          fontWeight: FontWeight.w600)),
-                ),
-                if (article.publishedAt.isNotEmpty) ...[
-                  const SizedBox(width: 8),
-                  Text(article.publishedAt,
-                      style:
-                          tt.labelSmall?.copyWith(color: cs.onSurfaceVariant)),
-                ],
-              ],
+            CachedNetworkImage(
+              imageUrl: imgUrl,
+              height: 150,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              placeholder: (_, _) =>
+                  Container(height: 150, color: cs.surfaceContainerHighest),
+              errorWidget: (_, _, _) =>
+                  Container(height: 150, color: cs.surfaceContainerHighest,
+                    child: Center(child: Icon(Icons.image_outlined, color: cs.onSurfaceVariant.withValues(alpha: 0.3), size: 32))),
             ),
-            if (article.description.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text(article.description,
-                  style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis),
-            ],
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(article.title,
+                      style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis),
+                  if (article.description.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(article.description,
+                        style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis),
+                  ],
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Container(
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: accentContainer,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(article.source,
+                            style: tt.labelSmall?.copyWith(
+                                color: onAccentContainer,
+                                fontWeight: FontWeight.w600)),
+                      ),
+                      if (article.publishedAt.isNotEmpty) ...[
+                        const SizedBox(width: 8),
+                        Text(article.publishedAt,
+                            style:
+                                tt.labelSmall?.copyWith(color: cs.onSurfaceVariant)),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),

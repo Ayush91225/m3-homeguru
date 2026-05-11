@@ -11,11 +11,18 @@ class FeedTab extends StatefulWidget {
 
 class _FeedTabState extends State<FeedTab> with SingleTickerProviderStateMixin {
   late final TabController _tab;
+  List<HgBlog> _todayBlogs = [];
 
   @override
   void initState() {
     super.initState();
     _tab = TabController(length: 2, vsync: this);
+    _loadStories();
+  }
+
+  Future<void> _loadStories() async {
+    final blogs = await FeedService.fetchTodayBlogs();
+    if (mounted) setState(() => _todayBlogs = blogs);
   }
 
   @override
@@ -36,7 +43,7 @@ class _FeedTabState extends State<FeedTab> with SingleTickerProviderStateMixin {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.only(top: 12, bottom: 4),
-              child: StoryRing(blogs: mockHgBlogs),
+              child: StoryRing(blogs: _todayBlogs),
             ),
           ),
           SliverPersistentHeader(
@@ -75,6 +82,7 @@ class _BlogsView extends StatefulWidget {
 class _BlogsViewState extends State<_BlogsView>
     with AutomaticKeepAliveClientMixin, InfiniteScroll<_BlogsView> {
   final List<FeedArticle> _articles = [];
+  List<HgBlog> _hgBlogs = [];
   bool _initialLoading = true;
   bool _error = false;
 
@@ -91,22 +99,29 @@ class _BlogsViewState extends State<_BlogsView>
     if (refresh) {
       setState(() {
         _articles.clear();
+        _hgBlogs = [];
         page = 1;
         hasMore = true;
         _initialLoading = true;
         _error = false;
-        FeedService.fetchBlogs(1); // reset
       });
     }
-    final result = await FeedService.fetchBlogs(page);
+    final results = await Future.wait([
+      FeedService.fetchBlogs(page),
+      if (page == 1) FeedService.fetchAllBlogs() else Future.value(<HgBlog>[]),
+    ]);
     if (!mounted) return;
     setState(() {
       _initialLoading = false;
       loadingMore = false;
-      if (result.isEmpty) {
+      final articles = results[0] as List<FeedArticle>;
+      if (page == 1 && results.length > 1) {
+        _hgBlogs = results[1] as List<HgBlog>;
+      }
+      if (articles.isEmpty) {
         hasMore = false;
       } else {
-        _articles.addAll(result);
+        _articles.addAll(articles);
         page++;
       }
     });
@@ -125,7 +140,7 @@ class _BlogsViewState extends State<_BlogsView>
     if (_error) return FeedError(onRetry: () => _loadPage(refresh: true));
 
     // interleave HG blogs at positions 0, 3, 6 …
-    final hgBlogs = mockHgBlogs;
+    final hgBlogs = _hgBlogs;
     int hgIdx = 0;
     int extIdx = 0;
     final items = <dynamic>[];
@@ -230,7 +245,7 @@ class _NewsViewState extends State<_NewsView>
         controller: scrollCtrl,
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
         itemCount: _articles.length + (loadingMore ? 1 : 0),
-        separatorBuilder: (_, _) => const Divider(height: 1),
+        separatorBuilder: (_, _) => const SizedBox(height: 12),
         itemBuilder: (_, i) {
           if (i == _articles.length) {
             return const Padding(

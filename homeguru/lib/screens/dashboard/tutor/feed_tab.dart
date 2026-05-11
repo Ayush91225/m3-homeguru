@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../shared/feed/feed_models.dart';
 import '../../shared/feed/feed_widgets.dart';
+import 'blog/blog_editor_screen.dart';
 
 class TutorFeedTab extends StatefulWidget {
   const TutorFeedTab({super.key});
@@ -11,11 +12,18 @@ class TutorFeedTab extends StatefulWidget {
 
 class _TutorFeedTabState extends State<TutorFeedTab> with SingleTickerProviderStateMixin {
   late final TabController _tab;
+  List<HgBlog> _todayBlogs = [];
 
   @override
   void initState() {
     super.initState();
     _tab = TabController(length: 2, vsync: this);
+    _loadStories();
+  }
+
+  Future<void> _loadStories() async {
+    final blogs = await FeedService.fetchTodayBlogs();
+    if (mounted) setState(() => _todayBlogs = blogs);
   }
 
   @override
@@ -36,7 +44,7 @@ class _TutorFeedTabState extends State<TutorFeedTab> with SingleTickerProviderSt
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.only(top: 12, bottom: 4),
-              child: StoryRing(blogs: mockHgBlogs, isTutor: true),
+              child: StoryRing(blogs: _todayBlogs, isTutor: true),
             ),
           ),
           SliverPersistentHeader(
@@ -61,14 +69,14 @@ class _TutorFeedTabState extends State<TutorFeedTab> with SingleTickerProviderSt
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          // TODO: Add blog upload screen
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Blog upload coming soon!')),
+        onPressed: () async {
+          final published = await Navigator.push<bool>(
+            context, MaterialPageRoute(builder: (_) => const BlogEditorScreen()),
           );
+          if (published == true) _loadStories();
         },
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Upload Blog'),
+        icon: const Icon(Icons.edit_rounded),
+        label: const Text('Write'),
         backgroundColor: cs.tertiaryContainer,
         foregroundColor: cs.onTertiaryContainer,
       ),
@@ -90,6 +98,7 @@ class _BlogsView extends StatefulWidget {
 class _BlogsViewState extends State<_BlogsView>
     with AutomaticKeepAliveClientMixin, InfiniteScroll<_BlogsView> {
   final List<FeedArticle> _articles = [];
+  List<HgBlog> _hgBlogs = [];
   bool _initialLoading = true;
   bool _error = false;
 
@@ -106,22 +115,29 @@ class _BlogsViewState extends State<_BlogsView>
     if (refresh) {
       setState(() {
         _articles.clear();
+        _hgBlogs = [];
         page = 1;
         hasMore = true;
         _initialLoading = true;
         _error = false;
-        FeedService.fetchBlogs(1);
       });
     }
-    final result = await FeedService.fetchBlogs(page);
+    final results = await Future.wait([
+      FeedService.fetchBlogs(page),
+      if (page == 1) FeedService.fetchAllBlogs() else Future.value(<HgBlog>[]),
+    ]);
     if (!mounted) return;
     setState(() {
       _initialLoading = false;
       loadingMore = false;
-      if (result.isEmpty) {
+      final articles = results[0] as List<FeedArticle>;
+      if (page == 1 && results.length > 1) {
+        _hgBlogs = results[1] as List<HgBlog>;
+      }
+      if (articles.isEmpty) {
         hasMore = false;
       } else {
-        _articles.addAll(result);
+        _articles.addAll(articles);
         page++;
       }
     });
@@ -139,7 +155,7 @@ class _BlogsViewState extends State<_BlogsView>
     if (_initialLoading) return const FeedLoader();
     if (_error) return FeedError(onRetry: () => _loadPage(refresh: true));
 
-    final hgBlogs = mockHgBlogs;
+    final hgBlogs = _hgBlogs;
     int hgIdx = 0;
     int extIdx = 0;
     final items = <dynamic>[];
@@ -245,7 +261,7 @@ class _NewsViewState extends State<_NewsView>
         controller: scrollCtrl,
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
         itemCount: _articles.length + (loadingMore ? 1 : 0),
-        separatorBuilder: (_, _) => const Divider(height: 1),
+        separatorBuilder: (_, _) => const SizedBox(height: 12),
         itemBuilder: (_, i) {
           if (i == _articles.length) {
             return const Padding(

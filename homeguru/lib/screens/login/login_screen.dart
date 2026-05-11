@@ -239,6 +239,10 @@ class _LoginViewState extends State<_LoginView> {
         await prefs.setString('userId', data['userId']);
         await prefs.setString('userRole', data['role']);
         await prefs.setString('logged_in_user', data['role']);
+        await prefs.setString('userEmail', email);
+        if (data['onboardingComplete'] == true) {
+          await prefs.setBool('onboarding_complete', true);
+        }
         
         if (!mounted) return;
         

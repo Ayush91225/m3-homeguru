@@ -30,14 +30,15 @@ class TutorProfileHeader extends StatefulWidget {
 
 class _TutorProfileHeaderState extends State<TutorProfileHeader> {
   String? _networkPhotoUrl;
+  String? _networkCoverUrl;
 
   @override
   void initState() {
     super.initState();
-    _loadNetworkPhoto();
+    _loadNetworkData();
   }
 
-  Future<void> _loadNetworkPhoto() async {
+  Future<void> _loadNetworkData() async {
     final prefs = await SharedPreferences.getInstance();
     final tutorId = prefs.getString('userId');
     if (tutorId == null) return;
@@ -46,9 +47,11 @@ class _TutorProfileHeaderState extends State<TutorProfileHeader> {
     if (result['success'] == true && mounted) {
       final data = result['data'] as Map<String, dynamic>;
       final photo = data['profilePhoto'] as String?;
-      if (photo != null && photo.isNotEmpty) {
-        setState(() => _networkPhotoUrl = photo);
-      }
+      final cover = data['coverPhoto'] as String?;
+      setState(() {
+        if (photo != null && photo.isNotEmpty) _networkPhotoUrl = photo;
+        if (cover != null && cover.isNotEmpty) _networkCoverUrl = cover;
+      });
     }
   }
 
@@ -63,7 +66,7 @@ class _TutorProfileHeaderState extends State<TutorProfileHeader> {
         SizedBox(
           height: TutorProfileHeader._coverH + widget.topPad,
           width: double.infinity,
-          child: _Cover(cs: cs, image: store.cover),
+          child: _Cover(cs: cs, image: store.cover, networkUrl: _networkCoverUrl),
         ),
         Positioned(
           top: widget.topPad + 4,
@@ -97,21 +100,27 @@ class _TutorProfileHeaderState extends State<TutorProfileHeader> {
 }
 
 class _Cover extends StatelessWidget {
-  const _Cover({required this.cs, required this.image});
+  const _Cover({required this.cs, required this.image, this.networkUrl});
   final ColorScheme cs;
   final File? image;
+  final String? networkUrl;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final hasImage = image != null || (networkUrl != null && networkUrl!.isNotEmpty);
     return ClipRect(
       child: Stack(
         fit: StackFit.expand,
         children: [
-          image != null
-              ? Image.file(image!, fit: BoxFit.cover)
-              : Container(color: cs.surfaceContainerLow),
-          if (image == null) ...[
+          if (image != null)
+            Image.file(image!, fit: BoxFit.cover)
+          else if (networkUrl != null && networkUrl!.isNotEmpty)
+            Image.network(networkUrl!, fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(color: cs.surfaceContainerLow))
+          else
+            Container(color: cs.surfaceContainerLow),
+          if (!hasImage) ...[
             _Blob(top: -90, right: -90, size: 280, color: const Color(0xFFBF5000), opacity: isDark ? 0.28 : 0.13),
             _Blob(top: -70, left: -50, size: 340, color: const Color(0xFFFF9F5C), opacity: isDark ? 0.14 : 0.08),
             _Blob(bottom: -70, left: -70, size: 220, color: const Color(0xFFE67E22), opacity: isDark ? 0.18 : 0.09),
