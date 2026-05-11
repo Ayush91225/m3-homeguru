@@ -4,9 +4,10 @@ import 'package:http/http.dart' as http;
 class LearnerDataModel {
   static const _baseUrl = 'https://app.homeguruworld.com/api';
 
-  /// Fetch active & verified tutors
-  static Future<List<Map<String, dynamic>>> fetchTutors({
-    int limit = 50,
+  /// Fetch active & verified tutors with pagination
+  static Future<Map<String, dynamic>> fetchTutors({
+    int limit = 20,
+    String? lastKey,
     String? subject,
     String? board,
     String? grade,
@@ -14,6 +15,7 @@ class LearnerDataModel {
     try {
       final params = <String, String>{
         'limit': limit.toString(),
+        if (lastKey != null) 'lastKey': lastKey,
         if (subject != null) 'subject': subject,
         if (board != null) 'board': board,
         if (grade != null) 'grade': grade,
@@ -25,33 +27,41 @@ class LearnerDataModel {
       if (response.statusCode == 200) {
         final result = jsonDecode(response.body);
         if (result['success'] == true) {
-          return List<Map<String, dynamic>>.from(result['data'] ?? []);
+          return {
+            'tutors': List<Map<String, dynamic>>.from(result['data'] ?? []),
+            'hasMore': result['hasMore'] ?? false,
+            'lastKey': result['lastKey'],
+          };
         }
       }
-      return [];
+      return {'tutors': [], 'hasMore': false};
     } catch (e) {
       print('Error fetching tutors: $e');
-      return [];
+      return {'tutors': [], 'hasMore': false};
     }
   }
 
   /// Map API tutor to widget format
   static Map<String, dynamic> mapTutorForWidget(Map<String, dynamic> apiTutor) {
+    final subjects = apiTutor['subjects'] as List?;
+    final location = apiTutor['location'];
+    final locationStr = location is String ? location : (location is Map ? location['city'] ?? location['state'] ?? '' : '');
+    
     return {
-      'id': apiTutor['tutorId'],
-      'name': apiTutor['name'],
-      'image': apiTutor['profilePhoto'],
+      'id': apiTutor['tutorId'] ?? '',
+      'name': apiTutor['name'] ?? '',
+      'image': apiTutor['profilePhoto'] ?? '',
       'verified': apiTutor['isVerified'] == true,
-      'rating': apiTutor['rating'] ?? 0.0,
+      'rating': (apiTutor['rating'] ?? 0).toDouble(),
       'reviews': apiTutor['reviewCount'] ?? 0,
       'students': 0, // Not in API yet
-      'location': apiTutor['location'] ?? '',
-      'experience': apiTutor['experience'] ?? '',
+      'location': locationStr,
+      'experience': apiTutor['experience']?.toString() ?? '',
       'responseTime': '< 1 hour', // Mock for now
-      'subjects': (apiTutor['subjects'] as List?)?.map((s) => {
-        'name': s,
+      'subjects': (subjects ?? []).map((s) => {
+        'name': s.toString(),
         'hourlyRate': apiTutor['hourlyRate'] ?? 0,
-      }).toList() ?? [],
+      }).toList(),
     };
   }
 }

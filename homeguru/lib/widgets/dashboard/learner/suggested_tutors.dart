@@ -14,6 +14,7 @@ class SuggestedTutors extends StatefulWidget {
 class _SuggestedTutorsState extends State<SuggestedTutors> {
   List<Map<String, dynamic>> _tutors = [];
   bool _isLoading = true;
+  bool _hasLoaded = false;
 
   @override
   void initState() {
@@ -22,13 +23,20 @@ class _SuggestedTutorsState extends State<SuggestedTutors> {
   }
 
   Future<void> _loadTutors() async {
-    final apiTutors = await LearnerDataModel.fetchTutors(limit: 5);
+    if (_hasLoaded) return;
+    final result = await LearnerDataModel.fetchTutors(limit: 6);
+    final apiTutors = result['tutors'] as List<Map<String, dynamic>>;
     if (!mounted) return;
     setState(() {
-      _tutors = [
-        ...apiTutors.map((t) => LearnerDataModel.mapTutorForWidget(t)),
-        {'isViewAll': true}
-      ];
+      _hasLoaded = true;
+      if (apiTutors.isEmpty) {
+        _tutors = [];
+      } else {
+        _tutors = [
+          ...apiTutors.map((t) => LearnerDataModel.mapTutorForWidget(t)),
+          {'isViewAll': true}
+        ];
+      }
       _isLoading = false;
     });
   }
@@ -48,7 +56,74 @@ class _SuggestedTutorsState extends State<SuggestedTutors> {
     final tt = Theme.of(context).textTheme;
 
     if (_isLoading) {
-      return const SizedBox.shrink();
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 16),
+            child: Row(
+              children: [
+                Icon(Icons.recommend_rounded, size: 18, color: cs.onSurfaceVariant),
+                const SizedBox(width: 8),
+                Text(
+                  'Suggested Tutors',
+                  style: tt.bodyMedium?.copyWith(
+                    color: cs.onSurface,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(
+            height: 200,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: 3,
+              separatorBuilder: (_, _) => const SizedBox(width: 12),
+              itemBuilder: (_, i) => _ShimmerTutorCard(cs: cs),
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (_tutors.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 16),
+            child: Row(
+              children: [
+                Icon(Icons.recommend_rounded, size: 18, color: cs.onSurfaceVariant),
+                const SizedBox(width: 8),
+                Text(
+                  'Suggested Tutors',
+                  style: tt.bodyMedium?.copyWith(
+                    color: cs.onSurface,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: cs.surface,
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
+            ),
+            child: Column(children: [
+              Icon(Icons.person_search_rounded, size: 36, color: cs.onSurfaceVariant.withValues(alpha: 0.4)),
+              const SizedBox(height: 8),
+              Text('No tutors available', style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+            ]),
+          ),
+        ],
+      );
     }
 
     return Column(
@@ -402,16 +477,28 @@ class _TutorCard extends StatelessWidget {
             children: [
               Icon(Icons.location_on_rounded, size: 12, color: cs.onSurfaceVariant),
               const SizedBox(width: 4),
-              Text(
-                tutor['location'] ?? '',
-                style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+              Expanded(
+                child: Text(
+                  tutor['location']?.toString() ?? '',
+                  style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              const SizedBox(width: 12),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
               Icon(Icons.work_outline_rounded, size: 12, color: cs.onSurfaceVariant),
               const SizedBox(width: 4),
-              Text(
-                '${tutor['experience'] ?? 0} years exp',
-                style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+              Expanded(
+                child: Text(
+                  tutor['experience']?.toString() ?? 'New tutor',
+                  style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
@@ -450,6 +537,102 @@ class _TutorCard extends StatelessWidget {
                 fontWeight: FontWeight.w500,
                 color: cs.onPrimaryContainer,
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ShimmerTutorCard extends StatelessWidget {
+  final ColorScheme cs;
+  const _ShimmerTutorCard({required this.cs});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 280,
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: cs.surfaceContainerHighest,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      height: 14,
+                      decoration: BoxDecoration(
+                        color: cs.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      width: 60,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: cs.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            width: 100,
+            height: 20,
+            decoration: BoxDecoration(
+              color: cs.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            width: double.infinity,
+            height: 10,
+            decoration: BoxDecoration(
+              color: cs.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Container(
+            width: 120,
+            height: 10,
+            decoration: BoxDecoration(
+              color: cs.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          const Spacer(),
+          Container(
+            width: double.infinity,
+            height: 36,
+            decoration: BoxDecoration(
+              color: cs.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(999),
             ),
           ),
         ],

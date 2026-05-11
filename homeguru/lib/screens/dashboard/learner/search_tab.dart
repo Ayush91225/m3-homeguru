@@ -27,8 +27,11 @@ class _SearchTabState extends State<SearchTab> {
   List<Map<String, dynamic>> _displayedTutors = [];
   List<Map<String, dynamic>> _filteredTutors = [];
   bool _isLoading = false;
+  bool _hasLoaded = false;
+  bool _hasMore = true;
+  String? _lastKey;
   int _currentPage = 0;
-  static const int _itemsPerPage = 15;
+  static const int _itemsPerPage = 20;
   bool _scrollPending = false;
 
   @override
@@ -39,9 +42,15 @@ class _SearchTabState extends State<SearchTab> {
   }
 
   Future<void> _loadTutors() async {
-    final apiTutors = await LearnerDataModel.fetchTutors(limit: 100);
+    if (_hasLoaded) return;
+    setState(() => _isLoading = true);
+    final result = await LearnerDataModel.fetchTutors(limit: 20);
+    final apiTutors = result['tutors'] as List<Map<String, dynamic>>;
     if (!mounted) return;
     setState(() {
+      _hasLoaded = true;
+      _hasMore = result['hasMore'] as bool;
+      _lastKey = result['lastKey'] as String?;
       _allTutors = apiTutors.map((t) => LearnerDataModel.mapTutorForWidget(t)).toList();
       _applyFilters();
     });
@@ -76,16 +85,36 @@ class _SearchTabState extends State<SearchTab> {
     });
   }
 
-  void _loadMoreTutors() {
+  void _loadMoreTutors() async {
     if (_isLoading || !mounted) return;
+    
+    // Check if we need to fetch more from API
     final start = _currentPage * _itemsPerPage;
-    if (start >= _filteredTutors.length) return;
-    setState(() {
-      _isLoading = true;
-      _displayedTutors.addAll(_filteredTutors.sublist(start, (start + _itemsPerPage).clamp(0, _filteredTutors.length)));
-      _currentPage++;
-      _isLoading = false;
-    });
+    if (start >= _filteredTutors.length && _hasMore && _lastKey != null) {
+      setState(() => _isLoading = true);
+      final result = await LearnerDataModel.fetchTutors(limit: 20, lastKey: _lastKey);
+      final apiTutors = result['tutors'] as List<Map<String, dynamic>>;
+      if (!mounted) return;
+      
+      final newTutors = apiTutors.map((t) => LearnerDataModel.mapTutorForWidget(t)).toList();
+      setState(() {
+        _hasMore = result['hasMore'] as bool;
+        _lastKey = result['lastKey'] as String?;
+        _allTutors.addAll(newTutors);
+        _filteredTutors.addAll(newTutors);
+        _displayedTutors.addAll(newTutors.take(_itemsPerPage));
+        _currentPage++;
+        _isLoading = false;
+      });
+    } else if (start < _filteredTutors.length) {
+      // Load from already fetched data
+      setState(() {
+        _isLoading = true;
+        _displayedTutors.addAll(_filteredTutors.sublist(start, (start + _itemsPerPage).clamp(0, _filteredTutors.length)));
+        _currentPage++;
+        _isLoading = false;
+      });
+    }
   }
 
   void _onScroll() {
@@ -249,7 +278,7 @@ class _SearchTabState extends State<SearchTab> {
                         ),
                       );
                     },
-                    childCount: _displayedTutors.length + (_isLoading ? 1 : 0),
+                    childCount: _displayedTutors.length + (_isLoading && _hasMore ? 2 : 0),
                   ),
                 ),
               ),

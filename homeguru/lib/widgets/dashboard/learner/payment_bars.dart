@@ -262,7 +262,7 @@ class _PaymentBarsState extends State<PaymentBars> {
                       children: [
                         Row(
                           children: [
-                            Flexible(
+                            Expanded(
                               child: Text(
                                 '${_pendingPayments.length} payments pending',
                                 style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
@@ -270,11 +270,10 @@ class _PaymentBarsState extends State<PaymentBars> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            if (isUrgent)
-                              const SizedBox(width: 8),
-                            if (isUrgent)
+                            if (isUrgent) ...[
+                              const SizedBox(width: 4),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
                                   color: cs.errorContainer,
                                   borderRadius: BorderRadius.circular(100),
@@ -282,12 +281,13 @@ class _PaymentBarsState extends State<PaymentBars> {
                                 child: Text(
                                   'urgent',
                                   style: tt.labelSmall?.copyWith(
-                                    fontSize: 10,
+                                    fontSize: 9,
                                     color: cs.onErrorContainer,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
                               ),
+                            ],
                           ],
                         ),
                         const SizedBox(height: 2),

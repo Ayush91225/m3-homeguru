@@ -22,10 +22,12 @@ class _ShimmerCardState extends State<ShimmerCard> with SingleTickerProviderStat
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 2000),
+      duration: const Duration(milliseconds: 1500),
       vsync: this,
     )..repeat();
-    _animation = Tween<double>(begin: -1, end: 1.5).animate(_controller);
+    _animation = Tween<double>(begin: -2, end: 2).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
   }
 
   @override
@@ -65,14 +67,18 @@ class _ShimmerCardState extends State<ShimmerCard> with SingleTickerProviderStat
                 builder: (_, _) => Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
                       stops: [
-                        (_animation.value - 0.3).clamp(0.0, 1.0),
+                        (_animation.value - 0.5).clamp(0.0, 1.0),
                         _animation.value.clamp(0.0, 1.0),
-                        (_animation.value + 0.3).clamp(0.0, 1.0),
+                        (_animation.value + 0.5).clamp(0.0, 1.0),
                       ],
-                      colors: [baseColor, highlightColor, baseColor],
+                      colors: [
+                        baseColor,
+                        highlightColor.withValues(alpha: 0.8),
+                        baseColor,
+                      ],
                     ),
                   ),
                 ),
@@ -89,31 +95,79 @@ class _ShimmerCardState extends State<ShimmerCard> with SingleTickerProviderStat
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          width: double.infinity,
-                          height: 14,
-                          decoration: BoxDecoration(
-                            color: highlightColor,
-                            borderRadius: BorderRadius.circular(4),
+                        AnimatedBuilder(
+                          animation: _animation,
+                          builder: (_, _) => Container(
+                            width: double.infinity,
+                            height: 14,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.centerLeft,
+                                end: Alignment.centerRight,
+                                stops: [
+                                  (_animation.value - 0.5).clamp(0.0, 1.0),
+                                  _animation.value.clamp(0.0, 1.0),
+                                  (_animation.value + 0.5).clamp(0.0, 1.0),
+                                ],
+                                colors: [
+                                  baseColor,
+                                  highlightColor.withValues(alpha: 0.8),
+                                  baseColor,
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
                           ),
                         ),
                         const SizedBox(height: 6),
-                        Container(
-                          width: 80,
-                          height: 12,
-                          decoration: BoxDecoration(
-                            color: highlightColor,
-                            borderRadius: BorderRadius.circular(4),
+                        AnimatedBuilder(
+                          animation: _animation,
+                          builder: (_, _) => Container(
+                            width: 80,
+                            height: 12,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.centerLeft,
+                                end: Alignment.centerRight,
+                                stops: [
+                                  (_animation.value - 0.5).clamp(0.0, 1.0),
+                                  _animation.value.clamp(0.0, 1.0),
+                                  (_animation.value + 0.5).clamp(0.0, 1.0),
+                                ],
+                                colors: [
+                                  baseColor,
+                                  highlightColor.withValues(alpha: 0.8),
+                                  baseColor,
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
                           ),
                         ),
                       ],
                     ),
-                    Container(
-                      width: 50,
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: highlightColor,
-                        borderRadius: BorderRadius.circular(4),
+                    AnimatedBuilder(
+                      animation: _animation,
+                      builder: (_, _) => Container(
+                        width: 50,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                            stops: [
+                              (_animation.value - 0.5).clamp(0.0, 1.0),
+                              _animation.value.clamp(0.0, 1.0),
+                              (_animation.value + 0.5).clamp(0.0, 1.0),
+                            ],
+                            colors: [
+                              baseColor,
+                              highlightColor.withValues(alpha: 0.8),
+                              baseColor,
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
                       ),
                     ),
                   ],
