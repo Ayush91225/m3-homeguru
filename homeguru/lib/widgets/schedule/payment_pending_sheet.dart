@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/razorpay_service.dart';
 import '../../services/user_profile_store.dart';
+import '../../services/paid_payment_service.dart';
 
 class PaymentPendingSheet extends StatefulWidget {
+  final String requestId;
   final String tutorName;
   final String tutorImage;
   final String subject;
@@ -19,6 +22,7 @@ class PaymentPendingSheet extends StatefulWidget {
 
   const PaymentPendingSheet({
     super.key,
+    required this.requestId,
     required this.tutorName,
     required this.tutorImage,
     required this.subject,
@@ -39,6 +43,7 @@ class PaymentPendingSheet extends StatefulWidget {
 class _PaymentPendingSheetState extends State<PaymentPendingSheet> {
   final RazorpayService _razorpayService = RazorpayService();
   bool _isProcessing = false;
+  String? _pendingOrderId;
 
   @override
   void initState() {
@@ -56,18 +61,39 @@ class _PaymentPendingSheetState extends State<PaymentPendingSheet> {
     super.dispose();
   }
 
-  void _handlePaymentSuccess(PaymentSuccessResponse response) {
-    setState(() => _isProcessing = false);
-    if (mounted) {
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Payment successful! ID: ${response.paymentId}'),
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          behavior: SnackBarBehavior.floating,
-        ),
+  void _handlePaymentSuccess(PaymentSuccessResponse response) async {
+    try {
+      // Verify payment and create sessions
+      await PaidPaymentService.verifyPayment(
+        requestId: widget.requestId,
+        orderId: _pendingOrderId ?? '',
+        paymentId: response.paymentId ?? '',
+        signature: response.signature ?? '',
       );
-      widget.onPaymentComplete?.call();
+
+      if (mounted) {
+        setState(() => _isProcessing = false);
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Payment successful! ${widget.sessionsBooked} sessions created.'),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        widget.onPaymentComplete?.call();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Payment verification failed: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
@@ -99,49 +125,46 @@ class _PaymentPendingSheetState extends State<PaymentPendingSheet> {
   Future<void> _processPayment() async {
     setState(() => _isProcessing = true);
 
-    final profile = ProfileStore.of(context);
-    final amountInPaise = totalPrice.toInt() * 100;
-    final receipt = 'rcpt_${DateTime.now().millisecondsSinceEpoch}';
+    try {
+      // Create order via API
+      final orderData = await PaidPaymentService.createOrder(requestId: widget.requestId);
+      final orderId = orderData['orderId'];
+      _pendingOrderId = orderId;
 
-    final order = await _razorpayService.createOrder(
-      amount: amountInPaise,
-      receipt: receipt,
-      notes: {
-        'subject': widget.subject,
-        'level': widget.level,
-        'sessions': widget.sessionsBooked,
-        'tutor': widget.tutorName,
-      },
-    );
+      final prefs = await SharedPreferences.getInstance();
+      final userName = prefs.getString('profile_name') ?? 'Student';
+      final userEmail = prefs.getString('profile_email') ?? '';
+      final userPhone = prefs.getString('profile_phone') ?? '';
 
-    if (order == null) {
+      final amountInPaise = orderData['amount'] as int;
+
+      _razorpayService.openCheckout(
+        orderId: orderId,
+        amount: amountInPaise,
+        name: userName,
+        email: userEmail,
+        contact: userPhone,
+        description: '${widget.sessionsBooked} sessions with ${widget.tutorName}',
+        notes: {
+          'requestId': widget.requestId,
+          'subject': widget.subject,
+          'level': widget.level,
+          'sessions': widget.sessionsBooked,
+          'tutor': widget.tutorName,
+        },
+      );
+    } catch (e) {
       setState(() => _isProcessing = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to create order. Please try again.'),
-            backgroundColor: Colors.red,
+          SnackBar(
+            content: Text('Failed to create order: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
             behavior: SnackBarBehavior.floating,
           ),
         );
       }
-      return;
     }
-
-    _razorpayService.openCheckout(
-      orderId: order['id'],
-      amount: amountInPaise,
-      name: profile.name,
-      email: '${profile.handle.replaceAll('@', '')}@homeguru.com',
-      contact: profile.phone,
-      description: '${widget.sessionsBooked} sessions with ${widget.tutorName}',
-      notes: {
-        'subject': widget.subject,
-        'level': widget.level,
-        'sessions': widget.sessionsBooked,
-        'tutor': widget.tutorName,
-      },
-    );
   }
 
   double get totalPrice => widget.sessionsBooked * widget.perHourPrice;

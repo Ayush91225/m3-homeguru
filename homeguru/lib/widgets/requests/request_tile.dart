@@ -23,6 +23,7 @@ class RequestTile extends StatelessWidget {
       backgroundColor: Colors.transparent,
       useRootNavigator: true,
       builder: (context) => PaymentPendingSheet(
+        requestId: request.id,
         tutorName: request.tutor,
         tutorImage: request.tutorImage,
         subject: request.subject,

@@ -1,49 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../schedule/payment_pending_sheet.dart';
-
-// Global list that can be modified
-final List<Map<String, dynamic>> _pendingPayments = [
-  {
-    'tutorName': 'Priya Sharma',
-    'tutorImage': 'https://i.pravatar.cc/150?img=5',
-    'subject': 'Mathematics',
-    'level': 'Grade 10 CBSE',
-    'sessionsBooked': 20,
-    'preferredSlot': 'Mon, Wed, Fri at 5:00 PM',
-    'perHourPrice': 499.0,
-    'classesPerWeek': 3,
-    'durationMonths': 2,
-    'bookingAcceptedAt': DateTime.now().subtract(const Duration(hours: 2, minutes: 19)),
-  },
-  {
-    'tutorName': 'Rahul Verma',
-    'tutorImage': 'https://i.pravatar.cc/150?img=12',
-    'subject': 'Physics',
-    'level': 'Grade 11 CBSE',
-    'sessionsBooked': 15,
-    'preferredSlot': 'Tue, Thu at 6:00 PM',
-    'perHourPrice': 599.0,
-    'classesPerWeek': 2,
-    'durationMonths': 2,
-    'bookingAcceptedAt': DateTime.now().subtract(const Duration(hours: 1, minutes: 30)),
-  },
-  {
-    'tutorName': 'Anjali Patel',
-    'tutorImage': 'https://i.pravatar.cc/150?img=9',
-    'subject': 'Chemistry',
-    'level': 'Grade 12 CBSE',
-    'sessionsBooked': 12,
-    'preferredSlot': 'Mon, Wed at 4:00 PM',
-    'perHourPrice': 549.0,
-    'classesPerWeek': 2,
-    'durationMonths': 2,
-    'bookingAcceptedAt': DateTime.now().subtract(const Duration(hours: 3, minutes: 45)),
-  },
-];
-
-// Notifier to trigger rebuilds
-final ValueNotifier<int> _paymentUpdateNotifier = ValueNotifier<int>(0);
+import '../../../services/paid_payment_service.dart';
 
 class PaymentBars extends StatefulWidget {
   const PaymentBars({super.key});
@@ -54,11 +13,38 @@ class PaymentBars extends StatefulWidget {
 
 class _PaymentBarsState extends State<PaymentBars> {
   Timer? _timer;
+  List<Map<String, dynamic>> _pendingPayments = [];
+  bool _loading = true;
 
   @override
   void initState() {
     super.initState();
-    _timer = Timer.periodic(const Duration(seconds: 60), (_) => setState(() {}));
+    _loadPendingPayments();
+    _timer = Timer.periodic(const Duration(seconds: 60), (_) {
+      _loadPendingPayments();
+      setState(() {});
+    });
+  }
+
+  Future<void> _loadPendingPayments() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final learnerId = prefs.getString('userId');
+      if (learnerId != null) {
+        final payments = await PaidPaymentService.fetchPendingPayments(learnerId: learnerId);
+        if (mounted) {
+          setState(() {
+            _pendingPayments = payments;
+            _loading = false;
+          });
+        }
+      }
+    } catch (e) {
+      print('Error loading pending payments: $e');
+      if (mounted) {
+        setState(() => _loading = false);
+      }
+    }
   }
 
   @override
@@ -75,6 +61,23 @@ class _PaymentBarsState extends State<PaymentBars> {
     return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')} remaining';
   }
 
+  DateTime _getDeadline(Map<String, dynamic> payment) {
+    final acceptedAt = payment['acceptedAt'] is String
+        ? DateTime.tryParse(payment['acceptedAt']) ?? DateTime.now()
+        : payment['acceptedAt'] as DateTime? ?? DateTime.now();
+    return acceptedAt.add(const Duration(hours: 4));
+  }
+
+  String _formatPreferredSlot(Map<String, dynamic> payment) {
+    final days = payment['preferredDays'] as List?;
+    final time = payment['preferredTime']?.toString() ?? '17:00';
+    if (days == null || days.isEmpty) return 'Schedule TBD';
+    
+    final dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final dayLabels = days.map((d) => dayNames[(d as int) - 1]).join(', ');
+    return '$dayLabels at $time';
+  }
+
   void _showPaymentSheet(BuildContext context, Map<String, dynamic> payment) {
     showModalBottomSheet(
       context: context,
@@ -82,22 +85,19 @@ class _PaymentBarsState extends State<PaymentBars> {
       backgroundColor: Colors.transparent,
       useRootNavigator: true,
       builder: (context) => PaymentPendingSheet(
-        tutorName: payment['tutorName'],
-        tutorImage: payment['tutorImage'],
-        subject: payment['subject'],
-        level: payment['level'],
-        sessionsBooked: payment['sessionsBooked'],
-        preferredSlot: payment['preferredSlot'],
-        perHourPrice: payment['perHourPrice'],
-        classesPerWeek: payment['classesPerWeek'],
-        durationMonths: payment['durationMonths'],
-        bookingAcceptedAt: payment['bookingAcceptedAt'],
+        requestId: payment['requestId']?.toString() ?? '',
+        tutorName: payment['tutorName']?.toString() ?? 'Tutor',
+        tutorImage: payment['tutorImage']?.toString() ?? '',
+        subject: payment['subject']?.toString() ?? '',
+        level: payment['level']?.toString() ?? '',
+        sessionsBooked: payment['totalSessions'] as int? ?? 0,
+        preferredSlot: _formatPreferredSlot(payment),
+        perHourPrice: (payment['perHourRate'] as num?)?.toDouble() ?? 0,
+        classesPerWeek: payment['classesPerWeek'] as int? ?? 0,
+        durationMonths: payment['months'] as int? ?? 0,
+        bookingAcceptedAt: _getDeadline(payment).subtract(const Duration(hours: 4)),
         onPaymentComplete: () {
-          _pendingPayments.removeWhere((p) => 
-            p['tutorName'] == payment['tutorName'] && 
-            p['subject'] == payment['subject']
-          );
-          _paymentUpdateNotifier.value++;
+          _loadPendingPayments();
         },
       ),
     );
@@ -109,24 +109,24 @@ class _PaymentBarsState extends State<PaymentBars> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       useRootNavigator: true,
-      builder: (context) => _AllPaymentsSheet(payments: _pendingPayments),
+      builder: (context) => _AllPaymentsSheet(
+        payments: _pendingPayments,
+        onPaymentComplete: _loadPendingPayments,
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<int>(
-      valueListenable: _paymentUpdateNotifier,
-      builder: (context, _, __) {
-        if (_pendingPayments.isEmpty) return const SizedBox.shrink();
+    if (_loading || _pendingPayments.isEmpty) return const SizedBox.shrink();
 
-        final cs = Theme.of(context).colorScheme;
-        final tt = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
 
-        if (_pendingPayments.length == 1) {
-          final payment = _pendingPayments[0];
-          final deadline = (payment['bookingAcceptedAt'] as DateTime).add(const Duration(hours: 4));
-          final totalAmount = (payment['perHourPrice'] as double) * (payment['sessionsBooked'] as int);
+    if (_pendingPayments.length == 1) {
+      final payment = _pendingPayments[0];
+      final deadline = _getDeadline(payment);
+      final totalAmount = ((payment['perHourRate'] as num?)?.toDouble() ?? 0) * ((payment['totalSessions'] as int?) ?? 0);
 
       return Container(
         decoration: BoxDecoration(
@@ -185,11 +185,11 @@ class _PaymentBarsState extends State<PaymentBars> {
 
     // Multiple payments - stacked cards
     final mostUrgent = _pendingPayments.reduce((a, b) {
-      final aDeadline = (a['bookingAcceptedAt'] as DateTime).add(const Duration(hours: 4));
-      final bDeadline = (b['bookingAcceptedAt'] as DateTime).add(const Duration(hours: 4));
+      final aDeadline = _getDeadline(a);
+      final bDeadline = _getDeadline(b);
       return aDeadline.isBefore(bDeadline) ? a : b;
     });
-    final urgentDeadline = (mostUrgent['bookingAcceptedAt'] as DateTime).add(const Duration(hours: 4));
+    final urgentDeadline = _getDeadline(mostUrgent);
     final timeLeft = _formatTimeRemaining(urgentDeadline);
     final isUrgent = urgentDeadline.difference(DateTime.now()).inHours < 12;
 
@@ -320,15 +320,17 @@ class _PaymentBarsState extends State<PaymentBars> {
         ],
       ),
     );
-      },
-    );
   }
 }
 
 class _AllPaymentsSheet extends StatefulWidget {
   final List<Map<String, dynamic>> payments;
+  final VoidCallback onPaymentComplete;
 
-  const _AllPaymentsSheet({required this.payments});
+  const _AllPaymentsSheet({
+    required this.payments,
+    required this.onPaymentComplete,
+  });
 
   @override
   State<_AllPaymentsSheet> createState() => _AllPaymentsSheetState();
@@ -357,6 +359,23 @@ class _AllPaymentsSheetState extends State<_AllPaymentsSheet> {
     return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')} left';
   }
 
+  DateTime _getDeadline(Map<String, dynamic> payment) {
+    final acceptedAt = payment['acceptedAt'] is String
+        ? DateTime.tryParse(payment['acceptedAt']) ?? DateTime.now()
+        : payment['acceptedAt'] as DateTime? ?? DateTime.now();
+    return acceptedAt.add(const Duration(hours: 4));
+  }
+
+  String _formatPreferredSlot(Map<String, dynamic> payment) {
+    final days = payment['preferredDays'] as List?;
+    final time = payment['preferredTime']?.toString() ?? '17:00';
+    if (days == null || days.isEmpty) return 'Schedule TBD';
+    
+    final dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final dayLabels = days.map((d) => dayNames[(d as int) - 1]).join(', ');
+    return '$dayLabels at $time';
+  }
+
   void _showPaymentSheet(Map<String, dynamic> payment) {
     Navigator.pop(context);
     showModalBottomSheet(
@@ -365,23 +384,18 @@ class _AllPaymentsSheetState extends State<_AllPaymentsSheet> {
       backgroundColor: Colors.transparent,
       useRootNavigator: true,
       builder: (context) => PaymentPendingSheet(
-        tutorName: payment['tutorName'],
-        tutorImage: payment['tutorImage'],
-        subject: payment['subject'],
-        level: payment['level'],
-        sessionsBooked: payment['sessionsBooked'],
-        preferredSlot: payment['preferredSlot'],
-        perHourPrice: payment['perHourPrice'],
-        classesPerWeek: payment['classesPerWeek'],
-        durationMonths: payment['durationMonths'],
-        bookingAcceptedAt: payment['bookingAcceptedAt'],
-        onPaymentComplete: () {
-          _pendingPayments.removeWhere((p) => 
-            p['tutorName'] == payment['tutorName'] && 
-            p['subject'] == payment['subject']
-          );
-          _paymentUpdateNotifier.value++;
-        },
+        requestId: payment['requestId']?.toString() ?? '',
+        tutorName: payment['tutorName']?.toString() ?? 'Tutor',
+        tutorImage: payment['tutorImage']?.toString() ?? '',
+        subject: payment['subject']?.toString() ?? '',
+        level: payment['level']?.toString() ?? '',
+        sessionsBooked: payment['totalSessions'] as int? ?? 0,
+        preferredSlot: _formatPreferredSlot(payment),
+        perHourPrice: (payment['perHourRate'] as num?)?.toDouble() ?? 0,
+        classesPerWeek: payment['classesPerWeek'] as int? ?? 0,
+        durationMonths: payment['months'] as int? ?? 0,
+        bookingAcceptedAt: _getDeadline(payment).subtract(const Duration(hours: 4)),
+        onPaymentComplete: widget.onPaymentComplete,
       ),
     );
   }
@@ -393,8 +407,8 @@ class _AllPaymentsSheetState extends State<_AllPaymentsSheet> {
 
     final sortedPayments = List<Map<String, dynamic>>.from(widget.payments)
       ..sort((a, b) {
-        final aDeadline = (a['bookingAcceptedAt'] as DateTime).add(const Duration(hours: 4));
-        final bDeadline = (b['bookingAcceptedAt'] as DateTime).add(const Duration(hours: 4));
+        final aDeadline = _getDeadline(a);
+        final bDeadline = _getDeadline(b);
         return aDeadline.compareTo(bDeadline);
       });
 
@@ -448,8 +462,8 @@ class _AllPaymentsSheetState extends State<_AllPaymentsSheet> {
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   final payment = sortedPayments[index];
-                  final deadline = (payment['bookingAcceptedAt'] as DateTime).add(const Duration(hours: 4));
-                  final totalAmount = (payment['perHourPrice'] as double) * (payment['sessionsBooked'] as int);
+                  final deadline = _getDeadline(payment);
+                  final totalAmount = ((payment['perHourRate'] as num?)?.toDouble() ?? 0) * ((payment['totalSessions'] as int?) ?? 0);
                   final isUrgent = deadline.difference(DateTime.now()).inHours < 12;
 
                   return Container(
