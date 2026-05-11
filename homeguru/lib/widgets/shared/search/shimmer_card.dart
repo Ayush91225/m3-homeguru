@@ -60,11 +60,13 @@ class _ShimmerCardState extends State<ShimmerCard> with SingleTickerProviderStat
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Image shimmer - 60% height
             Expanded(
               flex: 3,
               child: AnimatedBuilder(
                 animation: _animation,
                 builder: (_, _) => Container(
+                  width: double.infinity,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.centerLeft,
@@ -76,7 +78,7 @@ class _ShimmerCardState extends State<ShimmerCard> with SingleTickerProviderStat
                       ],
                       colors: [
                         baseColor,
-                        highlightColor.withValues(alpha: 0.8),
+                        highlightColor,
                         baseColor,
                       ],
                     ),
@@ -84,6 +86,7 @@ class _ShimmerCardState extends State<ShimmerCard> with SingleTickerProviderStat
                 ),
               ),
             ),
+            // Info shimmer - 40% height
             Expanded(
               flex: 2,
               child: Padding(
@@ -95,11 +98,12 @@ class _ShimmerCardState extends State<ShimmerCard> with SingleTickerProviderStat
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Name shimmer
                         AnimatedBuilder(
                           animation: _animation,
                           builder: (_, _) => Container(
                             width: double.infinity,
-                            height: 14,
+                            height: 16,
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 begin: Alignment.centerLeft,
@@ -111,7 +115,7 @@ class _ShimmerCardState extends State<ShimmerCard> with SingleTickerProviderStat
                                 ],
                                 colors: [
                                   baseColor,
-                                  highlightColor.withValues(alpha: 0.8),
+                                  highlightColor,
                                   baseColor,
                                 ],
                               ),
@@ -119,7 +123,8 @@ class _ShimmerCardState extends State<ShimmerCard> with SingleTickerProviderStat
                             ),
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 4),
+                        // Subject shimmer
                         AnimatedBuilder(
                           animation: _animation,
                           builder: (_, _) => Container(
@@ -136,7 +141,7 @@ class _ShimmerCardState extends State<ShimmerCard> with SingleTickerProviderStat
                                 ],
                                 colors: [
                                   baseColor,
-                                  highlightColor.withValues(alpha: 0.8),
+                                  highlightColor,
                                   baseColor,
                                 ],
                               ),
@@ -146,6 +151,7 @@ class _ShimmerCardState extends State<ShimmerCard> with SingleTickerProviderStat
                         ),
                       ],
                     ),
+                    // Experience shimmer
                     AnimatedBuilder(
                       animation: _animation,
                       builder: (_, _) => Container(
@@ -162,7 +168,7 @@ class _ShimmerCardState extends State<ShimmerCard> with SingleTickerProviderStat
                             ],
                             colors: [
                               baseColor,
-                              highlightColor.withValues(alpha: 0.8),
+                              highlightColor,
                               baseColor,
                             ],
                           ),
