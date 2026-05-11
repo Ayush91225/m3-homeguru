@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
 import 'package:flutter/services.dart';
 import '../../../widgets/shared/search/search_card.dart';
 import '../../../widgets/shared/search/tutor_card.dart';
 import '../../../widgets/shared/search/shimmer_card.dart';
 import '../../../widgets/shared/search/filter_bar.dart';
+import '../../../services/learner_data_model.dart';
 
 class SearchTab extends StatefulWidget {
   const SearchTab({super.key});
@@ -39,17 +39,12 @@ class _SearchTabState extends State<SearchTab> {
   }
 
   Future<void> _loadTutors() async {
-    try {
-      final String response = await rootBundle.loadString('assets/mock_tutors.json');
-      final List<dynamic> data = json.decode(response);
-      if (!mounted) return;
-      setState(() {
-        _allTutors = data.cast<Map<String, dynamic>>();
-        _applyFilters();
-      });
-    } catch (e) {
-      debugPrint('Error loading tutors: $e');
-    }
+    final apiTutors = await LearnerDataModel.fetchTutors(limit: 100);
+    if (!mounted) return;
+    setState(() {
+      _allTutors = apiTutors.map((t) => LearnerDataModel.mapTutorForWidget(t)).toList();
+      _applyFilters();
+    });
   }
 
   void _applyFilters() {

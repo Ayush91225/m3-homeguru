@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
 import 'package:flutter/services.dart';
 import '../../../screens/dashboard/learner/learner_dashboard.dart';
 import '../../shared/tutor_action_sheet.dart';
+import '../../../services/learner_data_model.dart';
 
 class SuggestedTutors extends StatefulWidget {
   const SuggestedTutors({super.key});
@@ -22,16 +22,15 @@ class _SuggestedTutorsState extends State<SuggestedTutors> {
   }
 
   Future<void> _loadTutors() async {
-    try {
-      final String response = await rootBundle.loadString('assets/mock_tutors.json');
-      final List<dynamic> data = json.decode(response);
-      setState(() {
-        _tutors = [...data.take(5).map((e) => e as Map<String, dynamic>), {'isViewAll': true}];
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
-    }
+    final apiTutors = await LearnerDataModel.fetchTutors(limit: 5);
+    if (!mounted) return;
+    setState(() {
+      _tutors = [
+        ...apiTutors.map((t) => LearnerDataModel.mapTutorForWidget(t)),
+        {'isViewAll': true}
+      ];
+      _isLoading = false;
+    });
   }
 
   String _getSubjects(Map<String, dynamic> tutor) {
