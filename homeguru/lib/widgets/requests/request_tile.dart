@@ -8,11 +8,12 @@ class RequestTile extends StatelessWidget {
   const RequestTile({super.key, required this.request});
 
   String _fmtDate(DateTime d) {
+    final local = d.toLocal();
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    final h = d.hour % 12 == 0 ? 12 : d.hour % 12;
-    final m = d.minute.toString().padLeft(2, '0');
-    final p = d.hour >= 12 ? 'PM' : 'AM';
-    return '${d.day} ${months[d.month - 1]} ${d.year}  $h:$m $p';
+    final h = local.hour % 12 == 0 ? 12 : local.hour % 12;
+    final m = local.minute.toString().padLeft(2, '0');
+    final p = local.hour >= 12 ? 'PM' : 'AM';
+    return '${local.day} ${months[local.month - 1]} ${local.year}, $h:$m $p';
   }
 
   void _showPaymentSheet(BuildContext context) {

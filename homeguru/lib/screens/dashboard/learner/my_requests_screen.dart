@@ -36,8 +36,8 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
         setState(() {
           _allRequests = requests.map((r) => BookingRequest(
             id: r['requestId']?.toString() ?? '',
-            tutor: r['tutorId']?.toString() ?? '',
-            tutorImage: '',
+            tutor: r['tutorName']?.toString() ?? r['tutorId']?.toString() ?? 'Tutor',
+            tutorImage: r['tutorImage']?.toString() ?? 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(r['tutorName']?.toString() ?? 'T')}&background=random',
             subject: r['subject']?.toString() ?? '',
             level: r['level']?.toString() ?? '',
             type: r['type']?.toString() == 'paid' ? RequestType.paid : (r['type']?.toString() == 'paid-demo' ? RequestType.paidDemo : RequestType.demo),
