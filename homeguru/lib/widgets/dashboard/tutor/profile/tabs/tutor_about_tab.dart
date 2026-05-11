@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../../services/tutor_profile_service.dart';
+import '../../../../../services/blog_service.dart';
 import '../tutor_intro_video.dart';
 import '../../../../../screens/shared/feed/feed_models.dart';
-import '../../../../../screens/shared/feed/feed_widgets.dart';
+import '../../../../../screens/shared/feed/blog_detail_screen.dart';
 
 class TutorAboutTab extends StatefulWidget {
   const TutorAboutTab({super.key, this.viewMode = false});
@@ -66,19 +67,18 @@ class _TutorAboutTabState extends State<TutorAboutTab> {
         _tags = _extractTags(subjects);
       }
 
-      // Blogs
-      if (data['blogs'] is List) {
-        _blogs = (data['blogs'] as List).map((b) => HgBlog(
-          id: b['id']?.toString() ?? '',
-          title: b['title']?.toString() ?? '',
-          body: b['body']?.toString() ?? '',
-          imageUrl: b['imageUrl']?.toString() ?? '',
-          authorName: '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}'.trim(),
-          authorAvatar: data['profilePhoto']?.toString() ?? '',
-          tags: (b['tags'] is List) ? List<String>.from(b['tags']) : [],
-          publishedAt: b['publishedAt']?.toString() ?? '',
-        )).toList();
-      }
+      // Blogs — fetch from blogs API
+      final blogsData = await BlogService.fetchByTutor(tutorId);
+      _blogs = blogsData.map((b) => HgBlog(
+        id: b['blogId']?.toString() ?? '',
+        title: b['title']?.toString() ?? '',
+        body: b['body']?.toString() ?? '',
+        imageUrl: b['coverImageUrl']?.toString() ?? '',
+        authorName: b['authorName']?.toString() ?? '',
+        authorAvatar: b['authorAvatar']?.toString() ?? '',
+        tags: b['tag'] != null ? [b['tag'].toString()] : [],
+        publishedAt: b['createdAt']?.toString() ?? '',
+      )).toList();
     }
 
     if (mounted) setState(() => _loading = false);
@@ -272,10 +272,16 @@ class _TutorAboutTabState extends State<TutorAboutTab> {
         ),
         const SizedBox(height: 12),
         if (_blogs.isNotEmpty)
-          ..._blogs.map((blog) => Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-            child: HgBlogCard(blog: blog, isTutor: true),
-          ))
+          SizedBox(
+            height: 160,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              itemCount: _blogs.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              itemBuilder: (_, i) => _MiniProfileBlogCard(blog: _blogs[i], cs: cs, tt: tt),
+            ),
+          )
         else
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -315,6 +321,53 @@ class _TutorAboutTabState extends State<TutorAboutTab> {
 
         const SizedBox(height: 40),
       ],
+    );
+  }
+}
+
+class _MiniProfileBlogCard extends StatelessWidget {
+  const _MiniProfileBlogCard({required this.blog, required this.cs, required this.tt});
+  final HgBlog blog;
+  final ColorScheme cs;
+  final TextTheme tt;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.push(context,
+          MaterialPageRoute(builder: (_) => BlogDetailScreen(blog: blog))),
+      child: Container(
+        width: 200,
+        decoration: BoxDecoration(
+          color: cs.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (blog.imageUrl.isNotEmpty)
+              Image.network(blog.imageUrl, height: 90, width: 200, fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(height: 90, color: cs.surfaceContainerHighest))
+            else
+              Container(height: 90, color: cs.surfaceContainerHighest,
+                child: Center(child: Icon(Icons.article_outlined, color: cs.onSurfaceVariant.withValues(alpha: 0.3)))),
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(blog.title, style: tt.labelMedium?.copyWith(fontWeight: FontWeight.w600),
+                      maxLines: 2, overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 4),
+                  Text(blog.tags.isNotEmpty ? blog.tags.first : '', style: tt.labelSmall?.copyWith(color: cs.tertiary)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
