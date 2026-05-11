@@ -22,18 +22,20 @@ class LearnerDashboardState extends State<LearnerDashboard> {
   int _selectedIndex = 0;
   bool _fabExtended = true;
   bool _isLoading = true;
+  int _refreshKey = 0;
 
-  static const _tabs = [
-    HomeTab(),
-    SearchTab(),
-    ScheduleTab(),
-    FeedTab(),
-    ChatTab(),
+  List<Widget> get _tabs => [
+    HomeTab(key: ValueKey('home_$_refreshKey')),
+    SearchTab(key: ValueKey('search_$_refreshKey')),
+    const ScheduleTab(),
+    const FeedTab(),
+    const ChatTab(),
   ];
 
   @override
   void initState() {
     super.initState();
+    _refreshKey = DateTime.now().millisecondsSinceEpoch;
     _checkAuthAndOnboarding();
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
@@ -87,7 +89,10 @@ class LearnerDashboardState extends State<LearnerDashboard> {
       ),
       body: Stack(
         children: [
-          _tabs[_selectedIndex],
+          IndexedStack(
+            index: _selectedIndex,
+            children: _tabs,
+          ),
           Positioned(
             left: 20,
             right: (_fabExtended ? 140 : 56) + 20,

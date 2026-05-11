@@ -15,6 +15,7 @@ class LearnerDataModel {
     try {
       final params = <String, String>{
         'limit': limit.toString(),
+        '_t': DateTime.now().millisecondsSinceEpoch.toString(),
         if (lastKey != null) 'lastKey': lastKey,
         if (subject != null) 'subject': subject,
         if (board != null) 'board': board,
@@ -22,7 +23,13 @@ class LearnerDataModel {
       };
 
       final uri = Uri.parse('$_baseUrl/tutors').replace(queryParameters: params);
-      final response = await http.get(uri).timeout(const Duration(seconds: 10));
+      final response = await http.get(
+        uri,
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        },
+      ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final result = jsonDecode(response.body);
