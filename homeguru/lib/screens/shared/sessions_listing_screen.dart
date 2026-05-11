@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'class_content_screen.dart';
+import '../../services/session_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // ── Session model ─────────────────────────────────────────────────────────────
 
@@ -42,211 +44,6 @@ class SessionData {
   });
 }
 
-// ── Mock data ─────────────────────────────────────────────────────────────────
-
-// Tutor definitions
-const _tutors = [
-  (
-    name: 'Vikram Singh',
-    image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop',
-    subject: 'IELTS',
-    price: 799.0,
-    totalClasses: 50,
-  ),
-  (
-    name: 'Priya Sharma',
-    image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop',
-    subject: 'JEE Advanced',
-    price: 999.0,
-    totalClasses: 100,
-  ),
-  (
-    name: 'Ananya Reddy',
-    image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop',
-    subject: 'CBSE Grade 11-12',
-    price: 649.0,
-    totalClasses: 30,
-  ),
-  (
-    name: 'Meera Patel',
-    image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop',
-    subject: 'NEET',
-    price: 1199.0,
-    totalClasses: 20,
-  ),
-  (
-    name: 'Rajesh Kumar',
-    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop',
-    subject: 'JEE Mains',
-    price: 899.0,
-    totalClasses: 60,
-  ),
-];
-
-// Per-tutor session titles (conducted)
-const _titles = {
-  'Vikram Singh': [
-    'Speaking Practice — Introductions', 'Listening Skills: Lecture Format',
-    'Reading Comprehension Strategies', 'Writing Task 1: Graphs & Charts',
-    'Writing Task 2: Opinion Essays', 'Grammar for IELTS Band 7+',
-    'Vocabulary Building Session', 'Mock Test — Full Paper',
-    'Pronunciation & Fluency Drill', 'Academic Word List Deep Dive',
-    'Paraphrasing Techniques', 'Cohesion & Coherence in Writing',
-    'Listening: Multiple Choice Practice', 'Speaking Part 2 — Cue Cards',
-    'Reading: True/False/Not Given', 'Writing Feedback & Corrections',
-    'Idioms & Collocations', 'Time Management in Exam',
-    'Band 8 Sample Answers Review', 'Error Analysis Session',
-    'Formal vs Informal Register', 'Skimming & Scanning Techniques',
-    'Complex Sentence Structures', 'Passive Voice in Academic Writing',
-    'Discourse Markers Practice', 'Spelling & Punctuation Rules',
-    'Listening: Diagram Completion', 'Speaking Part 3 — Discussion',
-    'Reading: Matching Headings', 'Final Mock & Score Prediction',
-  ],
-  'Priya Sharma': [
-    'Limits & Continuity', 'Differentiation — Chain Rule',
-    'Integration by Parts', 'Differential Equations Intro',
-    'Vectors & 3D Geometry', 'Matrices & Determinants',
-    'Probability & Statistics', 'Complex Numbers',
-    'Sequences & Series', 'Binomial Theorem',
-    'Conic Sections — Ellipse', 'Conic Sections — Hyperbola',
-    'Trigonometric Identities', 'Inverse Trigonometry',
-    'Applications of Derivatives', 'Definite Integrals',
-    'Area Under Curves', 'Linear Programming',
-    'Relations & Functions', 'Sets & Logic',
-    'Permutations & Combinations', 'Mathematical Induction',
-    'Straight Lines & Circles', 'Parabola Problems',
-    'JEE Advanced Paper 1 Mock', 'JEE Advanced Paper 2 Mock',
-    'Error Analysis — Calculus', 'Revision: Algebra',
-    'Revision: Coordinate Geometry', 'Final Strategy Session',
-  ],
-  'Ananya Reddy': [
-    'Organic Chemistry — Basics', 'Hydrocarbons & Nomenclature',
-    'Alcohols, Phenols & Ethers', 'Aldehydes & Ketones',
-    'Carboxylic Acids & Derivatives', 'Amines & Diazonium Salts',
-    'Biomolecules Overview', 'Polymers & Chemistry in Everyday Life',
-    'Chemical Bonding & Structure', 'States of Matter',
-    'Thermodynamics — First Law', 'Thermodynamics — Second Law',
-    'Equilibrium & Le Chatelier', 'Electrochemistry Basics',
-    'Kinetics & Rate Laws', 'Surface Chemistry',
-    'p-Block Elements', 'd & f Block Elements',
-    'Coordination Compounds', 'Haloalkanes & Haloarenes',
-    'Environmental Chemistry', 'Solid State',
-    'Solutions & Colligative Properties', 'Redox Reactions',
-    'Hydrogen & s-Block Elements', 'General Principles of Extraction',
-    'CBSE Board Paper 2023 Review', 'CBSE Board Paper 2024 Review',
-    'Revision: Organic Reactions', 'Final Mock Test',
-  ],
-  'Meera Patel': [
-    'Cell Structure & Function', 'Cell Division — Mitosis & Meiosis',
-    'Biomolecules: Proteins & Enzymes', 'Photosynthesis in Detail',
-    'Respiration — Glycolysis & Krebs', 'Plant Growth & Development',
-    'Reproduction in Flowering Plants', 'Human Reproduction',
-    'Genetics — Mendelian Laws', 'Molecular Basis of Inheritance',
-    'Evolution & Natural Selection', 'Human Health & Disease',
-    'Microbes in Human Welfare', 'Biotechnology Principles',
-    'Biotechnology Applications', 'Organisms & Populations',
-    'Ecosystem & Energy Flow', 'Biodiversity & Conservation',
-    'Environmental Issues', 'Structural Organisation in Animals',
-    'Digestion & Absorption', 'Breathing & Gas Exchange',
-    'Body Fluids & Circulation', 'Excretory Products & Elimination',
-    'Locomotion & Movement', 'Neural Control & Coordination',
-    'Chemical Coordination', 'NEET Mock Test — Biology',
-    'Revision: Plant Physiology', 'Final Score Booster',
-  ],
-  'Rajesh Kumar': [
-    'Kinematics — 1D Motion', 'Kinematics — 2D Projectile',
-    'Laws of Motion & Friction', 'Work, Energy & Power',
-    'Rotational Motion & Torque', 'Gravitation',
-    'Properties of Solids & Fluids', 'Thermal Properties of Matter',
-    'Thermodynamics', 'Kinetic Theory of Gases',
-    'Simple Harmonic Motion', 'Waves & Sound',
-    'Electrostatics — Coulomb\'s Law', 'Electric Potential & Capacitance',
-    'Current Electricity & Ohm\'s Law', 'Magnetic Effects of Current',
-    'Magnetism & Matter', 'Electromagnetic Induction',
-    'Alternating Current', 'Electromagnetic Waves',
-    'Ray Optics & Optical Instruments', 'Wave Optics',
-    'Dual Nature of Radiation', 'Atoms & Nuclei',
-    'Semiconductor Devices', 'Communication Systems',
-    'JEE Mains Mock Test 1', 'JEE Mains Mock Test 2',
-    'Revision: Mechanics', 'Final Strategy & Exam Tips',
-  ],
-};
-
-const _durations = ['45m', '1h', '1h 15m', '1h 30m', '1h 45m', '2h', '2h 30m'];
-const _quizScores = ['0/0', '5/10', '6/10', '7/10', '8/10', '9/10', '10/10',
-                     '8/15', '10/15', '12/15', '14/15', '15/15',
-                     '6/20', '12/20', '16/20', '18/20', '20/20'];
-
-List<SessionData> _generateSessions() {
-  final now = DateTime.now();
-  final sessions = <SessionData>[];
-  int idCounter = 1;
-  int codeCounter = 1000;
-
-  for (final tutor in _tutors) {
-    final titles = _titles[tutor.name]!; // 30 titles per tutor
-
-    // ── 30 conducted sessions (spread over past ~180 days) ──
-    for (int i = 0; i < 30; i++) {
-      final classNum = i + 1;
-      final daysAgo = (i * 6) + 1; // every ~6 days
-      final hoursOffset = (i % 5) * 2;
-      final isDemo = classNum == 1;
-      final isPaidDemo = classNum == 2;
-      final type = isDemo
-          ? SessionType.demo
-          : isPaidDemo
-              ? SessionType.paidDemo
-              : SessionType.paid;
-      final filesCount = (i % 4 == 0) ? 0 : (i % 3) + 1;
-      final quizStr = isDemo ? '0/0' : _quizScores[(i + idCounter) % _quizScores.length];
-
-      sessions.add(SessionData(
-        id: '${idCounter++}',
-        title: titles[i],
-        subject: tutor.subject,
-        tutor: tutor.name,
-        tutorImage: tutor.image,
-        scheduledAt: now.subtract(Duration(days: daysAgo, hours: hoursOffset)),
-        duration: _durations[(i + idCounter) % _durations.length],
-        type: type,
-        status: SessionStatus.conducted,
-        paidAmount: isDemo ? null : (isPaidDemo ? 99 : tutor.price),
-        meetingCode: 'HG-${codeCounter++}',
-        classNumber: classNum,
-        totalClasses: tutor.totalClasses,
-        files: filesCount,
-        quiz: quizStr,
-      ));
-    }
-
-    // ── 10 upcoming sessions (spread over next ~60 days) ──
-    for (int i = 0; i < 10; i++) {
-      final classNum = 31 + i;
-      final daysAhead = (i * 6) + 1;
-      final hoursOffset = (i % 4) * 3;
-
-      sessions.add(SessionData(
-        id: '${idCounter++}',
-        title: titles[i % titles.length], // reuse titles for upcoming
-        subject: tutor.subject,
-        tutor: tutor.name,
-        tutorImage: tutor.image,
-        scheduledAt: now.add(Duration(days: daysAhead, hours: hoursOffset)),
-        duration: _durations[(i + idCounter) % _durations.length],
-        type: SessionType.paid,
-        status: SessionStatus.upcoming,
-        paidAmount: tutor.price,
-        meetingCode: 'HG-${codeCounter++}',
-        classNumber: classNum,
-        totalClasses: tutor.totalClasses,
-      ));
-    }
-  }
-
-  return sessions;
-}
-
 // ── Screen ────────────────────────────────────────────────────────────────────
 
 class SessionsListingScreen extends StatefulWidget {
@@ -259,12 +56,72 @@ class SessionsListingScreen extends StatefulWidget {
 }
 
 class _SessionsListingScreenState extends State<SessionsListingScreen> {
-  final List<SessionData> _all = _generateSessions();
+  List<SessionData> _all = [];
+  bool _loading = true;
 
   DateTime? _filterDate;
   String? _filterSubject;
   late String? _filterTutor;
   SessionStatus? _filterStatus;
+
+  @override
+  void initState() {
+    super.initState();
+    _filterTutor = widget.initialTutor;
+    _loadSessions();
+  }
+
+  Future<void> _loadSessions() async {
+    setState(() => _loading = true);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('userId');
+      if (userId == null) {
+        setState(() => _loading = false);
+        return;
+      }
+
+      final sessions = await SessionService.fetchSessions(
+        tutorId: widget.isTutor ? userId : null,
+        learnerId: widget.isTutor ? null : userId,
+      );
+
+      final mapped = sessions.map((s) {
+        final scheduledAt = DateTime.tryParse(s['scheduledAt']?.toString() ?? '') ?? DateTime.now();
+        final duration = s['duration'] as int? ?? 60;
+        final status = s['status']?.toString() ?? 'upcoming';
+        final type = s['type']?.toString() ?? 'demo';
+
+        return SessionData(
+          id: s['sessionId']?.toString() ?? '',
+          title: s['subject']?.toString() ?? 'Session',
+          subject: s['subject']?.toString() ?? '',
+          tutor: widget.isTutor ? (s['learnerName']?.toString() ?? 'Student') : (s['tutorName']?.toString() ?? 'Tutor'),
+          tutorImage: widget.isTutor ? (s['learnerImage']?.toString() ?? '') : (s['tutorImage']?.toString() ?? ''),
+          scheduledAt: scheduledAt,
+          duration: '${duration}m',
+          type: type == 'paid' ? SessionType.paid : type == 'paid-demo' ? SessionType.paidDemo : SessionType.demo,
+          status: status == 'conducted' ? SessionStatus.conducted : status == 'cancelled' ? SessionStatus.cancelled : SessionStatus.upcoming,
+          paidAmount: (s['price'] as num?)?.toDouble(),
+          meetingCode: s['meetingId']?.toString() ?? '',
+          classNumber: s['sessionNumber'] as int?,
+          totalClasses: s['totalSessions'] as int?,
+        );
+      }).toList();
+
+      if (mounted) {
+        setState(() {
+          _all = mapped;
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading sessions: $e');
+      if (mounted) {
+        setState(() => _loading = false);
+      }
+    }
+  }
 
   List<SessionData> get _filtered {
     return _all.where((s) {
@@ -293,12 +150,6 @@ class _SessionsListingScreenState extends State<SessionsListingScreen> {
 
   List<String> get _subjects => _all.map((s) => s.subject).toSet().toList()..sort();
   List<String> get _tutors => _all.map((s) => s.tutor).toSet().toList()..sort();
-
-  @override
-  void initState() {
-    super.initState();
-    _filterTutor = widget.initialTutor;
-  }
 
   bool get _hasFilters => _filterDate != null || _filterSubject != null || _filterTutor != null || _filterStatus != null;
 
@@ -341,41 +192,43 @@ class _SessionsListingScreenState extends State<SessionsListingScreen> {
             ),
         ],
       ),
-      body: Column(
-        children: [
-          _FilterBar(
-            filterDate: _filterDate,
-            filterSubject: _filterSubject,
-            filterTutor: _filterTutor,
-            filterStatus: _filterStatus,
-            subjects: _subjects,
-            tutors: _tutors,
-            onDateTap: _pickDate,
-            onSubjectChanged: (v) => setState(() => _filterSubject = v),
-            onTutorChanged: (v) => setState(() => _filterTutor = v),
-            onStatusChanged: (v) => setState(() => _filterStatus = v),
-            isTutor: widget.isTutor,
-          ),
-          Expanded(
-            child: sessions.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.search_off_rounded, size: 48, color: cs.onSurfaceVariant),
-                        const SizedBox(height: 12),
-                        Text('No sessions found', style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.only(bottom: 32),
-                    itemCount: sessions.length,
-                    itemBuilder: (context, i) => _SessionTile(session: sessions[i], isTutor: widget.isTutor),
-                  ),
-          ),
-        ],
-      ),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                _FilterBar(
+                  filterDate: _filterDate,
+                  filterSubject: _filterSubject,
+                  filterTutor: _filterTutor,
+                  filterStatus: _filterStatus,
+                  subjects: _subjects,
+                  tutors: _tutors,
+                  onDateTap: _pickDate,
+                  onSubjectChanged: (v) => setState(() => _filterSubject = v),
+                  onTutorChanged: (v) => setState(() => _filterTutor = v),
+                  onStatusChanged: (v) => setState(() => _filterStatus = v),
+                  isTutor: widget.isTutor,
+                ),
+                Expanded(
+                  child: sessions.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.search_off_rounded, size: 48, color: cs.onSurfaceVariant),
+                              const SizedBox(height: 12),
+                              Text('No sessions found', style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.only(bottom: 32),
+                          itemCount: sessions.length,
+                          itemBuilder: (context, i) => _SessionTile(session: sessions[i], isTutor: widget.isTutor),
+                        ),
+                ),
+              ],
+            ),
     );
   }
 }
@@ -647,7 +500,12 @@ class _SessionTile extends StatelessWidget {
                 CircleAvatar(
                   radius: 24,
                   backgroundColor: cs.surfaceContainerHighest,
-                  backgroundImage: NetworkImage(session.tutorImage),
+                  backgroundImage: session.tutorImage.isNotEmpty
+                      ? NetworkImage(session.tutorImage)
+                      : null,
+                  child: session.tutorImage.isEmpty
+                      ? Icon(Icons.person, size: 24, color: cs.onSurfaceVariant)
+                      : null,
                 ),
                 const SizedBox(width: 12),
                 Expanded(

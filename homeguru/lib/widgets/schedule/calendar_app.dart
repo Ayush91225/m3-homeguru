@@ -40,9 +40,20 @@ class _CalendarAppState extends State<CalendarApp> {
     final now = tz.TZDateTime.now(location);
     _today = DateTime(now.year, now.month, now.day);
     _selectedDate = DateTime(now.year, now.month, now.day);
-    _events = createInitialEvents(now, isTutor: widget.isTutor);
-    _convertedEvents = _events; // Initialize cache
+    _events = [];
+    _convertedEvents = [];
     _lastConvertedTimezone = _timezone;
+    _loadEvents(now);
+  }
+
+  Future<void> _loadEvents(tz.TZDateTime now) async {
+    final events = await createInitialEvents(now, isTutor: widget.isTutor);
+    if (mounted) {
+      setState(() {
+        _events = events;
+        _convertedEvents = events;
+      });
+    }
   }
 
   void _convertEventsIfNeeded() {

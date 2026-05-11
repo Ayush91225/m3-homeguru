@@ -53,7 +53,12 @@ class TutorRequestTile extends StatelessWidget {
                 CircleAvatar(
                   radius: 24,
                   backgroundColor: cs.surfaceContainerHighest,
-                  backgroundImage: CachedNetworkImageProvider(request.studentImage),
+                  backgroundImage: request.studentImage.isNotEmpty
+                      ? CachedNetworkImageProvider(request.studentImage)
+                      : null,
+                  child: request.studentImage.isEmpty
+                      ? Icon(Icons.person, size: 24, color: cs.onSurfaceVariant)
+                      : null,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -329,7 +334,13 @@ class _RequestDetailsSheet extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 28,
-                  backgroundImage: CachedNetworkImageProvider(request.studentImage),
+                  backgroundColor: cs.surfaceContainerHighest,
+                  backgroundImage: request.studentImage.isNotEmpty
+                      ? CachedNetworkImageProvider(request.studentImage)
+                      : null,
+                  child: request.studentImage.isEmpty
+                      ? Icon(Icons.person, size: 28, color: cs.onSurfaceVariant)
+                      : null,
                 ),
                 const SizedBox(width: 16),
                 Expanded(
